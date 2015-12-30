@@ -1,3 +1,8 @@
 syntax: glob
 *.aps
 *.suo
+Debug/*
+Release/*
+*.user
+*.ncb
+Release9x/*
