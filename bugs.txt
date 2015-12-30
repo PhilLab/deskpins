@@ -1,0 +1,10 @@
+Proxy mode not handled ok for Inno installers (VCL-based), e.g. bao0995u.exe.
+
+Notification icon menu weirdness:
+    1. right click tray icon
+    2. enter pin mode
+    3. cancel with right click
+    4. right click tray icon
+    5. The menu highlighting doesn't work anymore.
+    This affects all notification icons' menus.
+    Probably some problem with layerwnd clicks and tray notification area focus?
