@@ -168,7 +168,7 @@ static void Apply(HWND hWnd)
     if (opt.trackRate.value != rate)
         EnumWindows(ResetPinTimersEnumProc, opt.trackRate.value = rate);
 
-    opt.dblClkTray = IsDlgButtonChecked(hWnd, IDC_TRAY_DOUBLE_CLICK);
+    opt.dblClkTray = IsDlgButtonChecked(hWnd, IDC_TRAY_DOUBLE_CLICK) == BST_CHECKED;
 }
 
 

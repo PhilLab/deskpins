@@ -23,7 +23,7 @@ return reinterpret_cast<HWND>(::GetWindowLong(hWnd, GWL_HWNDPARENT));
 
 bool IsChild(HWND hWnd)
 {
-    return ef::Win::WndH(hWnd).getStyle() & WS_CHILD;
+    return (ef::Win::WndH(hWnd).getStyle() & WS_CHILD) != 0;
 }
 
 
@@ -89,7 +89,7 @@ bool IsTaskBar(HWND hWnd)
 
 bool IsTopMost(HWND hWnd)
 {
-    return ef::Win::WndH(hWnd).getExStyle() & WS_EX_TOPMOST;
+    return (ef::Win::WndH(hWnd).getExStyle() & WS_EX_TOPMOST) != 0;
 }
 
 
@@ -338,7 +338,7 @@ BOOL Rectangle(HDC hDC, const RECT& rc)
 
 bool PSChanged(HWND hPage)
 {
-    return PropSheet_Changed(GetParent(hPage), hPage);
+    return !!PropSheet_Changed(GetParent(hPage), hPage);
 }
 
 

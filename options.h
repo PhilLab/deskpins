@@ -24,12 +24,12 @@ struct HotKey {
 
     bool set(HWND hWnd) const
     {
-        return RegisterHotKey(hWnd, id, mod, vk);
+        return !!RegisterHotKey(hWnd, id, mod, vk);
     }
 
     bool unset(HWND hWnd) const
     {
-        return UnregisterHotKey(hWnd, id);
+        return !!UnregisterHotKey(hWnd, id);
     }
 
     bool load(ef::Win::RegKeyH& key, const ef::tchar* val);

@@ -45,5 +45,5 @@ bool PinShape::initShape() {
         DeleteObject(hBmp);
     }
 
-    return hRgn;
+    return hRgn != 0;
 }

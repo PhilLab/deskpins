@@ -2,9 +2,6 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-// disable unnecessary warnings
-#pragma warning (disable:4800)    // BOOL -> int
-
 #define STRICT
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 

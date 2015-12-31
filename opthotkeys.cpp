@@ -7,7 +7,7 @@
 
 static bool CmHotkeysOn(HWND hWnd)
 {
-    bool b = IsDlgButtonChecked(hWnd, IDC_HOTKEYS_ON);
+    bool b = IsDlgButtonChecked(hWnd, IDC_HOTKEYS_ON) == BST_CHECKED;
     EnableGroup(hWnd, IDC_HOTKEYS_GROUP, b);
     PSChanged(hWnd);
     return true;
@@ -73,7 +73,7 @@ static void Apply(HWND hWnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(hWnd, DWL_USER))->opt;
 
-    bool hotkeysOn = IsDlgButtonChecked(hWnd, IDC_HOTKEYS_ON);
+    bool hotkeysOn = IsDlgButtonChecked(hWnd, IDC_HOTKEYS_ON) == BST_CHECKED;
 
     HotKey hkEnter(App::HOTID_ENTERPINMODE);
     HotKey hkToggle(App::HOTID_TOGGLEPIN);

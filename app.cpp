@@ -69,7 +69,7 @@ bool App::initComctl()
     //iccx.dwICC = ICC_LISTVIEW_CLASSES | ICC_HOTKEY_CLASS | 
     //             ICC_TAB_CLASSES | ICC_UPDOWN_CLASS;
     iccx.dwICC = ICC_WIN95_CLASSES;
-    bool ret = InitCommonControlsEx(&iccx);
+    bool ret = !!InitCommonControlsEx(&iccx);
     if (!ret)
         Error(0, ResStr(IDS_ERR_CCINIT));
     return ret;
@@ -144,7 +144,7 @@ bool App::createMainWnd()
     CreateWindow(App::WNDCLS_MAIN, App::APPNAME, 
         WS_POPUP, 0,0,0,0, 0, 0, app.hInst, 0);
 
-    return app.hMainWnd;
+    return app.hMainWnd != 0;
 }
 
 

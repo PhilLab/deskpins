@@ -61,7 +61,7 @@ BOOL CALLBACK TargetWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return ret;
         }
         case WM_USER: {
-            data.cursShowing = wParam;
+            data.cursShowing = wParam != 0;
             InvalidateRect(hWnd, 0, true);
             UpdateWindow(hWnd);
             return 0;
@@ -563,7 +563,7 @@ bool RulesList::setData(int i, AutoPinRule* rule)
     lvi.iItem = i;
     lvi.iSubItem = 0;
     lvi.lParam = LPARAM(rule);
-    return ListView_SetItem(hList, &lvi);
+    return !!ListView_SetItem(hList, &lvi);
 }
 
 
@@ -637,7 +637,7 @@ std::vector<int> RulesList::getSel() const
 void RulesList::setItemSel(int i, bool sel)
 {
     UINT state = ListView_GetItemState(hList, i, LVIS_SELECTED);
-    bool curSel = state & LVIS_SELECTED;
+    bool curSel = (state & LVIS_SELECTED) != 0;
     if (curSel != sel)
         ListView_SetItemState(hList, i, sel ? LVIS_SELECTED : 0, LVIS_SELECTED);
 }
@@ -646,7 +646,7 @@ void RulesList::setItemSel(int i, bool sel)
 bool RulesList::getItemSel(int i) const
 {
     UINT state = ListView_GetItemState(hList, i, LVIS_SELECTED);
-    return state & LVIS_SELECTED;
+    return (state & LVIS_SELECTED) != 0;
 }
 
 
@@ -730,7 +730,7 @@ void UIUpdate(HWND hWnd)
 
 static bool CmAutoPinOn(HWND hWnd)
 {
-    bool b = IsDlgButtonChecked(hWnd, IDC_AUTOPIN_ON);
+    bool b = IsDlgButtonChecked(hWnd, IDC_AUTOPIN_ON) == BST_CHECKED;
     EnableGroup(hWnd, IDC_AUTOPIN_GROUP, b);
 
     // if turned on, disable some buttons
@@ -777,7 +777,7 @@ static void Apply(HWND hWnd, WindowCreationMonitor& winCreMon)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(hWnd, DWL_USER))->opt;
 
-    bool autoPinOn = IsDlgButtonChecked(hWnd, IDC_AUTOPIN_ON);
+    bool autoPinOn = IsDlgButtonChecked(hWnd, IDC_AUTOPIN_ON) == BST_CHECKED;
     if (opt.autoPinOn != autoPinOn) {
         if (!autoPinOn)
             winCreMon.term();

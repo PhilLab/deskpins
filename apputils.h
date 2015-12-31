@@ -23,7 +23,7 @@ public:
                 this->msgId = msgId;
             }
         }
-        return hook;
+        return hook != 0;
     }
 
     bool term() {
@@ -91,7 +91,7 @@ public:
         if (dllTermFunc)
             dllTermFunc();
 
-        bool ok = FreeLibrary(hDll);
+        bool ok = !!FreeLibrary(hDll);
         if (ok)
             hDll = 0;
 

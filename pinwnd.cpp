@@ -152,7 +152,7 @@ public:
     bool collect()
     {
         DWORD threadId = GetWindowThreadProcessId(appWnd, 0);
-        return EnumThreadWindows(threadId, (WNDENUMPROC)enumProc, LPARAM(this));
+        return !!EnumThreadWindows(threadId, (WNDENUMPROC)enumProc, LPARAM(this));
     }
 
 protected:
@@ -387,7 +387,7 @@ static bool FixVisible(HWND hWnd, const PinData& pd)
     // IsIconic() is crucial; without it we cannot restore the minimized
     // wnd by clicking on the taskbar button
     bool ownerVisible = IsWindowVisible(hPinOwner) && !IsIconic(hPinOwner);
-    bool pinVisible = IsWindowVisible(hWnd);
+    bool pinVisible = !!IsWindowVisible(hWnd);
     if (ownerVisible != pinVisible)
         ShowWindow(hWnd, ownerVisible ? SW_SHOWNOACTIVATE : SW_HIDE);
 
@@ -420,8 +420,8 @@ static void PlaceOnCaption(HWND hWnd, const PinData& pd)
     LONG minMaxMask = WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
     bool hasMinOrMax  = (style & minMaxMask) != 0;
     bool hasMinAndMax = (style & minMaxMask) == minMaxMask;
-    bool hasClose = style & WS_SYSMENU;
-    bool hasHelp  = exStyle & WS_EX_CONTEXTHELP;
+    bool hasClose = (style & WS_SYSMENU) != 0;
+    bool hasHelp  = (exStyle & WS_EX_CONTEXTHELP) != 0;
     if (style & WS_SYSMENU) {  // other buttons appear only if this is set
         ++btnCnt;
         if (hasMinOrMax)

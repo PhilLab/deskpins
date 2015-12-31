@@ -84,7 +84,7 @@ AutoPinRule::load(ef::Win::RegKeyH& key, int i)
 
     *flag = _T('E');
     if (!key.getDWord(val, dw)) return false;
-    enabled = dw;
+    enabled = dw != 0;
 
     return true;
 }
@@ -192,17 +192,17 @@ Options::load()
     if (key.getDWord(REG_POLLRATE, dw) && trackRate.inRange(dw))
         trackRate = dw;
     if (key.getDWord(REG_TRAYDBLCLK, dw))
-        dblClkTray = dw;
+        dblClkTray = dw != 0;
 
     if (key.getDWord(REG_HOTKEYSON, dw))
-        hotkeysOn = dw;
+        hotkeysOn = dw != 0;
     hotEnterPin.load(key, REG_HOTNEWPIN);
     hotTogglePin.load(key, REG_HOTTOGGLEPIN);
 
     ef::Win::AutoRegKeyH apKey = ef::Win::RegKeyH::open(key, REG_APR_SUBPATH);
     if (apKey) {
         if (apKey.getDWord(REG_AUTOPINON, dw))
-            autoPinOn = dw;
+            autoPinOn = dw != 0;
         if (apKey.getDWord(REG_AUTOPINDELAY, dw) && autoPinDelay.inRange(dw))
             autoPinDelay = dw;
         if (apKey.getDWord(REG_AUTOPINCOUNT, dw)) {
