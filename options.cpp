@@ -63,7 +63,8 @@ AutoPinRule::load(ef::Win::RegKeyH& key, int i)
 {
     // convert index to str and make room for one more char (the flag)
     tchar val[20];
-    _itot(i, val, 10);
+    if (_itot_s(i, val, 10) != 0)
+        return false;
     tchar* flag = val + _tcslen(val);
     *(flag+1) = _T('\0');
 
@@ -95,7 +96,8 @@ AutoPinRule::save(ef::Win::RegKeyH& key, int i) const
 {
     // convert index to str and make room for one more char (the flag)
     tchar val[20];
-    _itot(i, val, 10);
+    if (_itot_s(i, val, 10) != 0)
+        return false;
     tchar* flag = val + _tcslen(val);
     *(flag+1) = _T('\0');
 

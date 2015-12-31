@@ -902,7 +902,7 @@ BOOL CALLBACK OptAutoPinProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     tstring s = rule->descr;
                     if (int(s.length()) > di.item.cchTextMax-1)
                         s = s.substr(0, di.item.cchTextMax-1);
-                    _tcscpy(di.item.pszText, s.c_str());
+                    _tcscpy_s(di.item.pszText, di.item.cchTextMax, s.c_str());
                 }
                 if (di.item.mask & LVIF_STATE) {
                     di.item.stateMask = LVIS_STATEIMAGEMASK;

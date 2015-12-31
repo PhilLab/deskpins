@@ -99,16 +99,18 @@ public:
 
     ResStr(const ResStr& other)
     {
-        str = new ef::tchar[_tcslen(other.str) + 1];
-        _tcscpy(str, other.str);
+        const size_t buflen = _tcslen(other.str) + 1;
+        str = new ef::tchar[buflen];
+        _tcscpy_s(str, buflen, other.str);
     }
 
     ResStr& operator=(const ResStr& other)
     {
         if (*this != other) {
             delete[] str;
-            str = new ef::tchar[_tcslen(other.str) + 1];
-            _tcscpy(str, other.str);
+            const size_t buflen = _tcslen(other.str) + 1;
+            str = new ef::tchar[buflen];
+            _tcscpy_s(str, buflen, other.str);
         }
     }
 
