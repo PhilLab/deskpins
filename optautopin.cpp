@@ -365,7 +365,6 @@ protected:
 };
 
 
-//RulesList::RulesList() : hList(0), emuChk(SysVer::comctl() < PACKVERSION(4,70))
 RulesList::RulesList() : hList(0), emuChk(ef::Win::getDllVer(_T("comctl32.dll")) < ef::Win::packVer(4,70))
 {
     //emuChk = true;

@@ -67,9 +67,6 @@ COLORREF Light(COLORREF clr);
 COLORREF Dark(COLORREF clr);
 
 
-#define PACKVERSION(major,minor) MAKELONG(minor,major)
-
-
 // automatically handles language
 class ResStr {
 public:
