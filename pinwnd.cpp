@@ -5,18 +5,17 @@
 #include "resource.h"
 
 
-static LRESULT EvCreate(HWND hWnd);
-static void EvDestroy(HWND hWnd);
-static void EvTimer(HWND hWnd, UINT id);
-static void EvPaint(HWND hWnd);
-static void EvLClick(HWND hWnd);
-static bool EvPinAssignWnd(HWND hWnd, HWND hTarget, int pollRate);
-static HWND EvGetPinnedWnd(HWND hWnd);
-static void EvPinResetTimer(HWND hWnd, int pollRate);
+class PinData;
 
-struct PinData;   // forward decl
+static LRESULT EvCreate(HWND hWnd, PinData& pd);
+static void EvDestroy(HWND hWnd, PinData& pd);
+static void EvTimer(HWND hWnd, PinData& pd, UINT id);
+static void EvPaint(HWND hWnd, PinData& pd);
+static void EvLClick(HWND hWnd, PinData& pd);
+static bool EvPinAssignWnd(HWND hWnd, PinData& pd, HWND hTarget, int pollRate);
+static HWND EvGetPinnedWnd(HWND hWnd, PinData& pd);
+static void EvPinResetTimer(HWND hWnd, PinData& pd, int pollRate);
 
-static bool SetPinData(HWND hWnd, PinData* pd);
 static bool IsVCLAppWnd(HWND hWnd);
 static bool SelectProxy(HWND hWnd, const PinData& pd);
 static BOOL CALLBACK EnumThreadWndProc(HWND hWnd, LPARAM lParam);
@@ -25,74 +24,88 @@ static void PlaceOnCaption(HWND hWnd, const PinData& pd);
 static bool FixVisible(HWND hWnd, const PinData& pd);
 
 
-// ugly but handy macros for event handlers
-
-#define GETPINDATAREF_ONFAILRET(pdVar, pinWnd)                \
-    LONG _pinDataRaw_ = GetWindowLong((pinWnd), 0);             \
-    if (!_pinDataRaw_) return;                                  \
-    PinData& pdVar = *reinterpret_cast<PinData*>(_pinDataRaw_)
-
-#define GETPINDATAREF_ONFAILRETVAL(pdVar, pinWnd, ret)        \
-    LONG _pinDataRaw_ = GetWindowLong((pinWnd), 0);             \
-    if (!_pinDataRaw_) return ret;                              \
-    PinData& pdVar = *reinterpret_cast<PinData*>(_pinDataRaw_)
-
-
-// struct assigned to each pin wnd
+// Data object assigned to each pin wnd.
 //
-struct PinData {
+class PinData {
+public:
+    // Attach to pin wnd and return object or 0 on error.
+    static PinData* create(HWND pin, HWND callback) {
+        PinData* pd = new PinData(callback);
+        SetLastError(0);
+        if (!SetWindowLong(pin, 0, LONG(pd)) && GetLastError()) {
+            delete pd;
+            pd = 0;
+        }
+        return pd;
+    }
+    // Get object or 0 on error.
+    static PinData* get(HWND pin) {
+        return reinterpret_cast<PinData*>(GetWindowLong(pin, 0));
+    }
+    // Detach from pin wnd and delete.
+    static void destroy(HWND pin) {
+        PinData* pd = get(pin);
+        if (!pd)
+            return;
+        SetLastError(0);
+        if (!SetWindowLong(pin, 0, 0) && GetLastError())
+            return;
+        delete pd;
+    }
+
     HWND hCallbackWnd;
 
     bool proxyMode;
     HWND hTopMostWnd;
     HWND hProxyWnd;
 
-    PinData(HWND hWnd)
-        :
-    hCallbackWnd(hWnd),
-        proxyMode(false),
-        hTopMostWnd(0),
-        hProxyWnd(0)
-    {
-    }
-
     HWND getPinOwner() const {
         return proxyMode ? hProxyWnd : hTopMostWnd;
     }
 
+private:
+    PinData(HWND hWnd)
+    :
+        hCallbackWnd(hWnd),
+        proxyMode(false),
+        hTopMostWnd(0),
+        hProxyWnd(0)
+    {}
 };
 
 
-// Pin wnd proc
+// Pin wnd proc.
 //
 LRESULT CALLBACK PinWndProc(HWND hWnd, UINT uMsg, 
                             WPARAM wParam, LPARAM lParam)
 {
-    switch (uMsg) {
-        case WM_CREATE:         return EvCreate(hWnd);
-        case WM_DESTROY:        EvDestroy(hWnd); break;
-        case WM_TIMER:          EvTimer(hWnd, wParam); break;
-        case WM_PAINT:          EvPaint(hWnd); break;
-        case WM_LBUTTONDOWN:    EvLClick(hWnd); break;
-        case App::WM_PIN_RESETTIMER:   EvPinResetTimer(hWnd, int(wParam)); break;
-        case App::WM_PIN_ASSIGNWND:    return EvPinAssignWnd(hWnd, HWND(wParam), int(lParam));
-        case App::WM_PIN_GETPINNEDWND: return LRESULT(EvGetPinnedWnd(hWnd));
-        default: return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    if (uMsg == WM_NCCREATE) {
+        PinData::create(hWnd, app.hMainWnd);
+        return true;
     }
-
-    return 0;  
+    else if (uMsg == WM_NCDESTROY) {
+        PinData::destroy(hWnd);
+        return 0;
+    }
+    PinData* pd = PinData::get(hWnd);
+    if (pd) {
+        switch (uMsg) {
+            case WM_CREATE:         return EvCreate(hWnd, *pd);
+            case WM_DESTROY:        return EvDestroy(hWnd, *pd), 0;
+            case WM_TIMER:          return EvTimer(hWnd, *pd, wParam), 0;
+            case WM_PAINT:          return EvPaint(hWnd, *pd), 0;
+            case WM_LBUTTONDOWN:    return EvLClick(hWnd, *pd), 0;
+            case App::WM_PIN_RESETTIMER:   return EvPinResetTimer(hWnd, *pd, int(wParam)), 0;
+            case App::WM_PIN_ASSIGNWND:    return EvPinAssignWnd(hWnd, *pd, HWND(wParam), int(lParam));
+            case App::WM_PIN_GETPINNEDWND: return LRESULT(EvGetPinnedWnd(hWnd, *pd));
+        }
+    }
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 
-static LRESULT EvCreate(HWND hWnd)
+static LRESULT EvCreate(HWND hWnd, PinData& pd)
 {
-    // create and store the pin data struct
-    PinData& pd = *new PinData(app.hMainWnd);
-    if (!SetPinData(hWnd, &pd)) {
-        delete &pd;
-        return -1;
-    }
-
     // send 'pin created' notification
     PostMessage(pd.hCallbackWnd, App::WM_PINSTATUS, WPARAM(hWnd), true);
 
@@ -111,10 +124,8 @@ static LRESULT EvCreate(HWND hWnd)
 }
 
 
-static void EvDestroy(HWND hWnd)
+static void EvDestroy(HWND hWnd, PinData& pd)
 {
-    GETPINDATAREF_ONFAILRET(pd, hWnd);
-
     if (pd.hTopMostWnd) {
         SetWindowPos(pd.hTopMostWnd, HWND_NOTOPMOST, 0,0,0,0, 
             SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE); // NOTE: added noactivate
@@ -124,10 +135,6 @@ static void EvDestroy(HWND hWnd)
 
     // send 'pin destroyed' notification
     PostMessage(pd.hCallbackWnd, App::WM_PINSTATUS, WPARAM(hWnd), false);
-
-    // remove and destroy the pin data struct
-    SetPinData(hWnd, 0);
-    delete &pd;
 }
 
 
@@ -235,10 +242,8 @@ static void FixPopupZOrder(HWND hAppWnd)
 }
 
 
-static void EvTimer(HWND hWnd, UINT id)
+static void EvTimer(HWND hWnd, PinData& pd, UINT id)
 {
-    GETPINDATAREF_ONFAILRET(pd, hWnd);
-
     if (id != 1) return;
 
     // Does the app wnd still exist?
@@ -270,7 +275,7 @@ static void EvTimer(HWND hWnd, UINT id)
 }
 
 
-static void EvPaint(HWND hWnd)
+static void EvPaint(HWND hWnd, PinData&)
 {
     PAINTSTRUCT ps;
     if (HDC hDC = BeginPaint(hWnd, &ps)) {
@@ -289,23 +294,14 @@ static void EvPaint(HWND hWnd)
 }
 
 
-static void EvLClick(HWND hWnd)
+static void EvLClick(HWND hWnd, PinData&)
 {
     DestroyWindow(hWnd);
 }
 
 
-static bool SetPinData(HWND hWnd, PinData* pd)
+static bool EvPinAssignWnd(HWND hWnd, PinData& pd, HWND hTarget, int pollRate)
 {
-    SetLastError(0);
-    return SetWindowLong(hWnd, 0, LONG(pd)) || !GetLastError();
-}
-
-
-static bool EvPinAssignWnd(HWND hWnd, HWND hTarget, int pollRate)
-{
-    GETPINDATAREF_ONFAILRETVAL(pd, hWnd, false);
-
     // this shouldn't happen; it means the pin is already used
     if (pd.hTopMostWnd) return false;
 
@@ -353,18 +349,14 @@ static bool EvPinAssignWnd(HWND hWnd, HWND hTarget, int pollRate)
 }
 
 
-static HWND EvGetPinnedWnd(HWND hWnd)
+static HWND EvGetPinnedWnd(HWND hWnd, PinData& pd)
 {
-    GETPINDATAREF_ONFAILRETVAL(pd, hWnd, 0);
-
     return pd.hTopMostWnd;
 }
 
 
-static void EvPinResetTimer(HWND hWnd, int pollRate)
+static void EvPinResetTimer(HWND hWnd, PinData& pd, int pollRate)
 {
-    GETPINDATAREF_ONFAILRET(pd, hWnd);
-
     // only set it if there's a pinned window
     if (pd.hTopMostWnd)
         SetTimer(hWnd, 1, pollRate, 0);
@@ -460,11 +452,13 @@ static bool SelectProxy(HWND hWnd, const PinData& pd)
 static BOOL CALLBACK EnumThreadWndProc(HWND hWnd, LPARAM lParam)
 {
     HWND hPin = HWND(lParam);
-    GETPINDATAREF_ONFAILRETVAL(pd, hPin, false);
+    PinData* pd = PinData::get(hPin);
+    if (!pd)
+        return false;
 
-    if (GetWindow(hWnd, GW_OWNER) == pd.hTopMostWnd) {
+    if (GetWindow(hWnd, GW_OWNER) == pd->hTopMostWnd) {
         if (IsWindowVisible(hWnd) && !IsIconic(hWnd) && !IsWndRectEmpty(hWnd)) {
-            pd.hProxyWnd = hWnd;
+            pd->hProxyWnd = hWnd;
             SetWindowLong(hPin, GWL_HWNDPARENT, LONG(hWnd));
             // we must also move it in front of the new owner
             // otherwise the wnd mgr will not do it until we select the new owner
