@@ -160,8 +160,8 @@ void App::createSmClrIcon(COLORREF clr)
     if (GetIconInfo(hSmClrIcon, &ii)) {
         // (assuming non-monochrome)
         COLORREF clrMap[][2] = {
-            { CLR_LRED, clr       }, 
-            { CLR_DRED, Dark(clr) }
+            { StdClr::red, clr       }, 
+            { StdClr::maroon, Dark(clr) }
         };
         remapBmpColors(ii.hbmColor, clrMap, ARRSIZE(clrMap));
         HICON hNewIcon = CreateIconIndirect(&ii);

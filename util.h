@@ -2,24 +2,24 @@
 
 #include "common.h"
 
-#define CLR_WHITE     RGB(255,255,255)
-#define CLR_BLACK     RGB(  0,  0,  0)
-#define CLR_LGRAY     RGB(192,192,192)
-#define CLR_DGRAY     RGB(128,128,128)
-
-#define CLR_LRED      RGB(255,  0,  0)
-#define CLR_LYELLOW   RGB(255,255,  0)
-#define CLR_LGREEN    RGB(  0,255,  0)
-#define CLR_LCYAN     RGB(  0,255,255)
-#define CLR_LBLUE     RGB(  0,  0,255)
-#define CLR_LMAGENTA  RGB(255,  0,255)
-
-#define CLR_DRED      RGB(128,  0,  0)
-#define CLR_DYELLOW   RGB(128,128,  0)
-#define CLR_DGREEN    RGB(  0,128,  0)
-#define CLR_DCYAN     RGB(  0,128,128)
-#define CLR_DBLUE     RGB(  0,  0,128)
-#define CLR_DMAGENTA  RGB(128,  0,128)
+namespace StdClr { enum {
+    black   = 0x000000,
+    maroon  = 0x000080,
+    green   = 0x008000,
+    olive   = 0x008080,
+    navy    = 0x800000,
+    purple  = 0x800080,
+    teal    = 0x808000,
+    silver  = 0xc0c0c0,
+    gray    = 0x808080,
+    red     = 0x0000ff,
+    lime    = 0x00ff00,
+    yellow  = 0x00ffff,
+    blue    = 0xff0000,
+    magenta = 0xff00ff,
+    cyan    = 0xffff00,
+    white   = 0xffffff,
+}; }
 
 bool IsWndRectEmpty(HWND hWnd);
 HWND GetNonChildParent(HWND hWnd);

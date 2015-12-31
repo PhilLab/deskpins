@@ -186,8 +186,8 @@ Options::load()
         //       to get this straight (and hope no-one notices :D ).
         // FIXME: no longer needed
         if (pinClr > 0 && pinClr < 7) {
-            const COLORREF clr[6] = {CLR_LRED, CLR_LYELLOW, CLR_LGREEN, 
-                CLR_LCYAN, CLR_LBLUE, CLR_LMAGENTA};
+            using namespace StdClr;
+            const COLORREF clr[6] = {red, yellow, lime, cyan, blue, magenta};
             pinClr = clr[pinClr-1];
         }
     }
