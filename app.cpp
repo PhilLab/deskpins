@@ -64,33 +64,14 @@ void App::freeResMod()
 // TODO: move to eflib?
 bool App::initComctl()
 {
-    // InitCommonControlsEx is available in comctl32.dll v4.70+.
-    // This means that in the rare case of Win95A
-    // we'll have to use InitCommonControls instead.
-
-    bool ret = false;
-    HINSTANCE hDll = LoadLibrary(_T("comctl32.dll"));
-    if (hDll) {
-        typedef BOOL (WINAPI *FPICCX)(LPINITCOMMONCONTROLSEX);
-        FPICCX fpiccx = FPICCX(GetProcAddress(hDll, "InitCommonControlsEx"));
-        if (fpiccx) {
-            INITCOMMONCONTROLSEX iccx;
-            iccx.dwSize = sizeof(iccx);
-            //iccx.dwICC = ICC_LISTVIEW_CLASSES | ICC_HOTKEY_CLASS | 
-            //             ICC_TAB_CLASSES | ICC_UPDOWN_CLASS;
-            iccx.dwICC = ICC_WIN95_CLASSES;
-            ret = fpiccx(&iccx);
-            if (!ret)
-                Error(0, ResStr(IDS_ERR_CCINIT));
-        }
-        else {
-            InitCommonControls();
-            ret = true;
-        }
-
-        FreeLibrary(hDll);
-    }
-
+    INITCOMMONCONTROLSEX iccx;
+    iccx.dwSize = sizeof(iccx);
+    //iccx.dwICC = ICC_LISTVIEW_CLASSES | ICC_HOTKEY_CLASS | 
+    //             ICC_TAB_CLASSES | ICC_UPDOWN_CLASS;
+    iccx.dwICC = ICC_WIN95_CLASSES;
+    bool ret = InitCommonControlsEx(&iccx);
+    if (!ret)
+        Error(0, ResStr(IDS_ERR_CCINIT));
     return ret;
 }
 

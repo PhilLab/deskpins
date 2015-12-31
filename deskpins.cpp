@@ -13,11 +13,10 @@
 
 //#define TEST_OPTIONS_PAGE  1
 
-// commctrl v6 manifest
-// TODO: probably not needed with VS2008
-#pragma comment(linker, "/manifestdependency:\""                                \
-    "type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' "  \
-    "processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'"  \
+// enable visual styles
+#pragma comment(linker, "/manifestdependency:\""                               \
+    "type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' " \
+    "processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'" \
     "\"")
 
 #include "ef/std/addlib.hpp"
@@ -617,22 +616,15 @@ static void EvTermDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
 
 static void showSpecialInfo(HWND parent)
 {
-#if defined(_UNICODE)
-    const tchar* text = _T("Unicode");
-#elif defined(_MBCS)
-    const tchar* text = _T("MBCS");
-#else
-    const tchar* text = _T("ASCII");
-#endif
-
 #if defined(_DEBUG)
     const tchar* build = _T("Debug");
 #else
     const tchar* build = _T("Release");
 #endif
 
+    // TODO: remove build info and add something more useful (e.g. "portable")
     tchar buf[1000];
-    wsprintf(buf, _T("Build: %s\r\nText mode: %s"), build, text);
+    wsprintf(buf, _T("Build: %s"), build);
     MessageBox(parent, buf, _T("Info"), MB_ICONINFORMATION);
 }
 
@@ -806,4 +798,3 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     return 0;
 }
-

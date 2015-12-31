@@ -92,13 +92,9 @@ tstring getHelpFileDescr(const tstring& path, const tstring& file)
     {
         boost::scoped_array<char> buf(new char[len]);
         if (ReadFileBack(hFile, buf.get(), len)) {
-#ifdef _UNICODE
             boost::scoped_array<wchar_t> wbuf(new wchar_t[len]);
             if (MultiByteToWideChar(CP_THREAD_ACP, 0, buf.get(), len, wbuf.get(), len/*, 0, 0*/))
                 ret.assign(wbuf.get(), len);
-#else
-            ret.assign(buf.get(), len);
-#endif
         }
     }
     return ret;
