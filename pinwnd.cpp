@@ -138,7 +138,7 @@ static void EvDestroy(HWND hWnd)
 //    vector<HWND>& wndList = *(vector<HWND>*)lParam;
 //    if (hWnd == static_hAppWnd || GetWindow(hWnd, GW_OWNER) == static_hAppWnd)
 //    wndList.push_back(hWnd);
-//    return true;  // continue enum
+//    return true;  // continue enumeration
 //}
 
 
@@ -164,7 +164,7 @@ protected:
         ThreadWnds& obj = *reinterpret_cast<ThreadWnds*>(lParam);
         if (hWnd == obj.appWnd || GetWindow(hWnd, GW_OWNER) == obj.appWnd)
             obj.wndList.push_back(hWnd);
-        return true;  // continue enum
+        return true;  // continue enumeration
     }
 
 };
@@ -470,11 +470,11 @@ static BOOL CALLBACK EnumThreadWndProc(HWND hWnd, LPARAM lParam)
             // otherwise the wnd mgr will not do it until we select the new owner
             SetWindowPos(hWnd, hPin, 0,0,0,0, 
                 SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
-            return false;   // stop enum
+            return false;   // stop enumeration
         }
     }
 
-    return true;  // continue enum
+    return true;  // continue enumeration
 }
 
 

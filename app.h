@@ -21,18 +21,19 @@ struct App : boost::noncopyable {
     static const ef::tchar* WNDCLS_MAIN;
     static const ef::tchar* WNDCLS_PIN;
     static const ef::tchar* WNDCLS_PINLAYER;
+
     enum {
         // app messages
-        WM_TRAYICON        = WM_APP + 0,
-        WM_PINSTATUS       = WM_APP + 1,
-        WM_PINREQ          = WM_APP + 2,
-        WM_QUEUEWINDOW     = WM_APP + 3,
-        WM_CMDLINE_OPTION  = WM_APP + 4,  // for posting CMDLINE_* options in wparam
+        WM_TRAYICON = WM_APP,
+        WM_PINSTATUS,
+        WM_PINREQ,
+        WM_QUEUEWINDOW,
+        WM_CMDLINE_OPTION,  // for posting CMDLINE_* options in wparam
 
         // pin wnd messages
-        WM_PIN_ASSIGNWND    = WM_USER + 0,
-        WM_PIN_RESETTIMER   = WM_USER + 1,
-        WM_PIN_GETPINNEDWND = WM_USER + 2,
+        WM_PIN_ASSIGNWND = WM_USER,
+        WM_PIN_RESETTIMER,
+        WM_PIN_GETPINNEDWND,
 
         // system hotkey IDs
         HOTID_ENTERPINMODE = 0,

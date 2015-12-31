@@ -165,7 +165,7 @@ void PinWindow(HWND hWnd, HWND hHitWnd, int trackRate, bool silent /*= false*/)
 //
 static HWND HasPin(HWND hWnd)
 {
-    // enum all pin windows
+    // enumerate all pin windows
     HWND hPin = 0;
     while ((hPin = FindWindowEx(0, hPin, App::WNDCLS_PIN, 0)) != 0)
         //if (GetParent(hPin) == hWnd)

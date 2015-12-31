@@ -135,7 +135,7 @@ static BOOL CALLBACK EnumWndProcPinsUpdate(HWND hWnd, LPARAM)
 {
     if (strimatch(App::WNDCLS_PIN, ef::Win::WndH(hWnd).getClassName().c_str()))
         InvalidateRect(hWnd, 0, false);
-    return true;    // continue enum
+    return true;    // continue enumeration
 }
 
 
@@ -149,7 +149,7 @@ static BOOL CALLBACK ResetPinTimersEnumProc(HWND hWnd, LPARAM lParam)
 {
     if (strimatch(App::WNDCLS_PIN, ef::Win::WndH(hWnd).getClassName().c_str()))
         SendMessage(hWnd, App::WM_PIN_RESETTIMER, lParam, 0);
-    return true;    // continue enum
+    return true;    // continue enumeration
 }
 
 
