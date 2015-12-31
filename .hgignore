@@ -1,8 +1,3 @@
 syntax: glob
-*.aps
-*.suo
-Debug/*
-Release/*
-*.user
-*.ncb
-Release9x/*
+*.{aps,suo,ncb,user}
+{Debug,Release,Release9x}/*
