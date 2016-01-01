@@ -389,7 +389,9 @@ void RulesList::init(HWND hWnd)
             if (hBmp) {
                 HGDIOBJ orgBmp = SelectObject(hDC, hBmp);
                 if (orgBmp) {
-                    HFONT hFnt = CreateFont(16, 0, 0,0,FW_NORMAL, false, false, false, SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("Marlett"));
+                    HFONT hFnt = CreateFont(16, 0, 0,0,FW_NORMAL, false, false, false, 
+                        SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
+                        DEFAULT_PITCH | FF_DONTCARE, _T("Marlett"));
                     if (hFnt) {
                         HGDIOBJ orgFnt = SelectObject(hDC, hFnt);
                         if (orgFnt) {

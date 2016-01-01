@@ -514,27 +514,6 @@ static void UpdateStatusMessage(HWND hWnd)
 }
 
 
-/*void SetChecks(HWND hWnd)
-{
-DWORD style = getWndStyle(hWnd);
-DWORD exstyle = getWndExStyle(hWnd);
-CheckDlgButton(hWnd, 1000, bool(style & WS_SYSMENU));
-CheckDlgButton(hWnd, 1001, bool(style & WS_MINIMIZEBOX));
-CheckDlgButton(hWnd, 1002, bool(style & WS_MAXIMIZEBOX));
-CheckDlgButton(hWnd, 1003, bool(exstyle & WS_EX_CONTEXTHELP));
-}
-
-void Toggle(HWND hWnd, int lngType, int flag)
-{
-LONG lng = GetWindowLong(hWnd, lngType);
-lng ^= flag;
-SetWindowLong(hWnd, lngType, lng);
-
-SetWindowPos(hWnd, 0, 0,0,0,0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_DRAWFRAME);
-
-SetChecks(hWnd);
-}*/
-
 static bool EvInitDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
 {
     app.hAboutDlg = hWnd;
@@ -583,15 +562,6 @@ static bool EvInitDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
     //#ifdef TEST_OPTIONS_PAGE
     //  SendMessage(hWnd, WM_COMMAND, CM_OPTIONS, 0);
     //#endif
-
-    /*
-    CreateWindow(L"BUTTON", L"SysMenu", WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 0,  0, 100, 20, hWnd, HMENU(1000), app.hInst, 0);
-    CreateWindow(L"BUTTON", L"MinBox",  WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 0, 20, 100, 20, hWnd, HMENU(1001), app.hInst, 0);
-    CreateWindow(L"BUTTON", L"MaxBox",  WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 0, 40, 100, 20, hWnd, HMENU(1002), app.hInst, 0);
-    CreateWindow(L"BUTTON", L"CtxHelp", WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 0, 60, 100, 20, hWnd, HMENU(1003), app.hInst, 0);
-
-    SetChecks(hWnd);
-    */
 
     return true;
 }

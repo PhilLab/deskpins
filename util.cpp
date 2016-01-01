@@ -211,38 +211,31 @@ bool IsLastErrResNotFound() {
 }
 
 
-int LocalizedDialogBoxParam(LPCTSTR lpTemplateName, 
-                            HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
-                                if (app.hResMod) {
-                                    int ret = DialogBoxParam(app.hResMod, lpTemplateName, 
-                                        hWndParent, lpDialogFunc, dwInitParam);
-                                    if (ret != -1 || !IsLastErrResNotFound())
-                                        return ret;
-                                }
-                                return DialogBoxParam(app.hInst, lpTemplateName, 
-                                    hWndParent, lpDialogFunc, dwInitParam);
+int LocalizedDialogBoxParam(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
+    if (app.hResMod) {
+        int ret = DialogBoxParam(app.hResMod, lpTemplate, hParent, lpDialogFunc, dwInit);
+        if (ret != -1 || !IsLastErrResNotFound())
+            return ret;
+    }
+    return DialogBoxParam(app.hInst, lpTemplate, hParent, lpDialogFunc, dwInit);
 }
 
-int LocalizedDialogBoxParam(WORD id, 
-                            HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam) {
-                                return LocalizedDialogBoxParam(MAKEINTRESOURCE(id), 
-                                    hWndParent, lpDialogFunc, dwInitParam);
+int LocalizedDialogBoxParam(WORD id, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
+    return LocalizedDialogBoxParam(MAKEINTRESOURCE(id), hParent, lpDialogFunc, dwInit);
 }
 
 
-HWND CreateLocalizedDialog(LPCTSTR lpTemplate,
-                           HWND hWndParent, DLGPROC lpDialogFunc) {
-                               if (app.hResMod) {
-                                   HWND ret = CreateDialog(app.hResMod, lpTemplate, hWndParent, lpDialogFunc);
-                                   if (ret || !IsLastErrResNotFound())
-                                       return ret;
-                               }
-                               return CreateDialog(app.hInst, lpTemplate, hWndParent, lpDialogFunc);
+HWND CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc) {
+    if (app.hResMod) {
+        HWND ret = CreateDialog(app.hResMod, lpTemplate, hParent, lpDialogFunc);
+        if (ret || !IsLastErrResNotFound())
+            return ret;
+    }
+    return CreateDialog(app.hInst, lpTemplate, hParent, lpDialogFunc);
 }
 
-HWND CreateLocalizedDialog(WORD id,
-                           HWND hWndParent, DLGPROC lpDialogFunc) {
-                               return CreateLocalizedDialog(MAKEINTRESOURCE(id), hWndParent, lpDialogFunc);
+HWND CreateLocalizedDialog(WORD id, HWND hParent, DLGPROC lpDialogFunc) {
+    return CreateLocalizedDialog(MAKEINTRESOURCE(id), hParent, lpDialogFunc);
 }
 
 
