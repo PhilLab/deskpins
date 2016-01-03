@@ -9,13 +9,13 @@ public:
     bool initShape();
     bool initImage(COLORREF clr);
 
-    HBITMAP getBmp() const { return hBmp;  }
-    HRGN    getRgn() const { return hRgn;  }
+    HBITMAP getBmp() const { return bmp;  }
+    HRGN    getRgn() const { return rgn;  }
     int     getW()   const { return sz.cx; }
     int     getH()   const { return sz.cy; }
 
 protected:
-    HBITMAP hBmp;
-    HRGN    hRgn;
+    HBITMAP bmp;
+    HRGN    rgn;
     SIZE    sz;
 };

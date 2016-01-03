@@ -1,4 +1,4 @@
 #pragma once
 
 
-LRESULT CALLBACK PinWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK PinWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);

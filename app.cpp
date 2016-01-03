@@ -15,12 +15,12 @@ const tchar* App::WNDCLS_PIN      = _T("EFPinWnd");
 const tchar* App::WNDCLS_PINLAYER = _T("EFPinLayerWnd");
 
 
-// Load a resource dll and store it in 'hResMod'.
+// Load a resource dll and store it in 'resMod'.
 // The previous dll, if any, is released.
-// On error (or if file is nul), 'hResMod' is set to 0 
+// On error (or if file is nul), 'resMod' is set to 0 
 // to use the built-in EXE resources.
 // Returns success.
-bool App::loadResMod(const tstring& file, HWND hMsgParent)
+bool App::loadResMod(const tstring& file, HWND msgParent)
 {
     // unload current
     freeResMod();
@@ -30,33 +30,33 @@ bool App::loadResMod(const tstring& file, HWND hMsgParent)
         return true;
 
     // try to load module if it's a DLL
-    tstring s = ef::dirSpec(ef::Win::getModulePath(hInst));
+    tstring s = ef::dirSpec(ef::Win::getModulePath(inst));
     if (!s.empty()) {
 #ifdef _DEBUG
         s += _T("..\\Localization\\");
 #endif
         s += file;
-        hResMod = LoadLibrary(s.c_str());
+        resMod = LoadLibrary(s.c_str());
     }
 
     // display warning if failed
-    if (!hResMod) {
+    if (!resMod) {
         tchar buf[MAX_PATH + 100];
         const tchar* msg = _T("Could not load language file: %s\r\n")
             _T("Reverting to English interface.");
         wsprintf(buf, msg, file.c_str());
-        Error(hMsgParent, buf);
+        Error(msgParent, buf);
     }
 
-    return hResMod != 0;
+    return resMod != 0;
 }
 
 
 void App::freeResMod()
 {
-    if (hResMod) {
-        FreeLibrary(hResMod);
-        hResMod = 0;
+    if (resMod) {
+        FreeLibrary(resMod);
+        resMod = 0;
     }
 }
 
@@ -99,7 +99,7 @@ bool App::regWndCls()
     wc.lpfnWndProc   = MainWndProc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
-    wc.hInstance     = app.hInst;
+    wc.hInstance     = app.inst;
     wc.hIcon         = 0;
     wc.hCursor       = 0;
     wc.hbrBackground = 0;
@@ -112,9 +112,9 @@ bool App::regWndCls()
     wc.lpfnWndProc   = PinWndProc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = sizeof(void*);  // data object ptr
-    wc.hInstance     = app.hInst;
+    wc.hInstance     = app.inst;
     wc.hIcon         = 0;
-    wc.hCursor       = LoadCursor(app.hInst, MAKEINTRESOURCE(IDC_REMOVEPIN));
+    wc.hCursor       = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_REMOVEPIN));
     wc.hbrBackground = 0;
     wc.lpszMenuName  = 0;
     wc.lpszClassName = WNDCLS_PIN;
@@ -125,9 +125,9 @@ bool App::regWndCls()
     wc.lpfnWndProc   = PinLayerWndProc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
-    wc.hInstance     = app.hInst;
+    wc.hInstance     = app.inst;
     wc.hIcon         = 0;
-    wc.hCursor       = LoadCursor(app.hInst, MAKEINTRESOURCE(IDC_PLACEPIN));
+    wc.hCursor       = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_PLACEPIN));
     wc.hbrBackground = 0;
     wc.lpszMenuName  = 0;
     wc.lpszClassName = WNDCLS_PINLAYER;
@@ -140,11 +140,11 @@ bool App::regWndCls()
 
 bool App::createMainWnd()
 {
-    // app.hMainWnd set in WM_CREATE
+    // app.mainWnd set in WM_CREATE
     CreateWindow(App::WNDCLS_MAIN, App::APPNAME, 
-        WS_POPUP, 0,0,0,0, 0, 0, app.hInst, 0);
+        WS_POPUP, 0,0,0,0, 0, 0, app.inst, 0);
 
-    return app.hMainWnd != 0;
+    return app.mainWnd != 0;
 }
 
 
@@ -152,12 +152,12 @@ bool App::createMainWnd()
 // On failure, we get the original icon.
 void App::createSmClrIcon(COLORREF clr)
 {
-    if (hSmClrIcon) DeleteObject(hSmClrIcon);
-    hSmClrIcon = HICON(LoadImage(app.hInst, MAKEINTRESOURCE(IDI_APP), 
+    if (smClrIcon) DeleteObject(smClrIcon);
+    smClrIcon = HICON(LoadImage(app.inst, MAKEINTRESOURCE(IDI_APP), 
         IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 
     ICONINFO ii;
-    if (GetIconInfo(hSmClrIcon, &ii)) {
+    if (GetIconInfo(smClrIcon, &ii)) {
         // (assuming non-monochrome)
         COLORREF clrMap[][2] = {
             { StdClr::red, clr       }, 
@@ -166,8 +166,8 @@ void App::createSmClrIcon(COLORREF clr)
         remapBmpColors(ii.hbmColor, clrMap, ARRSIZE(clrMap));
         HICON hNewIcon = CreateIconIndirect(&ii);
         if (hNewIcon) {
-            DestroyIcon(hSmClrIcon);
-            hSmClrIcon = hNewIcon;
+            DestroyIcon(smClrIcon);
+            smClrIcon = hNewIcon;
         }
         // (assuming non-monochrome)
         // destroy bmps returned from GetIconInfo()

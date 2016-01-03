@@ -1,4 +1,4 @@
 #pragma once
 
 
-BOOL CALLBACK OptLangProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK OptLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);

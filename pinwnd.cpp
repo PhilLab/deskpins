@@ -7,21 +7,21 @@
 
 class PinData;
 
-static LRESULT EvCreate(HWND hWnd, PinData& pd);
-static void EvDestroy(HWND hWnd, PinData& pd);
-static void EvTimer(HWND hWnd, PinData& pd, UINT id);
-static void EvPaint(HWND hWnd, PinData& pd);
-static void EvLClick(HWND hWnd, PinData& pd);
-static bool EvPinAssignWnd(HWND hWnd, PinData& pd, HWND hTarget, int pollRate);
-static HWND EvGetPinnedWnd(HWND hWnd, PinData& pd);
-static void EvPinResetTimer(HWND hWnd, PinData& pd, int pollRate);
+static LRESULT EvCreate(HWND wnd, PinData& pd);
+static void EvDestroy(HWND wnd, PinData& pd);
+static void EvTimer(HWND wnd, PinData& pd, UINT id);
+static void EvPaint(HWND wnd, PinData& pd);
+static void EvLClick(HWND wnd, PinData& pd);
+static bool EvPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate);
+static HWND EvGetPinnedWnd(HWND wnd, PinData& pd);
+static void EvPinResetTimer(HWND wnd, PinData& pd, int pollRate);
 
-static bool IsVCLAppWnd(HWND hWnd);
-static bool SelectProxy(HWND hWnd, const PinData& pd);
-static BOOL CALLBACK EnumThreadWndProc(HWND hWnd, LPARAM lParam);
-static void FixTopStyle(HWND /*hWnd*/, const PinData& pd);
-static void PlaceOnCaption(HWND hWnd, const PinData& pd);
-static bool FixVisible(HWND hWnd, const PinData& pd);
+static bool IsVCLAppWnd(HWND wnd);
+static bool SelectProxy(HWND wnd, const PinData& pd);
+static BOOL CALLBACK EnumThreadWndProc(HWND wnd, LPARAM param);
+static void FixTopStyle(HWND /*wnd*/, const PinData& pd);
+static void PlaceOnCaption(HWND wnd, const PinData& pd);
+static bool FixVisible(HWND wnd, const PinData& pd);
 
 
 // Data object assigned to each pin wnd.
@@ -53,88 +53,88 @@ public:
         delete pd;
     }
 
-    HWND hCallbackWnd;
+    HWND callbackWnd;
 
     bool proxyMode;
-    HWND hTopMostWnd;
-    HWND hProxyWnd;
+    HWND topMostWnd;
+    HWND proxyWnd;
 
     HWND getPinOwner() const {
-        return proxyMode ? hProxyWnd : hTopMostWnd;
+        return proxyMode ? proxyWnd : topMostWnd;
     }
 
 private:
-    PinData(HWND hWnd)
+    PinData(HWND wnd)
     :
-        hCallbackWnd(hWnd),
+        callbackWnd(wnd),
         proxyMode(false),
-        hTopMostWnd(0),
-        hProxyWnd(0)
+        topMostWnd(0),
+        proxyWnd(0)
     {}
 };
 
 
 // Pin wnd proc.
 //
-LRESULT CALLBACK PinWndProc(HWND hWnd, UINT uMsg, 
-                            WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PinWndProc(HWND wnd, UINT msg, 
+                            WPARAM wparam, LPARAM lparam)
 {
-    if (uMsg == WM_NCCREATE) {
-        PinData::create(hWnd, app.hMainWnd);
+    if (msg == WM_NCCREATE) {
+        PinData::create(wnd, app.mainWnd);
         return true;
     }
-    else if (uMsg == WM_NCDESTROY) {
-        PinData::destroy(hWnd);
+    else if (msg == WM_NCDESTROY) {
+        PinData::destroy(wnd);
         return 0;
     }
-    PinData* pd = PinData::get(hWnd);
+    PinData* pd = PinData::get(wnd);
     if (pd) {
-        switch (uMsg) {
-            case WM_CREATE:         return EvCreate(hWnd, *pd);
-            case WM_DESTROY:        return EvDestroy(hWnd, *pd), 0;
-            case WM_TIMER:          return EvTimer(hWnd, *pd, wParam), 0;
-            case WM_PAINT:          return EvPaint(hWnd, *pd), 0;
-            case WM_LBUTTONDOWN:    return EvLClick(hWnd, *pd), 0;
-            case App::WM_PIN_RESETTIMER:   return EvPinResetTimer(hWnd, *pd, int(wParam)), 0;
-            case App::WM_PIN_ASSIGNWND:    return EvPinAssignWnd(hWnd, *pd, HWND(wParam), int(lParam));
-            case App::WM_PIN_GETPINNEDWND: return LRESULT(EvGetPinnedWnd(hWnd, *pd));
+        switch (msg) {
+            case WM_CREATE:         return EvCreate(wnd, *pd);
+            case WM_DESTROY:        return EvDestroy(wnd, *pd), 0;
+            case WM_TIMER:          return EvTimer(wnd, *pd, wparam), 0;
+            case WM_PAINT:          return EvPaint(wnd, *pd), 0;
+            case WM_LBUTTONDOWN:    return EvLClick(wnd, *pd), 0;
+            case App::WM_PIN_RESETTIMER:   return EvPinResetTimer(wnd, *pd, int(wparam)), 0;
+            case App::WM_PIN_ASSIGNWND:    return EvPinAssignWnd(wnd, *pd, HWND(wparam), int(lparam));
+            case App::WM_PIN_GETPINNEDWND: return LRESULT(EvGetPinnedWnd(wnd, *pd));
         }
     }
-    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    return DefWindowProc(wnd, msg, wparam, lparam);
 }
 
 
-static LRESULT EvCreate(HWND hWnd, PinData& pd)
+static LRESULT EvCreate(HWND wnd, PinData& pd)
 {
     // send 'pin created' notification
-    PostMessage(pd.hCallbackWnd, App::WM_PINSTATUS, WPARAM(hWnd), true);
+    PostMessage(pd.callbackWnd, App::WM_PINSTATUS, WPARAM(wnd), true);
 
     // initially place pin in the middle of the screen;
     // later it will be positioned on the pinned wnd's caption
     RECT rc;
-    GetWindowRect(hWnd, &rc);
+    GetWindowRect(wnd, &rc);
     int wndW = rc.right - rc.left;
     int wndH = rc.bottom - rc.top;
     int scrW = GetSystemMetrics(SM_CXSCREEN);
     int scrH = GetSystemMetrics(SM_CYSCREEN);
-    SetWindowPos(hWnd, 0, (scrW-wndW)/2, (scrH-wndH)/2, 0, 0,
+    SetWindowPos(wnd, 0, (scrW-wndW)/2, (scrH-wndH)/2, 0, 0,
         SWP_NOZORDER | SWP_NOSIZE);
 
     return 0;
 }
 
 
-static void EvDestroy(HWND hWnd, PinData& pd)
+static void EvDestroy(HWND wnd, PinData& pd)
 {
-    if (pd.hTopMostWnd) {
-        SetWindowPos(pd.hTopMostWnd, HWND_NOTOPMOST, 0,0,0,0, 
+    if (pd.topMostWnd) {
+        SetWindowPos(pd.topMostWnd, HWND_NOTOPMOST, 0,0,0,0, 
             SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE); // NOTE: added noactivate
-        pd.hTopMostWnd = pd.hProxyWnd = 0;
+        pd.topMostWnd = pd.proxyWnd = 0;
         pd.proxyMode = false;
     }
 
     // send 'pin destroyed' notification
-    PostMessage(pd.hCallbackWnd, App::WM_PINSTATUS, WPARAM(hWnd), false);
+    PostMessage(pd.callbackWnd, App::WM_PINSTATUS, WPARAM(wnd), false);
 }
 
 
@@ -152,7 +152,7 @@ static void EvDestroy(HWND hWnd, PinData& pd)
 // helper to collect all non-child windows of a thread
 class ThreadWnds {
 public:
-    ThreadWnds(HWND hWnd) : appWnd(hWnd) {}
+    ThreadWnds(HWND wnd) : appWnd(wnd) {}
     int count() const { return wndList.size(); }
     HWND operator[](int n) const { return wndList[n]; }
 
@@ -166,11 +166,11 @@ protected:
     HWND appWnd;
     std::vector<HWND> wndList;
 
-    static BOOL CALLBACK enumProc(HWND hWnd, LPARAM lParam)
+    static BOOL CALLBACK enumProc(HWND wnd, LPARAM param)
     {
-        ThreadWnds& obj = *reinterpret_cast<ThreadWnds*>(lParam);
-        if (hWnd == obj.appWnd || GetWindow(hWnd, GW_OWNER) == obj.appWnd)
-            obj.wndList.push_back(hWnd);
+        ThreadWnds& obj = *reinterpret_cast<ThreadWnds*>(param);
+        if (wnd == obj.appWnd || GetWindow(wnd, GW_OWNER) == obj.appWnd)
+            obj.wndList.push_back(wnd);
         return true;  // continue enumeration
     }
 
@@ -183,20 +183,20 @@ protected:
 // - move all disabled wnds (starting from the bottom one)
 //   behind the last enabled
 //
-static void FixPopupZOrder(HWND hAppWnd)
+static void FixPopupZOrder(HWND appWnd)
 {
     // - find the most visible, disabled, top-level wnd (wnd X)
     // - find all non-disabled, top-level wnds and place them
     //   above wnd X
 
     // get all non-child wnds
-    ThreadWnds threadWnds(hAppWnd);
+    ThreadWnds threadWnds(appWnd);
     if (!threadWnds.collect())
         return;
 
     //vector<HWND> wndList;
-    //DWORD idThread = GetWindowThreadProcessId(hAppWnd, 0);
-    //static_hAppWnd = hAppWnd;
+    //DWORD idThread = GetWindowThreadProcessId(appWnd, 0);
+    //static_hAppWnd = appWnd;
     //if (!EnumThreadWindows(idThread, (WNDENUMPROC)EnumThreadWndCollectProc,
     //  LPARAM(&wndList))) return;
 
@@ -219,22 +219,22 @@ static void FixPopupZOrder(HWND hAppWnd)
         return;
 
     // find last enabled
-    HWND hLastEnabled = 0;
+    HWND lastEnabled = 0;
     for (int n = threadWnds.count()-1; n >= 0; --n) {
         if (IsWindowEnabled(threadWnds[n])) {
-            hLastEnabled = threadWnds[n];
+            lastEnabled = threadWnds[n];
             break;
         }
     }
 
     // none enabled? bail out
-    if (!hLastEnabled)
+    if (!lastEnabled)
         return;
 
     // move all disabled (starting from the last) behind the last enabled
     for (int n = threadWnds.count()-1; n >= 0; --n) {
         if (!IsWindowEnabled(threadWnds[n])) {
-            SetWindowPos(threadWnds[n], hLastEnabled, 0,0,0,0, 
+            SetWindowPos(threadWnds[n], lastEnabled, 0,0,0,0, 
                 SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER);
         }
     }
@@ -242,74 +242,74 @@ static void FixPopupZOrder(HWND hAppWnd)
 }
 
 
-static void EvTimer(HWND hWnd, PinData& pd, UINT id)
+static void EvTimer(HWND wnd, PinData& pd, UINT id)
 {
     if (id != 1) return;
 
     // Does the app wnd still exist?
     // We must check this because, when the pinned wnd closes,
     // the pin is just hidden, not destroyed.
-    if (!IsWindow(pd.hTopMostWnd)) {
-        pd.hTopMostWnd = pd.hProxyWnd = 0;
+    if (!IsWindow(pd.topMostWnd)) {
+        pd.topMostWnd = pd.proxyWnd = 0;
         pd.proxyMode = false;
-        DestroyWindow(hWnd);
+        DestroyWindow(wnd);
         return;
     }
 
     if (pd.proxyMode
-        && (!pd.hProxyWnd || !IsWindowVisible(pd.hProxyWnd))
-        && !SelectProxy(hWnd, pd))
+        && (!pd.proxyWnd || !IsWindowVisible(pd.proxyWnd))
+        && !SelectProxy(wnd, pd))
         return;
 
     // bugfix: disabled proxy mode check so that FixVisible()
     // is called even on normal apps that hide the window on minimize
     // (just like our About dlg)
-    if (/*pd->proxyMode &&*/ !FixVisible(hWnd, pd))
+    if (/*pd->proxyMode &&*/ !FixVisible(wnd, pd))
         return;
 
-    if (pd.proxyMode && !IsWindowEnabled(pd.hTopMostWnd))
-        FixPopupZOrder(pd.hTopMostWnd);
+    if (pd.proxyMode && !IsWindowEnabled(pd.topMostWnd))
+        FixPopupZOrder(pd.topMostWnd);
 
-    FixTopStyle(hWnd, pd);
-    PlaceOnCaption(hWnd, pd);
+    FixTopStyle(wnd, pd);
+    PlaceOnCaption(wnd, pd);
 }
 
 
-static void EvPaint(HWND hWnd, PinData&)
+static void EvPaint(HWND wnd, PinData&)
 {
     PAINTSTRUCT ps;
-    if (HDC hDC = BeginPaint(hWnd, &ps)) {
+    if (HDC dc = BeginPaint(wnd, &ps)) {
         if (app.pinShape.getBmp()) {
-            if (HDC hMemDC = CreateCompatibleDC(0)) {
-                if (HBITMAP hOrgBmp = HBITMAP(SelectObject(hMemDC, app.pinShape.getBmp()))) {
-                    BitBlt(hDC, 0,0,app.pinShape.getW(),app.pinShape.getH(), hMemDC, 0,0, SRCCOPY);
-                    SelectObject(hMemDC, hOrgBmp);
+            if (HDC memDC = CreateCompatibleDC(0)) {
+                if (HBITMAP orgBmp = HBITMAP(SelectObject(memDC, app.pinShape.getBmp()))) {
+                    BitBlt(dc, 0,0,app.pinShape.getW(),app.pinShape.getH(), memDC, 0,0, SRCCOPY);
+                    SelectObject(memDC, orgBmp);
                 }
-                DeleteDC(hMemDC);
+                DeleteDC(memDC);
             }
         }
-        EndPaint(hWnd, &ps);
+        EndPaint(wnd, &ps);
     }
 
 }
 
 
-static void EvLClick(HWND hWnd, PinData&)
+static void EvLClick(HWND wnd, PinData&)
 {
-    DestroyWindow(hWnd);
+    DestroyWindow(wnd);
 }
 
 
-static bool EvPinAssignWnd(HWND hWnd, PinData& pd, HWND hTarget, int pollRate)
+static bool EvPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate)
 {
     // this shouldn't happen; it means the pin is already used
-    if (pd.hTopMostWnd) return false;
+    if (pd.topMostWnd) return false;
 
 
-    pd.hTopMostWnd = hTarget;
+    pd.topMostWnd = target;
 
     // decide proxy mode
-    if (!IsWindowVisible(hTarget) || IsWndRectEmpty(hTarget) || IsVCLAppWnd(hTarget)) {
+    if (!IsWindowVisible(target) || IsWndRectEmpty(target) || IsVCLAppWnd(target)) {
         // set proxy mode flag; we'll find a proxy wnd later
         pd.proxyMode = true;
     }
@@ -318,48 +318,48 @@ static bool EvPinAssignWnd(HWND hWnd, PinData& pd, HWND hTarget, int pollRate)
         // docs say not to set GWL_HWNDPARENT, but it works nevertheless
         // (SetParent() only works with windows of the same process)
         SetLastError(0);
-        if (!SetWindowLong(hWnd, GWL_HWNDPARENT, LONG(pd.getPinOwner())) && GetLastError())
-            Error(hWnd, ResStr(IDS_ERR_SETPINPARENTFAIL));
+        if (!SetWindowLong(wnd, GWL_HWNDPARENT, LONG(pd.getPinOwner())) && GetLastError())
+            Error(wnd, ResStr(IDS_ERR_SETPINPARENTFAIL));
     }
 
-    if (!SetWindowPos(pd.hTopMostWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE))
-        Error(hWnd, ResStr(IDS_ERR_SETTOPMOSTFAIL));
+    if (!SetWindowPos(pd.topMostWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE))
+        Error(wnd, ResStr(IDS_ERR_SETTOPMOSTFAIL));
 
     // set wnd region
     if (app.pinShape.getRgn()) {
-        HRGN hRgnCopy = CreateRectRgn(0,0,0,0);
-        if (CombineRgn(hRgnCopy, app.pinShape.getRgn(), 0, RGN_COPY) != ERROR) {
-            if (!SetWindowRgn(hWnd, hRgnCopy, false))
-                DeleteObject(hRgnCopy);
+        HRGN rgnCopy = CreateRectRgn(0,0,0,0);
+        if (CombineRgn(rgnCopy, app.pinShape.getRgn(), 0, RGN_COPY) != ERROR) {
+            if (!SetWindowRgn(wnd, rgnCopy, false))
+                DeleteObject(rgnCopy);
         }
     }
 
     // set pin size, move it on the caption, and make it visible
-    SetWindowPos(hWnd, 0, 0,0,app.pinShape.getW(),app.pinShape.getH(), 
+    SetWindowPos(wnd, 0, 0,0,app.pinShape.getW(),app.pinShape.getH(), 
         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE); // NOTE: added SWP_NOACTIVATE
-    PlaceOnCaption(hWnd, pd);
-    ShowWindow(hWnd, SW_SHOW);
+    PlaceOnCaption(wnd, pd);
+    ShowWindow(wnd, SW_SHOW);
 
-    SetForegroundWindow(pd.hTopMostWnd);
+    SetForegroundWindow(pd.topMostWnd);
 
     // start polling timer
-    SetTimer(hWnd, 1, pollRate, 0);
+    SetTimer(wnd, 1, pollRate, 0);
 
     return true;
 }
 
 
-static HWND EvGetPinnedWnd(HWND hWnd, PinData& pd)
+static HWND EvGetPinnedWnd(HWND wnd, PinData& pd)
 {
-    return pd.hTopMostWnd;
+    return pd.topMostWnd;
 }
 
 
-static void EvPinResetTimer(HWND hWnd, PinData& pd, int pollRate)
+static void EvPinResetTimer(HWND wnd, PinData& pd, int pollRate)
 {
     // only set it if there's a pinned window
-    if (pd.hTopMostWnd)
-        SetTimer(hWnd, 1, pollRate, 0);
+    if (pd.topMostWnd)
+        SetTimer(wnd, 1, pollRate, 0);
 }
 
 
@@ -368,20 +368,20 @@ static void EvPinResetTimer(HWND hWnd, PinData& pd, int pollRate)
 // change pin state to pinned wnd state.
 // Return whether the pin is visible
 // (if so, the caller should perform further adjustments)
-static bool FixVisible(HWND hWnd, const PinData& pd)
+static bool FixVisible(HWND wnd, const PinData& pd)
 {
     // insanity check
-    if (!IsWindow(pd.hTopMostWnd)) return false;
+    if (!IsWindow(pd.topMostWnd)) return false;
 
-    HWND hPinOwner = pd.getPinOwner();
-    if (!hPinOwner) return false;
+    HWND pinOwner = pd.getPinOwner();
+    if (!pinOwner) return false;
 
     // IsIconic() is crucial; without it we cannot restore the minimized
     // wnd by clicking on the taskbar button
-    bool ownerVisible = IsWindowVisible(hPinOwner) && !IsIconic(hPinOwner);
-    bool pinVisible = !!IsWindowVisible(hWnd);
+    bool ownerVisible = IsWindowVisible(pinOwner) && !IsIconic(pinOwner);
+    bool pinVisible = !!IsWindowVisible(wnd);
     if (ownerVisible != pinVisible)
-        ShowWindow(hWnd, ownerVisible ? SW_SHOWNOACTIVATE : SW_HIDE);
+        ShowWindow(wnd, ownerVisible ? SW_SHOWNOACTIVATE : SW_HIDE);
 
     // return whether the pin is visible now
     return ownerVisible;
@@ -389,26 +389,26 @@ static bool FixVisible(HWND hWnd, const PinData& pd)
 
 
 // patch for VCL apps (clearing of WS_EX_TOPMOST bit)
-static void FixTopStyle(HWND /*hWnd*/, const PinData& pd)
+static void FixTopStyle(HWND /*wnd*/, const PinData& pd)
 {
-    if (!(ef::Win::WndH(pd.hTopMostWnd).getExStyle() & WS_EX_TOPMOST))
-        SetWindowPos(pd.hTopMostWnd, HWND_TOPMOST, 0,0,0,0, 
+    if (!(ef::Win::WndH(pd.topMostWnd).getExStyle() & WS_EX_TOPMOST))
+        SetWindowPos(pd.topMostWnd, HWND_TOPMOST, 0,0,0,0, 
             SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
 
-static void PlaceOnCaption(HWND hWnd, const PinData& pd)
+static void PlaceOnCaption(HWND wnd, const PinData& pd)
 {
-    HWND hPinOwner = pd.getPinOwner();
-    if (!hPinOwner) return;
+    HWND pinOwner = pd.getPinOwner();
+    if (!pinOwner) return;
 
     // Move the pin on the owner's caption
     //
 
     // Calc the number of caption buttons
     int btnCnt = 0;
-    LONG style   = ef::Win::WndH(hPinOwner).getStyle();
-    LONG exStyle = ef::Win::WndH(hPinOwner).getExStyle();
+    LONG style   = ef::Win::WndH(pinOwner).getStyle();
+    LONG exStyle = ef::Win::WndH(pinOwner).getExStyle();
     LONG minMaxMask = WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
     bool hasMinOrMax  = (style & minMaxMask) != 0;
     bool hasMinAndMax = (style & minMaxMask) == minMaxMask;
@@ -424,11 +424,11 @@ static void PlaceOnCaption(HWND hWnd, const PinData& pd)
             ++btnCnt;
     }
 
-    RECT rcPin, rcPinned;
-    GetWindowRect(hWnd, &rcPin);
-    GetWindowRect(hPinOwner, &rcPinned);
-    int x = rcPinned.right - (btnCnt*GetSystemMetrics(SM_CXSIZE) + app.pinShape.getW() + 10); // add a small padding
-    SetWindowPos(hWnd, 0, x, rcPinned.top+3, 0, 0, 
+    RECT pin, pinned;
+    GetWindowRect(wnd, &pin);
+    GetWindowRect(pinOwner, &pinned);
+    int x = pinned.right - (btnCnt*GetSystemMetrics(SM_CXSIZE) + app.pinShape.getW() + 10); // add a small padding
+    SetWindowPos(wnd, 0, x, pinned.top+3, 0, 0, 
         SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 
     // reveal VCL app wnd :)
@@ -438,31 +438,31 @@ static void PlaceOnCaption(HWND hWnd, const PinData& pd)
 }
 
 
-static bool SelectProxy(HWND hWnd, const PinData& pd)
+static bool SelectProxy(HWND wnd, const PinData& pd)
 {
-    HWND hAppWnd = pd.hTopMostWnd;
-    if (!IsWindow(hAppWnd)) return false;
+    HWND appWnd = pd.topMostWnd;
+    if (!IsWindow(appWnd)) return false;
 
-    DWORD idThread = GetWindowThreadProcessId(hAppWnd, 0);
-    return EnumThreadWindows(idThread, (WNDENUMPROC)EnumThreadWndProc, 
-        LPARAM(hWnd)) && pd.getPinOwner();
+    DWORD thread = GetWindowThreadProcessId(appWnd, 0);
+    return EnumThreadWindows(thread, (WNDENUMPROC)EnumThreadWndProc, 
+        LPARAM(wnd)) && pd.getPinOwner();
 }
 
 
-static BOOL CALLBACK EnumThreadWndProc(HWND hWnd, LPARAM lParam)
+static BOOL CALLBACK EnumThreadWndProc(HWND wnd, LPARAM param)
 {
-    HWND hPin = HWND(lParam);
-    PinData* pd = PinData::get(hPin);
+    HWND pin = HWND(param);
+    PinData* pd = PinData::get(pin);
     if (!pd)
         return false;
 
-    if (GetWindow(hWnd, GW_OWNER) == pd->hTopMostWnd) {
-        if (IsWindowVisible(hWnd) && !IsIconic(hWnd) && !IsWndRectEmpty(hWnd)) {
-            pd->hProxyWnd = hWnd;
-            SetWindowLong(hPin, GWL_HWNDPARENT, LONG(hWnd));
+    if (GetWindow(wnd, GW_OWNER) == pd->topMostWnd) {
+        if (IsWindowVisible(wnd) && !IsIconic(wnd) && !IsWndRectEmpty(wnd)) {
+            pd->proxyWnd = wnd;
+            SetWindowLong(pin, GWL_HWNDPARENT, LONG(wnd));
             // we must also move it in front of the new owner
             // otherwise the wnd mgr will not do it until we select the new owner
-            SetWindowPos(hWnd, hPin, 0,0,0,0, 
+            SetWindowPos(wnd, pin, 0,0,0,0, 
                 SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
             return false;   // stop enumeration
         }
@@ -472,8 +472,8 @@ static BOOL CALLBACK EnumThreadWndProc(HWND hWnd, LPARAM lParam)
 }
 
 
-static bool IsVCLAppWnd(HWND hWnd)
+static bool IsVCLAppWnd(HWND wnd)
 {
-    return strimatch(_T("TApplication"), ef::Win::WndH(hWnd).getClassName().c_str()) 
-        && IsWndRectEmpty(hWnd);
+    return strimatch(_T("TApplication"), ef::Win::WndH(wnd).getClassName().c_str()) 
+        && IsWndRectEmpty(wnd);
 }

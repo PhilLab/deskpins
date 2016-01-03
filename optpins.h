@@ -1,4 +1,4 @@
 #pragma once
 
 
-BOOL CALLBACK OptPinsProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK OptPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);

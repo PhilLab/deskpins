@@ -134,14 +134,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
     }*/
 
     //COMInitializer comInit;
-    app.hInst = hInstance;
+    app.inst = hInstance;
 
     // load settings as soon as possible
     opt.load();
 
     // setup UI dll & help early to get correct language msgs
     if (!app.loadResMod(opt.uiFile.c_str(), 0)) opt.uiFile = _T("");
-    app.help.init(app.hInst, opt.helpFile);
+    app.help.init(app.inst, opt.helpFile);
 
     if (!app.chkPrevInst() || !app.initComctl())
         return 0;
@@ -153,7 +153,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
     MSG msg;
     while (GetMessage(&msg, 0, 0, 0)) {
-        //if (!app.hActiveModelessDlg || !IsDialogMessage(app.hActiveModelessDlg, &msg)) {
+        //if (!app.activeModelessDlg || !IsDialogMessage(app.activeModelessDlg, &msg)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
         //}
@@ -174,25 +174,25 @@ static bool isWin8orGreater()
 static void CmNewPin(HWND hWnd)
 {
     // avoid re-entrancy
-    if (app.hLayerWnd) return;
+    if (app.layerWnd) return;
 
     // NOTE: fix for Win8+ (the top-left corner doesn't work)
     const POINT layerWndPos = isWin8orGreater() ? ef::Win::Point(100, 100) : ef::Win::Point(0, 0);
     const SIZE layerWndSize = { 1, 1 };
 
-    app.hLayerWnd = CreateWindowEx(
+    app.layerWnd = CreateWindowEx(
         WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW,
         App::WNDCLS_PINLAYER,
         _T("DeskPin"),
         WS_POPUP | WS_VISIBLE,
         layerWndPos.x, layerWndPos.y, layerWndSize.cx, layerWndSize.cy,
-        hWnd, 0, app.hInst, 0);
+        hWnd, 0, app.inst, 0);
 
-    if (!app.hLayerWnd) return;
+    if (!app.layerWnd) return;
 
-    ShowWindow(app.hLayerWnd, SW_SHOW);
+    ShowWindow(app.layerWnd, SW_SHOW);
 
-    // synthesize a WM_LBUTTONDOWN on hLayerWnd, so that it captures the mouse
+    // synthesize a WM_LBUTTONDOWN on layerWnd, so that it captures the mouse
     POINT pt;
     GetCursorPos(&pt);
     SetCursorPos(layerWndPos.x, layerWndPos.y);
@@ -263,7 +263,7 @@ LRESULT CALLBACK OptPSSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
         // also set the big icon (for Alt-Tab)
         SendMessage(hWnd, WM_SETICON, ICON_BIG, 
-            LPARAM(LoadIcon(app.hInst, MAKEINTRESOURCE(IDI_APP))));
+            LPARAM(LoadIcon(app.inst, MAKEINTRESOURCE(IDI_APP))));
 
         LRESULT ret = CallWindowProc(orgOptPSProc, hWnd, uMsg, wParam, lParam);
         SetWindowLong(hWnd, GWL_WNDPROC, LONG(orgOptPSProc));
@@ -295,7 +295,7 @@ static void BuildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[],
     for (int n = 0; n < pageCnt; ++n) {
         psp[n].dwSize      = sizeof(psp[n]);
         psp[n].dwFlags     = PSP_HASHELP;
-        psp[n].hInstance   = app.hResMod ? app.hResMod : app.hInst;
+        psp[n].hInstance   = app.resMod ? app.resMod : app.inst;
         psp[n].pszTemplate = MAKEINTRESOURCE(dlgIds[n]);
         psp[n].hIcon       = 0;
         psp[n].pszTitle    = 0;
@@ -309,8 +309,8 @@ static void BuildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[],
     psh.dwSize      = sizeof(psh);
     psh.dwFlags     = PSH_HASHELP | PSH_PROPSHEETPAGE | PSH_USECALLBACK | PSH_USEHICON;
     psh.hwndParent  = hParentWnd;
-    psh.hInstance   = app.hResMod ? app.hResMod : app.hInst;
-    psh.hIcon       = app.hSmIcon;
+    psh.hInstance   = app.resMod ? app.resMod : app.inst;
+    psh.hIcon       = app.smIcon;
     psh.pszCaption  = capStr;
     psh.nPages      = pageCnt;
     psh.nStartPage  = (app.optionPage >= 0 && app.optionPage < pageCnt) 
@@ -358,7 +358,7 @@ static void CmOptions(HWND hWnd, WindowCreationMonitor& winCreMon)
     HINSTANCE hCurResMod = 0;
     if (!opt.uiFile.empty()) {
         tchar buf[MAX_PATH];
-        GetModuleFileName(app.hResMod, buf, sizeof(buf));
+        GetModuleFileName(app.resMod, buf, sizeof(buf));
         hCurResMod = LoadLibrary(buf);
     }
 
@@ -487,7 +487,7 @@ static void EvTrayIcon(HWND hWnd, WPARAM id, LPARAM msg)
 static void EvHotkey(HWND hWnd, int idHotKey)
 {
     // ignore if there's an active pin layer
-    if (app.hLayerWnd) return;
+    if (app.layerWnd) return;
 
     switch (idHotKey) {
     case App::HOTID_ENTERPINMODE:
@@ -516,7 +516,7 @@ static void UpdateStatusMessage(HWND hWnd)
 
 static bool EvInitDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
 {
-    app.hAboutDlg = hWnd;
+    app.aboutDlg = hWnd;
 
     UpdateStatusMessage(hWnd);
 
@@ -531,12 +531,12 @@ static bool EvInitDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
     }
 
     // set dlg icons
-    HICON hAppIcon = LoadIcon(app.hInst, MAKEINTRESOURCE(IDI_APP));
+    HICON hAppIcon = LoadIcon(app.inst, MAKEINTRESOURCE(IDI_APP));
     SendMessage(hWnd, WM_SETICON, ICON_BIG,   LPARAM(hAppIcon));
-    SendMessage(hWnd, WM_SETICON, ICON_SMALL, LPARAM(app.hSmIcon));
+    SendMessage(hWnd, WM_SETICON, ICON_SMALL, LPARAM(app.smIcon));
 
     // set static icon if dlg was loaded from lang dll
-    if (app.hResMod)
+    if (app.resMod)
         SendDlgItemMessage(hWnd,IDC_LOGO,STM_SETIMAGE,IMAGE_ICON,LPARAM(hAppIcon));
 
     struct Link {
@@ -569,7 +569,7 @@ static bool EvInitDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
 
 static void EvTermDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
 {
-    app.hAboutDlg = 0;
+    app.aboutDlg = 0;
 
     if (hBoldGUIFont) {
         DeleteObject(hBoldGUIFont);
@@ -613,7 +613,7 @@ static BOOL CALLBACK AboutDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             UpdateStatusMessage(hWnd);
             return true;
         //case WM_ACTIVATE:
-        //  app.hActiveModelessDlg = (LOWORD(wParam) == WA_INACTIVE) ? 0 : hWnd;
+        //  app.activeModelessDlg = (LOWORD(wParam) == WA_INACTIVE) ? 0 : hWnd;
         //  return false;
         case WM_COMMAND: {
             int id = LOWORD(wParam);
@@ -647,7 +647,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch (uMsg) {
         case WM_CREATE: {
-            app.hMainWnd = hWnd;
+            app.mainWnd = hWnd;
             //winCreMon = new HookDllWindowCreationMonitor();
             winCreMon = new EventHookWindowCreationMonitor();
 
@@ -656,13 +656,13 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 opt.autoPinOn = false;
             }
 
-            app.hSmIcon = HICON(LoadImage(app.hInst, MAKEINTRESOURCE(IDI_APP), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
+            app.smIcon = HICON(LoadImage(app.inst, MAKEINTRESOURCE(IDI_APP), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
             app.createSmClrIcon(opt.pinClr);
 
             // first set the hWnd (this can only be done once)...
             app.trayIcon.setWnd(hWnd);
             // .. and then create the notification icon
-            app.trayIcon.create(app.hSmClrIcon, trayIconTip().c_str());
+            app.trayIcon.create(app.smClrIcon, trayIconTip().c_str());
 
             // setup hotkeys
             if (opt.hotkeysOn) {
@@ -683,7 +683,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
         case WM_DESTROY: {
-            app.hMainWnd = 0;
+            app.mainWnd = 0;
 
             winCreMon->term();
             delete winCreMon;
@@ -715,7 +715,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         case App::WM_PINSTATUS:
             if (lParam) ++app.pinsUsed; else --app.pinsUsed;
-            if (app.hAboutDlg) SendMessage(app.hAboutDlg, App::WM_PINSTATUS, 0, 0);
+            if (app.aboutDlg) SendMessage(app.aboutDlg, App::WM_PINSTATUS, 0, 0);
             app.trayIcon.setTip(trayIconTip().c_str());
             break;
         case WM_COMMAND:
@@ -724,11 +724,11 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     app.help.show(hWnd);
                     break;
                 case CM_ABOUT:
-                    if (app.hAboutDlg)
-                        SetForegroundWindow(app.hAboutDlg);
+                    if (app.aboutDlg)
+                        SetForegroundWindow(app.aboutDlg);
                     else {
                         CreateLocalizedDialog(IDD_ABOUT, 0, AboutDlgProc);
-                        ShowWindow(app.hAboutDlg, SW_SHOW);
+                        ShowWindow(app.aboutDlg, SW_SHOW);
                     }
                     break;
                 case CM_NEWPIN: 
@@ -760,7 +760,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         default:
             if (uMsg == taskbarMsg) {
                 // taskbar recreated; reset the tray icon
-                app.trayIcon.create(app.hSmClrIcon, trayIconTip().c_str());
+                app.trayIcon.create(app.smClrIcon, trayIconTip().c_str());
                 break;
             }
             return DefWindowProc(hWnd, uMsg, wParam, lParam);

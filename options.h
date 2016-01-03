@@ -22,31 +22,31 @@ struct HotKey {
         return !(*this == other);
     }
 
-    bool set(HWND hWnd) const
+    bool set(HWND wnd) const
     {
-        return !!RegisterHotKey(hWnd, id, mod, vk);
+        return !!RegisterHotKey(wnd, id, mod, vk);
     }
 
-    bool unset(HWND hWnd) const
+    bool unset(HWND wnd) const
     {
-        return !!UnregisterHotKey(hWnd, id);
+        return !!UnregisterHotKey(wnd, id);
     }
 
     bool load(ef::Win::RegKeyH& key, const ef::tchar* val);
     bool save(ef::Win::RegKeyH& key, const ef::tchar* val) const;
 
-    void getUI(HWND hWnd, int id)
+    void getUI(HWND wnd, int id)
     {
-        LRESULT lRes = SendDlgItemMessage(hWnd, id, HKM_GETHOTKEY, 0, 0);
-        vk  = LOBYTE(lRes);
-        mod = HIBYTE(lRes);
+        LRESULT res = SendDlgItemMessage(wnd, id, HKM_GETHOTKEY, 0, 0);
+        vk  = LOBYTE(res);
+        mod = HIBYTE(res);
         if (!vk)
             mod = 0;
     }
 
-    void setUI(HWND hWnd, int id) const
+    void setUI(HWND wnd, int id) const
     {
-        SendDlgItemMessage(hWnd, id, HKM_SETHOTKEY, MAKEWORD(vk, mod), 0);
+        SendDlgItemMessage(wnd, id, HKM_SETHOTKEY, MAKEWORD(vk, mod), 0);
     }
 
 };
@@ -108,7 +108,7 @@ struct ScalarOption {
 
     // get value from ctrl (use min val on error)
     // making sure it's in range
-    T getUI(HWND hWnd, int id)
+    T getUI(HWND wnd, int id)
     {
         if (!std::numeric_limits<T>::is_integer) {
             // only integers are supported for now
@@ -116,7 +116,7 @@ struct ScalarOption {
         }
 
         BOOL xlated;
-        T t = static_cast<T>(GetDlgItemInt(hWnd, id, &xlated, 
+        T t = static_cast<T>(GetDlgItemInt(wnd, id, &xlated, 
             std::numeric_limits<T>::is_signed));
         if (!xlated || t < minV)
             t = minV;
@@ -127,7 +127,7 @@ struct ScalarOption {
     }
 
     // show warning and focus ctrl if out of range
-    bool validateUI(HWND hWnd, int id)
+    bool validateUI(HWND wnd, int id)
     {
         if (!std::numeric_limits<T>::is_integer) {
             // only integers are supported for now
@@ -135,17 +135,17 @@ struct ScalarOption {
         }
 
         BOOL xlated;
-        T t = static_cast<T>(GetDlgItemInt(hWnd, id, &xlated, 
+        T t = static_cast<T>(GetDlgItemInt(wnd, id, &xlated, 
             std::numeric_limits<T>::is_signed));
         if (xlated && inRange(t))
             return true;
 
         // report error
-        HWND hPrevSib = GetWindow(GetDlgItem(hWnd, id), GW_HWNDPREV);
-        ef::tstring label = RemAccel(ef::Win::WndH(hPrevSib).getText());
+        HWND prevSib = GetWindow(GetDlgItem(wnd, id), GW_HWNDPREV);
+        ef::tstring label = RemAccel(ef::Win::WndH(prevSib).getText());
         ResStr str(IDS_WRN_UIRANGE, 256, DWORD_PTR(label.c_str()), DWORD(minV), DWORD(maxV));
-        Warning(hWnd, str);
-        SetFocus(GetDlgItem(hWnd, id));
+        Warning(wnd, str);
+        SetFocus(GetDlgItem(wnd, id));
         return false;
     }
 

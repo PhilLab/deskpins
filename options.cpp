@@ -50,11 +50,11 @@ HotKey::save(ef::Win::RegKeyH& key, const tchar* val) const
 
 
 bool 
-AutoPinRule::match(HWND hWnd) const
+AutoPinRule::match(HWND wnd) const
 {
     return enabled 
-        && ef::wildimatch(ttl, ef::Win::WndH(hWnd).getText()) 
-        && ef::wildimatch(cls, ef::Win::WndH(hWnd).getClassName());
+        && ef::wildimatch(ttl, ef::Win::WndH(wnd).getText()) 
+        && ef::wildimatch(cls, ef::Win::WndH(wnd).getClassName());
 }
 
 

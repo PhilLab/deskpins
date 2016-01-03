@@ -3,10 +3,10 @@
 #include "resource.h"
 
 
-bool IsWndRectEmpty(HWND hWnd)
+bool IsWndRectEmpty(HWND wnd)
 {
     RECT rc;
-    return GetWindowRect(hWnd, &rc) && IsRectEmpty(&rc);
+    return GetWindowRect(wnd, &rc) && IsRectEmpty(&rc);
 }
 
 
@@ -14,29 +14,29 @@ bool IsWndRectEmpty(HWND hWnd)
 // I thought that GetWindowLong(GWW_HWNDPARENT) returned the real parent
 // and GetParent() returned the owner (as stated in MSDN).
 // However, Spy++ shows the opposite...
-HWND GetOwner(HWND hWnd)
+HWND GetOwner(HWND wnd)
 {
-return reinterpret_cast<HWND>(::GetWindowLong(hWnd, GWL_HWNDPARENT));
+return reinterpret_cast<HWND>(::GetWindowLong(wnd, GWL_HWNDPARENT));
 }
 */
 
 
-bool IsChild(HWND hWnd)
+bool IsChild(HWND wnd)
 {
-    return (ef::Win::WndH(hWnd).getStyle() & WS_CHILD) != 0;
+    return (ef::Win::WndH(wnd).getStyle() & WS_CHILD) != 0;
 }
 
 
-HWND GetNonChildParent(HWND hWnd)
+HWND GetNonChildParent(HWND wnd)
 {
-    while (IsChild(hWnd))
-        hWnd = GetParent(hWnd);
+    while (IsChild(wnd))
+        wnd = GetParent(wnd);
 
-    return hWnd;
+    return wnd;
 }
 
 
-HWND GetTopParent(HWND hWnd /*, bool mustBeVisible = false*/)
+HWND GetTopParent(HWND wnd /*, bool mustBeVisible = false*/)
 {
     // ------------------------------------------------------
     // NOTE: 'mustBeVisible' is not used currently
@@ -60,50 +60,50 @@ HWND GetTopParent(HWND hWnd /*, bool mustBeVisible = false*/)
     // for the rest use GetWindow(GW_OWNER)
     //
     for (;;) {
-        HWND hParent = IsChild(hWnd)
-            ? GetParent(hWnd)
-            : GetWindow(hWnd, GW_OWNER);
+        HWND parent = IsChild(wnd)
+            ? GetParent(wnd)
+            : GetWindow(wnd, GW_OWNER);
 
-        if (!hParent || hParent == hWnd) break;
-        //if (mustBeVisible && !IsWindowVisible(hParent) || IsWndRectEmpty(hParent))
+        if (!parent || parent == wnd) break;
+        //if (mustBeVisible && !IsWindowVisible(parent) || IsWndRectEmpty(parent))
         //  break;
-        hWnd = hParent;
+        wnd = parent;
     }
 
-    return hWnd;
+    return wnd;
 }
 
 
-bool IsProgManWnd(HWND hWnd)
+bool IsProgManWnd(HWND wnd)
 { 
-    return strimatch(ef::Win::WndH(hWnd).getClassName().c_str(), _T("ProgMan"))
-        && strimatch(ef::Win::WndH(hWnd).getText().c_str(), _T("Program Manager"));
+    return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), _T("ProgMan"))
+        && strimatch(ef::Win::WndH(wnd).getText().c_str(), _T("Program Manager"));
 }
 
 
-bool IsTaskBar(HWND hWnd)
+bool IsTaskBar(HWND wnd)
 {
-    return strimatch(ef::Win::WndH(hWnd).getClassName().c_str(), _T("Shell_TrayWnd"));
+    return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), _T("Shell_TrayWnd"));
 }
 
 
-bool IsTopMost(HWND hWnd)
+bool IsTopMost(HWND wnd)
 {
-    return (ef::Win::WndH(hWnd).getExStyle() & WS_EX_TOPMOST) != 0;
+    return (ef::Win::WndH(wnd).getExStyle() & WS_EX_TOPMOST) != 0;
 }
 
 
-void Error(HWND hWnd, const tchar* s)
+void Error(HWND wnd, const tchar* s)
 {
     ResStr caption(IDS_ERRBOXTTITLE, 50, reinterpret_cast<DWORD>(App::APPNAME));
-    MessageBox(hWnd, s, caption, MB_ICONSTOP | MB_TOPMOST);
+    MessageBox(wnd, s, caption, MB_ICONSTOP | MB_TOPMOST);
 }
 
 
-void Warning(HWND hWnd, const tchar* s)
+void Warning(HWND wnd, const tchar* s)
 {
     ResStr caption(IDS_WRNBOXTTITLE, 50, reinterpret_cast<DWORD>(App::APPNAME));
-    MessageBox(hWnd, s, caption, MB_ICONWARNING | MB_TOPMOST);
+    MessageBox(wnd, s, caption, MB_ICONWARNING | MB_TOPMOST);
 }
 
 
@@ -115,46 +115,46 @@ bool GetScrSize(SIZE& sz)
 }
 
 
-void PinWindow(HWND hWnd, HWND hHitWnd, int trackRate, bool silent /*= false*/)
+void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent /*= false*/)
 {
     int err = 0, wrn = 0;
 
-    if (!hHitWnd)
+    if (!hitWnd)
         wrn = IDS_ERR_COULDNOTFINDWND;
-    else if (IsProgManWnd(hHitWnd))
+    else if (IsProgManWnd(hitWnd))
         wrn = IDS_ERR_CANNOTPINDESKTOP;
     // NOTE: after creating the layer wnd, the taskbar becomes non-topmost;
     // use this check to avoid pinning it
-    else if (IsTaskBar(hHitWnd))
+    else if (IsTaskBar(hitWnd))
         wrn = IDS_ERR_CANNOTPINTASKBAR;
-    else if (IsTopMost(hHitWnd))
+    else if (IsTopMost(hitWnd))
         wrn = IDS_ERR_ALREADYTOPMOST;
     // hidden wnds are handled by the proxy mechanism
-    //else if (!IsWindowVisible(hHitWnd))
+    //else if (!IsWindowVisible(hitWnd))
     //  Error(hWnd, "Cannot pin a hidden window");
     else {
         // create a pin wnd
-        HWND hPin = CreateWindowEx(
+        HWND pin = CreateWindowEx(
             WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
             App::WNDCLS_PIN,
             _T(""),
             WS_POPUP | WS_VISIBLE,
             0, 0, 0, 0,   // real pos/size set on wnd assignment
-            0, 0, app.hInst, 0);
+            0, 0, app.inst, 0);
 
-        if (!hPin)
+        if (!pin)
             err = IDS_ERR_PINCREATE;
-        else if (!SendMessage(hPin, App::WM_PIN_ASSIGNWND, WPARAM(hHitWnd), trackRate)) {
+        else if (!SendMessage(pin, App::WM_PIN_ASSIGNWND, WPARAM(hitWnd), trackRate)) {
             err = IDS_ERR_PINWND;
-            DestroyWindow(hPin);
+            DestroyWindow(pin);
         }
     }
 
     if (!silent && (err || wrn)) {
         if (err)
-            Error(hWnd, ResStr(err));
+            Error(wnd, ResStr(err));
         else
-            Warning(hWnd, ResStr(wrn));
+            Warning(wnd, ResStr(wrn));
     }
 
 }
@@ -163,37 +163,37 @@ void PinWindow(HWND hWnd, HWND hHitWnd, int trackRate, bool silent /*= false*/)
 // If the specified window (top parent) is pinned, 
 // return the pin wnd's handle; otherwise return 0.
 //
-static HWND HasPin(HWND hWnd)
+static HWND HasPin(HWND wnd)
 {
     // enumerate all pin windows
-    HWND hPin = 0;
-    while ((hPin = FindWindowEx(0, hPin, App::WNDCLS_PIN, 0)) != 0)
+    HWND pin = 0;
+    while ((pin = FindWindowEx(0, pin, App::WNDCLS_PIN, 0)) != 0)
         //if (GetParent(hPin) == hWnd)
-        if (HWND(SendMessage(hPin, App::WM_PIN_GETPINNEDWND, 0, 0)) == hWnd)
-            return hPin;
+        if (HWND(SendMessage(pin, App::WM_PIN_GETPINNEDWND, 0, 0)) == wnd)
+            return pin;
 
     return 0;
 }
 
 
-void TogglePin(HWND hWnd, HWND hTarget, int trackRate)
+void TogglePin(HWND wnd, HWND target, int trackRate)
 {
-    hTarget = GetTopParent(hTarget);
-    HWND hPin = HasPin(hTarget);
-    if (hPin)
-        DestroyWindow(hPin);
+    target = GetTopParent(target);
+    HWND pin = HasPin(target);
+    if (pin)
+        DestroyWindow(pin);
     else
-        PinWindow(hWnd, hTarget, trackRate);
+        PinWindow(wnd, target, trackRate);
 }
 
 
 HMENU LoadLocalizedMenu(LPCTSTR lpMenuName) {
-    if (app.hResMod) {
-        HMENU ret = LoadMenu(app.hResMod, lpMenuName);
+    if (app.resMod) {
+        HMENU ret = LoadMenu(app.resMod, lpMenuName);
         if (ret)
             return ret;
     }
-    return LoadMenu(app.hInst, lpMenuName);
+    return LoadMenu(app.inst, lpMenuName);
 }
 
 
@@ -212,12 +212,12 @@ bool IsLastErrResNotFound() {
 
 
 int LocalizedDialogBoxParam(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
-    if (app.hResMod) {
-        int ret = DialogBoxParam(app.hResMod, lpTemplate, hParent, lpDialogFunc, dwInit);
+    if (app.resMod) {
+        int ret = DialogBoxParam(app.resMod, lpTemplate, hParent, lpDialogFunc, dwInit);
         if (ret != -1 || !IsLastErrResNotFound())
             return ret;
     }
-    return DialogBoxParam(app.hInst, lpTemplate, hParent, lpDialogFunc, dwInit);
+    return DialogBoxParam(app.inst, lpTemplate, hParent, lpDialogFunc, dwInit);
 }
 
 int LocalizedDialogBoxParam(WORD id, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
@@ -226,12 +226,12 @@ int LocalizedDialogBoxParam(WORD id, HWND hParent, DLGPROC lpDialogFunc, LPARAM 
 
 
 HWND CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc) {
-    if (app.hResMod) {
-        HWND ret = CreateDialog(app.hResMod, lpTemplate, hParent, lpDialogFunc);
+    if (app.resMod) {
+        HWND ret = CreateDialog(app.resMod, lpTemplate, hParent, lpDialogFunc);
         if (ret || !IsLastErrResNotFound())
             return ret;
     }
-    return CreateDialog(app.hInst, lpTemplate, hParent, lpDialogFunc);
+    return CreateDialog(app.inst, lpTemplate, hParent, lpDialogFunc);
 }
 
 HWND CreateLocalizedDialog(WORD id, HWND hParent, DLGPROC lpDialogFunc) {
@@ -253,24 +253,24 @@ bool RectContains(const RECT& rc1, const RECT& rc2)
 // enable/disable all ctrls that lie inside the specified ctrl 
 // (usually a group, or maybe a tab, etc)
 // TODO: move to eflib?
-void EnableGroup(HWND hWnd, int id, bool mode)
+void EnableGroup(HWND wnd, int id, bool mode)
 {
-    HWND hContainer = GetDlgItem(hWnd, id);
+    HWND container = GetDlgItem(wnd, id);
     RECT rc;
-    GetWindowRect(hContainer, &rc);
+    GetWindowRect(container, &rc);
 
     // deflate a bit (4 DLUs) to be on the safe side (do we need this?)
     RECT rc2 = {0, 0, 4, 4};
-    MapDialogRect(hWnd, &rc2);
+    MapDialogRect(wnd, &rc2);
     InflateRect(&rc, rc2.left-rc2.right, rc2.top-rc2.bottom);
 
-    for (HWND hChild = GetWindow(hWnd, GW_CHILD); 
-        hChild; hChild = GetWindow(hChild, GW_HWNDNEXT)) {
-            if (hChild == hContainer)
+    for (HWND child = GetWindow(wnd, GW_CHILD); 
+        child; child = GetWindow(child, GW_HWNDNEXT)) {
+            if (child == container)
                 continue;
-            GetWindowRect(hChild, &rc2);
+            GetWindowRect(child, &rc2);
             if (RectContains(rc, rc2))
-                EnableWindow(hChild, mode);
+                EnableWindow(child, mode);
     }
 
 }
@@ -316,22 +316,22 @@ COLORREF Dark(COLORREF clr)
 }
 
 
-BOOL MoveWindow(HWND hWnd, const RECT& rc, BOOL repaint)
+BOOL MoveWindow(HWND wnd, const RECT& rc, BOOL repaint)
 {
-    return MoveWindow(hWnd, rc.left, rc.top, 
+    return MoveWindow(wnd, rc.left, rc.top, 
         rc.right-rc.left, rc.bottom-rc.top, repaint);
 }
 
 
-BOOL Rectangle(HDC hDC, const RECT& rc)
+BOOL Rectangle(HDC dc, const RECT& rc)
 {
-    return Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
+    return Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
 }
 
 
-bool PSChanged(HWND hPage)
+bool PSChanged(HWND page)
 {
-    return !!PropSheet_Changed(GetParent(hPage), hPage);
+    return !!PropSheet_Changed(GetParent(page), page);
 }
 
 
@@ -346,10 +346,10 @@ tstring RemAccel(tstring s)
 
 
 // TODO: move to eflib?
-bool getBmpSize(HBITMAP hBmp, SIZE& sz)
+bool getBmpSize(HBITMAP bmp, SIZE& sz)
 {
     BITMAP bm;
-    if (!GetObject(hBmp, sizeof(bm), &bm))
+    if (!GetObject(bmp, sizeof(bm), &bm))
         return false;
     sz.cx = bm.bmWidth;
     sz.cy = abs(bm.bmHeight);
@@ -358,10 +358,10 @@ bool getBmpSize(HBITMAP hBmp, SIZE& sz)
 
 
 // TODO: move to eflib?
-bool getBmpSizeAndBpp(HBITMAP hBmp, SIZE& sz, int& bpp)
+bool getBmpSizeAndBpp(HBITMAP bmp, SIZE& sz, int& bpp)
 {
     BITMAP bm;
-    if (!GetObject(hBmp, sizeof(bm), &bm))
+    if (!GetObject(bmp, sizeof(bm), &bm))
         return false;
     sz.cx = bm.bmWidth;
     sz.cy = abs(bm.bmHeight);
@@ -373,14 +373,14 @@ bool getBmpSizeAndBpp(HBITMAP hBmp, SIZE& sz, int& bpp)
 // Convert white/lgray/dgray of bmp to shades of 'clr'.
 // NOTE: Bmp must *not* be selected in any DC for this to succeed.
 //
-bool remapBmpColors(HBITMAP hBmp, COLORREF clrs[][2], int cnt)
+bool remapBmpColors(HBITMAP bmp, COLORREF clrs[][2], int cnt)
 {
     bool ok = false;
     SIZE sz;
     int bpp;
-    if (getBmpSizeAndBpp(hBmp, sz, bpp)) {
-        if (HDC hDC = CreateCompatibleDC(0)) {
-            if (HBITMAP hOrgBmp = HBITMAP(SelectObject(hDC, hBmp))) {
+    if (getBmpSizeAndBpp(bmp, sz, bpp)) {
+        if (HDC dc = CreateCompatibleDC(0)) {
+            if (HBITMAP orgBmp = HBITMAP(SelectObject(dc, bmp))) {
                 if (bpp == 16) {
                     // In 16-bpp modes colors get changed,
                     // e.g. light gray (0xC0C0C0) becomes 0xC6C6C6
@@ -393,16 +393,16 @@ bool remapBmpColors(HBITMAP hBmp, COLORREF clrs[][2], int cnt)
                 }
                 for (int y = 0; y < sz.cy; ++y) {
                     for (int x = 0; x < sz.cx; ++x) {
-                        COLORREF clr = GetPixel(hDC, x, y);
+                        COLORREF clr = GetPixel(dc, x, y);
                         for (int n = 0; n < cnt; ++n)
                             if (clr == clrs[n][0])
-                                SetPixelV(hDC, x, y, clrs[n][1]);
+                                SetPixelV(dc, x, y, clrs[n][1]);
                     }
                 }
                 ok = true;
-                SelectObject(hDC, hOrgBmp);
+                SelectObject(dc, orgBmp);
             }
-            DeleteDC(hDC);
+            DeleteDC(dc);
         }
     }
 
@@ -410,7 +410,7 @@ bool remapBmpColors(HBITMAP hBmp, COLORREF clrs[][2], int cnt)
     //oss << hex << setfill('0');
     //for (set<COLORREF>::const_iterator it = clrSet.begin(); it != clrSet.end(); ++it)
     //  oss << setw(6) << *it << "\r\n";
-    //MessageBoxA(app.hMainWnd, oss.str().c_str(), "Unique clrs", 0);
+    //MessageBoxA(app.mainWnd, oss.str().c_str(), "Unique clrs", 0);
 
     return ok;
 }

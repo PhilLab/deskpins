@@ -2,9 +2,9 @@
 #include "trayicon.h"
 
 
-TrayIcon::TrayIcon(UINT msg_, UINT id_)
+TrayIcon::TrayIcon(UINT msg, UINT id)
 :
-hWnd(0), msg(msg_), id(id_)
+    wnd(0), msg(msg), id(id)
 {
 }
 
@@ -16,24 +16,24 @@ TrayIcon::~TrayIcon()
 
 
 // can only be called once
-bool TrayIcon::setWnd(HWND hWnd_)
+bool TrayIcon::setWnd(HWND wnd_)
 {
-    if (hWnd) return false;
+    if (wnd) return false;
 
-    hWnd = hWnd_;
+    wnd = wnd_;
     return true;
 }
 
 
-bool TrayIcon::create(HICON hIcon, LPCTSTR tip)
+bool TrayIcon::create(HICON icon, LPCTSTR tip)
 {
     NOTIFYICONDATA nid;
     nid.cbSize           = sizeof(NOTIFYICONDATA);
-    nid.hWnd             = hWnd;
+    nid.hWnd             = wnd;
     nid.uID              = id;
     nid.uFlags           = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid.uCallbackMessage = msg;
-    nid.hIcon            = hIcon;
+    nid.hIcon            = icon;
     lstrcpyn(nid.szTip, tip, sizeof(nid.szTip));
 
     return !!Shell_NotifyIcon(NIM_ADD, &nid);
@@ -44,7 +44,7 @@ bool TrayIcon::destroy()
 {
     NOTIFYICONDATA nid;
     nid.cbSize = sizeof(NOTIFYICONDATA);
-    nid.hWnd   = hWnd;
+    nid.hWnd   = wnd;
     nid.uID    = id;
 
     return !!Shell_NotifyIcon(NIM_DELETE, &nid);
@@ -54,7 +54,7 @@ bool TrayIcon::setTip(LPCTSTR tip)
 {
     NOTIFYICONDATA nid;
     nid.cbSize           = sizeof(NOTIFYICONDATA);
-    nid.hWnd             = hWnd;
+    nid.hWnd             = wnd;
     nid.uID              = id;
     nid.uFlags           = NIF_TIP;
     lstrcpyn(nid.szTip, tip, sizeof(nid.szTip));
@@ -63,14 +63,14 @@ bool TrayIcon::setTip(LPCTSTR tip)
 }
 
 
-bool TrayIcon::setIcon(HICON hIcon)
+bool TrayIcon::setIcon(HICON icon)
 {
     NOTIFYICONDATA nid;
     nid.cbSize           = sizeof(NOTIFYICONDATA);
-    nid.hWnd             = hWnd;
+    nid.hWnd             = wnd;
     nid.uID              = id;
     nid.uFlags           = NIF_ICON;
-    nid.hIcon            = hIcon;
+    nid.hIcon            = icon;
 
     return !!Shell_NotifyIcon(NIM_MODIFY, &nid);
 }

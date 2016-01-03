@@ -4,21 +4,21 @@
 #include "resource.h"
 
 
-PinShape::PinShape() : hBmp(0), hRgn(0) {
+PinShape::PinShape() : bmp(0), rgn(0) {
     sz.cx = sz.cy = 1;
 }
 
 
 PinShape::~PinShape() {
-    DeleteObject(hBmp);
-    DeleteObject(hRgn);
+    DeleteObject(bmp);
+    DeleteObject(rgn);
 }
 
 
 bool PinShape::initImage(COLORREF clr) {
-    if (hBmp) {
-        DeleteObject(hBmp);
-        hBmp = 0;
+    if (bmp) {
+        DeleteObject(bmp);
+        bmp = 0;
     }
 
     COLORREF clrMap[][2] = {
@@ -26,24 +26,24 @@ bool PinShape::initImage(COLORREF clr) {
         { StdClr::silver, clr        }, 
         { StdClr::gray,   Dark(clr)  }
     };
-    return (hBmp = LoadBitmap(app.hInst, MAKEINTRESOURCE(IDB_PIN)))
-        && remapBmpColors(hBmp, clrMap, ARRSIZE(clrMap));
+    return (bmp = LoadBitmap(app.inst, MAKEINTRESOURCE(IDB_PIN)))
+        && remapBmpColors(bmp, clrMap, ARRSIZE(clrMap));
 }
 
 
 bool PinShape::initShape() {
-    if (hRgn) {
-        DeleteObject(hRgn);
-        hRgn = 0;
+    if (rgn) {
+        DeleteObject(rgn);
+        rgn = 0;
         sz.cx = sz.cy = 1;
     }
 
-    if (HBITMAP hBmp = LoadBitmap(app.hInst, MAKEINTRESOURCE(IDB_PIN))) {
-        if (!getBmpSize(hBmp, sz))
+    if (HBITMAP bmp = LoadBitmap(app.inst, MAKEINTRESOURCE(IDB_PIN))) {
+        if (!getBmpSize(bmp, sz))
             sz.cx = sz.cy = 1;
-        hRgn = ef::Win::RgnH::create(hBmp, RGB(255,0,255));
-        DeleteObject(hBmp);
+        rgn = ef::Win::RgnH::create(bmp, RGB(255,0,255));
+        DeleteObject(bmp);
     }
 
-    return hRgn != 0;
+    return rgn != 0;
 }

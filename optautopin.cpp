@@ -12,18 +12,18 @@ BOOL CALLBACK TargetWndProc(HWND, UINT, WPARAM, LPARAM);
 struct TargetWndData {
     WNDPROC orgProc;
     bool    cursShowing;
-    HCURSOR hCurs;
+    HCURSOR curs;
 
-    TargetWndData(HWND hWnd)
+    TargetWndData(HWND wnd)
     {
-        orgProc = WNDPROC(GetWindowLong(hWnd, GWL_WNDPROC));
+        orgProc = WNDPROC(GetWindowLong(wnd, GWL_WNDPROC));
         if (!orgProc)
             throw 0;  // TODO: use an exception
-        SetWindowLong(hWnd, GWL_USERDATA, LONG(this));
-        SetWindowLong(hWnd, GWL_WNDPROC, LONG(TargetWndProc));
+        SetWindowLong(wnd, GWL_USERDATA, LONG(this));
+        SetWindowLong(wnd, GWL_WNDPROC, LONG(TargetWndProc));
 
         cursShowing = true;
-        hCurs = LoadCursor(app.hInst, MAKEINTRESOURCE(IDC_BULLSEYE));
+        curs = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_BULLSEYE));
     }
 
     ~TargetWndData() {}
@@ -35,44 +35,44 @@ private:
 };
 
 
-BOOL CALLBACK TargetWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK TargetWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    TargetWndData& data = *(TargetWndData*)GetWindowLong(hWnd, GWL_USERDATA);
+    TargetWndData& data = *(TargetWndData*)GetWindowLong(wnd, GWL_USERDATA);
 
-    switch (uMsg) {
+    switch (msg) {
         case WM_NCDESTROY: {
             WNDPROC orgProc = data.orgProc;
             delete &data;
-            return CallWindowProc(orgProc, hWnd, uMsg, wParam, lParam);
+            return CallWindowProc(orgProc, wnd, msg, wparam, lparam);
         }
         case WM_PAINT: {
-            LRESULT ret = CallWindowProc(data.orgProc, hWnd, uMsg, wParam, lParam);
-            HDC hDC = GetDC(hWnd);
-            if (hDC) {
+            LRESULT ret = CallWindowProc(data.orgProc, wnd, msg, wparam, lparam);
+            HDC dc = GetDC(wnd);
+            if (dc) {
                 if (data.cursShowing) {
                     RECT rc;
-                    GetClientRect(hWnd, &rc);
+                    GetClientRect(wnd, &rc);
                     int x = (rc.right  - GetSystemMetrics(SM_CXCURSOR)) / 2;
                     int y = (rc.bottom - GetSystemMetrics(SM_CYCURSOR)) / 2;          
-                    DrawIcon(hDC, x+1, y+1, data.hCurs);
+                    DrawIcon(dc, x+1, y+1, data.curs);
                 }
-                ReleaseDC(hWnd, hDC);
+                ReleaseDC(wnd, dc);
             }
             return ret;
         }
         case WM_USER: {
-            data.cursShowing = wParam != 0;
-            InvalidateRect(hWnd, 0, true);
-            UpdateWindow(hWnd);
+            data.cursShowing = wparam != 0;
+            InvalidateRect(wnd, 0, true);
+            UpdateWindow(wnd);
             return 0;
         }
     }
 
-    return CallWindowProc(data.orgProc, hWnd, uMsg, wParam, lParam);
+    return CallWindowProc(data.orgProc, wnd, msg, wparam, lparam);
 }
 
 
-void MarkWnd(HWND hWnd, bool mode)
+void MarkWnd(HWND wnd, bool mode)
 {
     const int blinkDelay = 50;  // msec
     // thickness of highlight border
@@ -80,19 +80,19 @@ void MarkWnd(HWND hWnd, bool mode)
     // first val can vary; second should be zero
     const int flashes = mode ? 1 : 0;
     // amount to deflate if wnd is maximized, to make the highlight visible
-    const int zoomFix = IsZoomed(hWnd) ? GetSystemMetrics(SM_CXFRAME) : 0;
+    const int zoomFix = IsZoomed(wnd) ? GetSystemMetrics(SM_CXFRAME) : 0;
 
-    HDC hDC = GetWindowDC(hWnd);
-    if (hDC) {
-        int orgRop2 = SetROP2(hDC, R2_XORPEN);
+    HDC dc = GetWindowDC(wnd);
+    if (dc) {
+        int orgRop2 = SetROP2(dc, R2_XORPEN);
 
-        HRGN hRgn = CreateRectRgn(0,0,0,0);
-        bool hasRgn = GetWindowRgn(hWnd, hRgn) != ERROR;
+        HRGN rgn = CreateRectRgn(0,0,0,0);
+        bool hasRgn = GetWindowRgn(wnd, rgn) != ERROR;
         const int loops = flashes*2+1;
 
         if (hasRgn) {
             for (int m = 0; m < loops; ++m) {
-                FrameRgn(hDC, hRgn, HBRUSH(GetStockObject(WHITE_BRUSH)), width, width);
+                FrameRgn(dc, rgn, HBRUSH(GetStockObject(WHITE_BRUSH)), width, width);
                 GdiFlush();
                 if (mode && m < loops-1)
                     Sleep(blinkDelay);
@@ -100,120 +100,119 @@ void MarkWnd(HWND hWnd, bool mode)
         }
         else {
             RECT rc;
-            GetWindowRect(hWnd, &rc);    
+            GetWindowRect(wnd, &rc);    
             OffsetRect(&rc, -rc.left, -rc.top);
             InflateRect(&rc, -zoomFix, -zoomFix);
 
-            HGDIOBJ orgPen = SelectObject(hDC, GetStockObject(WHITE_PEN));
-            HGDIOBJ orgBrush = SelectObject(hDC, GetStockObject(NULL_BRUSH));
+            HGDIOBJ orgPen = SelectObject(dc, GetStockObject(WHITE_PEN));
+            HGDIOBJ orgBrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
 
-            RECT rcTmp;
+            RECT tmp;
             for (int m = 0; m < loops; ++m) {
-                CopyRect(&rcTmp, &rc);
+                CopyRect(&tmp, &rc);
                 for (int n = 0; n < width; ++n) {
-                    Rectangle(hDC, rcTmp.left, rcTmp.top, rcTmp.right, rcTmp.bottom);
-                    InflateRect(&rcTmp, -1, -1);
+                    Rectangle(dc, tmp.left, tmp.top, tmp.right, tmp.bottom);
+                    InflateRect(&tmp, -1, -1);
                 }
                 GdiFlush();
                 if (mode && m < loops-1)
                     Sleep(blinkDelay);
             }
-            SelectObject(hDC, orgBrush);
-            SelectObject(hDC, orgPen);
+            SelectObject(dc, orgBrush);
+            SelectObject(dc, orgPen);
         }
 
-        SetROP2(hDC, orgRop2);
-        ReleaseDC(hWnd, hDC);
-        DeleteObject(hRgn);
+        SetROP2(dc, orgRop2);
+        ReleaseDC(wnd, dc);
+        DeleteObject(rgn);
     }
 
 }
 
 
 BOOL CALLBACK APEditRuleDlgProc(
-                                HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+                                HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static int tracking = 0;    // 0: none, 1: title, 2: class
-    static HWND hHitWnd = 0;
+    static HWND hitWnd = 0;
     static SIZE minSize;
     static SIZE listMarg;
     static int  btnMarg;
-    static HWND hTooltip = 0;
+    static HWND tooltip = 0;
 
-    switch (uMsg) {
+    switch (msg) {
         case WM_INITDIALOG: {
-            if (!lParam) {
-                EndDialog(hWnd, -1);
+            if (!lparam) {
+                EndDialog(wnd, -1);
                 return true;
             }
-            SetWindowLong(hWnd, DWL_USER, lParam);
-            AutoPinRule& rule = *reinterpret_cast<AutoPinRule*>(lParam);
+            SetWindowLong(wnd, DWL_USER, lparam);
+            AutoPinRule& rule = *reinterpret_cast<AutoPinRule*>(lparam);
 
-            hHitWnd = 0;
+            hitWnd = 0;
 
-            SetDlgItemText(hWnd, IDC_DESCR, rule.descr.c_str());
-            SetDlgItemText(hWnd, IDC_TITLE, rule.ttl.c_str());
-            SetDlgItemText(hWnd, IDC_CLASS, rule.cls.c_str());
+            SetDlgItemText(wnd, IDC_DESCR, rule.descr.c_str());
+            SetDlgItemText(wnd, IDC_TITLE, rule.ttl.c_str());
+            SetDlgItemText(wnd, IDC_CLASS, rule.cls.c_str());
 
             try { 
-                new TargetWndData(GetDlgItem(hWnd, IDC_TTLPICK));
-                new TargetWndData(GetDlgItem(hWnd, IDC_CLSPICK));
+                new TargetWndData(GetDlgItem(wnd, IDC_TTLPICK));
+                new TargetWndData(GetDlgItem(wnd, IDC_CLSPICK));
             } 
             catch (int) {
                 // oh, well...
             }
 
             // create tooltip for target icons
-            hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""),
+            tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""),
                 WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                hWnd, 0, app.hInst, 0);
+                wnd, 0, app.inst, 0);
 
             TOOLINFO ti;
             ti.cbSize = sizeof(ti);
             ti.uFlags = TTF_SUBCLASS | TTF_IDISHWND;
-            ti.hwnd = hWnd;
-            ti.hinst = app.hInst;
+            ti.hwnd = wnd;
+            ti.hinst = app.inst;
             ti.lParam = 0;
 
-            ti.uId = UINT_PTR(GetDlgItem(hWnd, IDC_TTLPICK));
+            ti.uId = UINT_PTR(GetDlgItem(wnd, IDC_TTLPICK));
             ti.lpszText = _T("Drag icon to get window title");
-            SendMessage(hTooltip, TTM_ADDTOOL, 0, LPARAM(&ti));
+            SendMessage(tooltip, TTM_ADDTOOL, 0, LPARAM(&ti));
 
-            ti.uId = UINT_PTR(GetDlgItem(hWnd, IDC_CLSPICK));
+            ti.uId = UINT_PTR(GetDlgItem(wnd, IDC_CLSPICK));
             ti.lpszText = _T("Drag icon to get window class");
-            SendMessage(hTooltip, TTM_ADDTOOL, 0, LPARAM(&ti));
-
+            SendMessage(tooltip, TTM_ADDTOOL, 0, LPARAM(&ti));
 
             return true;
         }
         case WM_DESTROY: {
-            DestroyWindow(hTooltip);
+            DestroyWindow(tooltip);
             return true;
         }
         case WM_MOUSEMOVE: {
             if (tracking) {
-                POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-                ClientToScreen(hWnd, &pt);
-                HWND hNewWnd = GetNonChildParent(WindowFromPoint(pt));
-                if (hHitWnd != hNewWnd && !IsProgManWnd(hNewWnd) && !IsTaskBar(hNewWnd)) {
-                    if (hHitWnd)
-                        MarkWnd(hHitWnd, false);
+                POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+                ClientToScreen(wnd, &pt);
+                HWND newWnd = GetNonChildParent(WindowFromPoint(pt));
+                if (hitWnd != newWnd && !IsProgManWnd(newWnd) && !IsTaskBar(newWnd)) {
+                    if (hitWnd)
+                        MarkWnd(hitWnd, false);
 
-                    hHitWnd = hNewWnd;
+                    hitWnd = newWnd;
 
                     if (tracking == 1) {
-                        ef::Win::WndH w = GetDlgItem(hWnd, IDC_TITLE);
-                        w.setText(ef::Win::WndH(hHitWnd).getText());
+                        ef::Win::WndH w = GetDlgItem(wnd, IDC_TITLE);
+                        w.setText(ef::Win::WndH(hitWnd).getText());
                         w.update();
                     }
                     else {
-                        ef::Win::WndH w = GetDlgItem(hWnd, IDC_CLASS);
-                        w.setText(ef::Win::WndH(hHitWnd).getClassName());
+                        ef::Win::WndH w = GetDlgItem(wnd, IDC_CLASS);
+                        w.setText(ef::Win::WndH(hitWnd).getClassName());
                         w.update();
                     }
 
-                    MarkWnd(hHitWnd, true);
+                    MarkWnd(hitWnd, true);
 
                 }
             }
@@ -221,46 +220,46 @@ BOOL CALLBACK APEditRuleDlgProc(
         }
         case WM_LBUTTONUP: {
             if (tracking) {
-                if (hHitWnd)
-                    MarkWnd(hHitWnd, false);
+                if (hitWnd)
+                    MarkWnd(hitWnd, false);
                 ReleaseCapture();
-                SendDlgItemMessage(hWnd, tracking == 1 ? IDC_TTLPICK : IDC_CLSPICK, 
+                SendDlgItemMessage(wnd, tracking == 1 ? IDC_TTLPICK : IDC_CLSPICK, 
                     WM_USER, true, 0);
                 tracking = 0;
-                hHitWnd = 0;
+                hitWnd = 0;
             }
             return true;
         }
         case WM_HELP: {
-            app.help.show(hWnd, _T("::\\editruledlg.htm"));
+            app.help.show(wnd, _T("::\\editruledlg.htm"));
             return true;
         }
         case WM_COMMAND: {
-            int id = LOWORD(wParam);
+            int id = LOWORD(wparam);
             switch (id) {
                 case IDOK: {
                     AutoPinRule& rule = 
-                        *reinterpret_cast<AutoPinRule*>(GetWindowLong(hWnd, DWL_USER));
+                        *reinterpret_cast<AutoPinRule*>(GetWindowLong(wnd, DWL_USER));
                     tchar buf[256];
-                    GetDlgItemText(hWnd, IDC_DESCR, buf, sizeof(buf));  rule.descr = buf;
-                    GetDlgItemText(hWnd, IDC_TITLE, buf, sizeof(buf));  rule.ttl = buf;
-                    GetDlgItemText(hWnd, IDC_CLASS, buf, sizeof(buf));  rule.cls = buf;
+                    GetDlgItemText(wnd, IDC_DESCR, buf, sizeof(buf));  rule.descr = buf;
+                    GetDlgItemText(wnd, IDC_TITLE, buf, sizeof(buf));  rule.ttl = buf;
+                    GetDlgItemText(wnd, IDC_CLASS, buf, sizeof(buf));  rule.cls = buf;
                     // allow empty strings (at least title can be empty...)
                     //if (rule.ttl.empty()) rule.ttl = "*";
                     //if (rule.cls.empty()) rule.cls = "*";          
                 }
                 case IDCANCEL:
-                    EndDialog(hWnd, id);
+                    EndDialog(wnd, id);
                     return true;
                 case IDHELP:
-                    app.help.show(hWnd, _T("::\\editruledlg.htm"));
+                    app.help.show(wnd, _T("::\\editruledlg.htm"));
                     return true;
                 case IDC_TTLPICK:
                 case IDC_CLSPICK: {
-                    if (HIWORD(wParam) == STN_CLICKED) {
-                        SendDlgItemMessage(hWnd, id, WM_USER, false, 0);
-                        SetCapture(hWnd);
-                        SetCursor(LoadCursor(app.hInst, MAKEINTRESOURCE(IDC_BULLSEYE)));
+                    if (HIWORD(wparam) == STN_CLICKED) {
+                        SendDlgItemMessage(wnd, id, WM_USER, false, 0);
+                        SetCapture(wnd);
+                        SetCursor(LoadCursor(app.inst, MAKEINTRESOURCE(IDC_BULLSEYE)));
                         tracking = id == IDC_TTLPICK ? 1 : 2;
                     }
                     return true;
@@ -282,7 +281,7 @@ class RulesList {
 public:
     RulesList();
 
-    void init(HWND hWnd);
+    void init(HWND wnd);
     void term();
 
     void setAll(const AutoPinRules& rules);
@@ -304,20 +303,20 @@ public:
 
     operator HWND() const
     {
-        return hList;
+        return list;
     }
 
-    void checkClick(HWND hPage)
+    void checkClick(HWND page)
     {
         DWORD xy = GetMessagePos();
         LVHITTESTINFO hti;
         hti.pt.x = GET_X_LPARAM(xy);
         hti.pt.y = GET_Y_LPARAM(xy);
-        ScreenToClient(hList, &hti.pt);
-        int i = ListView_HitTest(hList, &hti);
+        ScreenToClient(list, &hti.pt);
+        int i = ListView_HitTest(list, &hti);
         if (i >= 0 && hti.flags & LVHT_ONITEMSTATEICON) {
             if (emuChk) toggleItem(i);
-            PSChanged(hPage);
+            PSChanged(page);
         }
     }
 
@@ -326,35 +325,35 @@ public:
         AutoPinRule* rule = getData(i);
         if (rule) {
             rule->enabled = !rule->enabled;
-            ListView_Update(hList, i);
+            ListView_Update(list, i);
         }
     }
 
-    static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+    static LRESULT CALLBACK WndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
-        RulesList* list = (RulesList*)GetWindowLong(hWnd, GWL_USERDATA);
+        RulesList* list = (RulesList*)GetWindowLong(wnd, GWL_USERDATA);
         if (!list || !list->orgProc)
-            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProc(wnd, msg, wparam, lparam);
 
-        if (uMsg == WM_CHAR && wParam == VK_SPACE) {
-            RulesList* list = (RulesList*)GetWindowLong(hWnd, GWL_USERDATA);
+        if (msg == WM_CHAR && wparam == VK_SPACE) {
+            RulesList* list = (RulesList*)GetWindowLong(wnd, GWL_USERDATA);
             if (list)
                 list->onSpace();
             return 0;
         }
 
-        return CallWindowProc(list->orgProc, hWnd, uMsg, wParam, lParam);    
+        return CallWindowProc(list->orgProc, wnd, msg, wparam, lparam);    
     }
 
     void onSpace()
     {
-        int i = ListView_GetNextItem(hList, -1, LVNI_FOCUSED);
+        int i = ListView_GetNextItem(list, -1, LVNI_FOCUSED);
         if (i != -1)
             toggleItem(i);
     }
 
 protected:
-    HWND hList;
+    HWND list;
     HIMAGELIST ilChecks;
     bool emuChk;
     WNDPROC orgProc;
@@ -365,122 +364,122 @@ protected:
 };
 
 
-RulesList::RulesList() : hList(0), emuChk(ef::Win::getDllVer(_T("comctl32.dll")) < ef::Win::packVer(4,70))
+RulesList::RulesList() : list(0), emuChk(ef::Win::getDllVer(_T("comctl32.dll")) < ef::Win::packVer(4,70))
 {
     //emuChk = true;
 }
 
 
-void RulesList::init(HWND hWnd)
+void RulesList::init(HWND wnd)
 {
-    hList = hWnd;
+    list = wnd;
 
     // LVS_EX_CHECKBOXES is only available in comctl32 4.70+
     // (like LVS_EX_GRIDLINES and LVS_EX_FULLROWSELECT),
     // so we emulate it on earlier versions
 
     if (emuChk) {
-        orgProc = WNDPROC(SetWindowLong(hList, GWL_WNDPROC, LONG(WndProc)));
-        SetWindowLong(hList, GWL_USERDATA, LONG(this));
+        orgProc = WNDPROC(SetWindowLong(list, GWL_WNDPROC, LONG(WndProc)));
+        SetWindowLong(list, GWL_USERDATA, LONG(this));
 
-        HDC hDC = CreateCompatibleDC(0);
-        if (hDC) {
-            HBITMAP hBmp = CreateCompatibleBitmap(hDC, 32, 16);
-            if (hBmp) {
-                HGDIOBJ orgBmp = SelectObject(hDC, hBmp);
+        HDC dc = CreateCompatibleDC(0);
+        if (dc) {
+            HBITMAP bmp = CreateCompatibleBitmap(dc, 32, 16);
+            if (bmp) {
+                HGDIOBJ orgBmp = SelectObject(dc, bmp);
                 if (orgBmp) {
-                    HFONT hFnt = CreateFont(16, 0, 0,0,FW_NORMAL, false, false, false, 
+                    HFONT fnt = CreateFont(16, 0, 0,0,FW_NORMAL, false, false, false, 
                         SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
                         DEFAULT_PITCH | FF_DONTCARE, _T("Marlett"));
-                    if (hFnt) {
-                        HGDIOBJ orgFnt = SelectObject(hDC, hFnt);
+                    if (fnt) {
+                        HGDIOBJ orgFnt = SelectObject(dc, fnt);
                         if (orgFnt) {
                             //ab
                             RECT rc = {0,0,16,16};
                             for (int n = 0; n < 2; ++n) {
-                                FillRect(hDC, &rc, HBRUSH(GetStockObject(WHITE_BRUSH)));
-                                SelectObject(hDC, GetStockObject(NULL_BRUSH));
+                                FillRect(dc, &rc, HBRUSH(GetStockObject(WHITE_BRUSH)));
+                                SelectObject(dc, GetStockObject(NULL_BRUSH));
 
                                 RECT rc2;
                                 CopyRect(&rc2, &rc);
 
                                 InflateRect(&rc2, -1, -1);
-                                Rectangle(hDC, rc2);
+                                Rectangle(dc, rc2);
                                 InflateRect(&rc2, -1, -1);
-                                Rectangle(hDC, rc2);
+                                Rectangle(dc, rc2);
                                 InflateRect(&rc2, -1, -1);
 
-                                //SetTextColor(hDC, RGB(0,255,0));
-                                //SetBkColor(hDC, RGB(0,255,0));
+                                //SetTextColor(dc, RGB(0,255,0));
+                                //SetBkColor(dc, RGB(0,255,0));
                                 if (n == 1) {
-                                    SetBkMode(hDC, TRANSPARENT);
-                                    DrawText(hDC, _T("a"), 1, &rc, DT_NOPREFIX | DT_CENTER);
+                                    SetBkMode(dc, TRANSPARENT);
+                                    DrawText(dc, _T("a"), 1, &rc, DT_NOPREFIX | DT_CENTER);
                                 }
 
                                 OffsetRect(&rc, 16, 0);
                             }
 
-                            SelectObject(hDC, orgFnt);
-                            DeleteObject(hFnt);
+                            SelectObject(dc, orgFnt);
+                            DeleteObject(fnt);
                         }
                     }
-                    SelectObject(hDC, orgBmp);
+                    SelectObject(dc, orgBmp);
 
                     ilChecks = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 0, 1);
-                    ImageList_AddMasked(ilChecks, hBmp, RGB(255,255,255));
-                    ListView_SetImageList(hList, ilChecks, LVSIL_STATE);
+                    ImageList_AddMasked(ilChecks, bmp, RGB(255,255,255));
+                    ListView_SetImageList(list, ilChecks, LVSIL_STATE);
                 }
-                DeleteObject(hBmp);
+                DeleteObject(bmp);
             }
-            DeleteDC(hDC);
+            DeleteDC(dc);
         }
 
     }
     else {
-        ListView_SetExtendedListViewStyle(hList, LVS_EX_CHECKBOXES 
+        ListView_SetExtendedListViewStyle(list, LVS_EX_CHECKBOXES 
             /*| LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT*/);
     }
 
-    ListView_SetCallbackMask(hList, LVIS_STATEIMAGEMASK);
+    ListView_SetCallbackMask(list, LVIS_STATEIMAGEMASK);
 
-    HWND hDlg = GetParent(hWnd);
+    HWND dlg = GetParent(wnd);
 
     // get the column text from the dummy static ctrl
     // delete it and move the top edge of the list to cover its place
-    HWND hDummy = GetDlgItem(hDlg, IDC_DUMMY);
-    tstring label = ef::Win::WndH(hDummy).getText();
+    HWND dummy = GetDlgItem(dlg, IDC_DUMMY);
+    tstring label = ef::Win::WndH(dummy).getText();
     RECT rc;
-    GetWindowRect(hDummy, &rc);
-    DestroyWindow(hDummy);  hDummy = 0;
-    ScreenToClient(hDlg, (POINT*)&rc);  // only top needed
+    GetWindowRect(dummy, &rc);
+    DestroyWindow(dummy);  dummy = 0;
+    ScreenToClient(dlg, (POINT*)&rc);  // only top needed
     int top = rc.top;
 
-    GetWindowRect(hList, &rc);
-    MapWindowPoints(0, hDlg, (POINT*)&rc, 2);
+    GetWindowRect(list, &rc);
+    MapWindowPoints(0, dlg, (POINT*)&rc, 2);
     rc.top = top;
-    MoveWindow(hList, rc, true);
+    MoveWindow(list, rc, true);
 
     // we'll set the column size to client width
-    GetClientRect(hList, &rc);    
+    GetClientRect(list, &rc);    
 
     LVCOLUMN lvc;
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt  = LVCFMT_LEFT;
     lvc.cx   = rc.right - rc.left;
     lvc.pszText = const_cast<tchar*>(label.c_str());
-    ListView_InsertColumn(hList, 0, LPARAM(&lvc));
+    ListView_InsertColumn(list, 0, LPARAM(&lvc));
 }
 
 
 void RulesList::term()
 {
-    if (ef::Win::WndH(hList).getStyle() & LVS_SHAREIMAGELISTS)
+    if (ef::Win::WndH(list).getStyle() & LVS_SHAREIMAGELISTS)
         ImageList_Destroy(ilChecks);
 
     if (emuChk)
-        SetWindowLong(hList, GWL_WNDPROC, LONG(orgProc));
+        SetWindowLong(list, GWL_WNDPROC, LONG(orgProc));
 
-    hList = 0;
+    list = 0;
 }
 
 
@@ -506,7 +505,7 @@ void RulesList::getAll(AutoPinRules& rules)
 {
     rules.clear();
 
-    int cnt = ListView_GetItemCount(hList);
+    int cnt = ListView_GetItemCount(list);
     for (int n = 0; n < cnt; ++n) {
         const AutoPinRule* rule = getData(n);
         if (!rule)
@@ -519,7 +518,7 @@ void RulesList::getAll(AutoPinRules& rules)
 void RulesList::remove(std::vector<int> indices)
 {
     for (int n = indices.size()-1; n >= 0; --n)
-        ListView_DeleteItem(hList, indices[n]);
+        ListView_DeleteItem(list, indices[n]);
 }
 
 
@@ -531,11 +530,11 @@ int RulesList::addNew()
 
     LVITEM lvi;
     lvi.mask = LVIF_TEXT | LVIF_PARAM;
-    lvi.iItem = ListView_GetItemCount(hList);
+    lvi.iItem = ListView_GetItemCount(list);
     lvi.iSubItem = 0;
     lvi.pszText = LPSTR_TEXTCALLBACK;
     lvi.lParam = LPARAM(rule);
-    int i = ListView_InsertItem(hList, &lvi);
+    int i = ListView_InsertItem(list, &lvi);
     if (i < 0)
         delete rule;
 
@@ -551,7 +550,7 @@ AutoPinRule* RulesList::getData(int i) const
     lvi.mask = LVIF_PARAM;
     lvi.iItem = i;
     lvi.iSubItem = 0;
-    return ListView_GetItem(hList, &lvi) ? (AutoPinRule*)lvi.lParam : 0;
+    return ListView_GetItem(list, &lvi) ? (AutoPinRule*)lvi.lParam : 0;
 }
 
 
@@ -564,7 +563,7 @@ bool RulesList::setData(int i, AutoPinRule* rule)
     lvi.iItem = i;
     lvi.iSubItem = 0;
     lvi.lParam = LPARAM(rule);
-    return !!ListView_SetItem(hList, &lvi);
+    return !!ListView_SetItem(list, &lvi);
 }
 
 
@@ -588,9 +587,9 @@ bool RulesList::setRule(int i, const AutoPinRule& rule)
     if (!r)
         return false;
     *r = rule;
-    ListView_Update(hList, i);
+    ListView_Update(list, i);
     // use this to update the focus rect size
-    ListView_SetItemText(hList, i, 0, LPSTR_TEXTCALLBACK);
+    ListView_SetItemText(list, i, 0, LPSTR_TEXTCALLBACK);
     return true;
 }
 
@@ -599,9 +598,9 @@ bool RulesList::setRule(int i, const AutoPinRule& rule)
 //
 void RulesList::selectSingleRule(int i)
 {
-    int cnt = ListView_GetItemCount(hList);
+    int cnt = ListView_GetItemCount(list);
     for (int n = 0; n < cnt; ++n)
-        ListView_SetItemState(hList, n, n==i ? LVIS_SELECTED : 0, LVIS_SELECTED);
+        ListView_SetItemState(list, n, n==i ? LVIS_SELECTED : 0, LVIS_SELECTED);
 }
 
 
@@ -610,9 +609,9 @@ void RulesList::selectSingleRule(int i)
 //
 int RulesList::getFirstSel() const
 {
-    int cnt = ListView_GetItemCount(hList);
+    int cnt = ListView_GetItemCount(list);
     for (int n = 0; n < cnt; ++n) {
-        UINT state = ListView_GetItemState(hList, n, LVIS_SELECTED);
+        UINT state = ListView_GetItemState(list, n, LVIS_SELECTED);
         if (state & LVIS_SELECTED)
             return n;
     }
@@ -625,9 +624,9 @@ int RulesList::getFirstSel() const
 std::vector<int> RulesList::getSel() const
 {
     std::vector<int> ret;
-    int cnt = ListView_GetItemCount(hList);
+    int cnt = ListView_GetItemCount(list);
     for (int n = 0; n < cnt; ++n) {
-        UINT state = ListView_GetItemState(hList, n, LVIS_SELECTED);
+        UINT state = ListView_GetItemState(list, n, LVIS_SELECTED);
         if (state & LVIS_SELECTED)
             ret.push_back(n);
     }
@@ -637,23 +636,23 @@ std::vector<int> RulesList::getSel() const
 
 void RulesList::setItemSel(int i, bool sel)
 {
-    UINT state = ListView_GetItemState(hList, i, LVIS_SELECTED);
+    UINT state = ListView_GetItemState(list, i, LVIS_SELECTED);
     bool curSel = (state & LVIS_SELECTED) != 0;
     if (curSel != sel)
-        ListView_SetItemState(hList, i, sel ? LVIS_SELECTED : 0, LVIS_SELECTED);
+        ListView_SetItemState(list, i, sel ? LVIS_SELECTED : 0, LVIS_SELECTED);
 }
 
 
 bool RulesList::getItemSel(int i) const
 {
-    UINT state = ListView_GetItemState(hList, i, LVIS_SELECTED);
+    UINT state = ListView_GetItemState(list, i, LVIS_SELECTED);
     return (state & LVIS_SELECTED) != 0;
 }
 
 
 void RulesList::moveSelUp()
 {
-    int cnt = ListView_GetItemCount(hList);
+    int cnt = ListView_GetItemCount(list);
     std::vector<int> sel = getSel();
     // nop if:
     // - nothing's selected
@@ -673,8 +672,8 @@ void RulesList::moveSelUp()
         setItemSel(i-1, true);
         setItemSel(i,   false);
         // notify for text change
-        ListView_SetItemText(hList, i-1, 0, LPSTR_TEXTCALLBACK);
-        ListView_SetItemText(hList, i, 0, LPSTR_TEXTCALLBACK);
+        ListView_SetItemText(list, i-1, 0, LPSTR_TEXTCALLBACK);
+        ListView_SetItemText(list, i, 0, LPSTR_TEXTCALLBACK);
     }
 
 }
@@ -682,7 +681,7 @@ void RulesList::moveSelUp()
 
 void RulesList::moveSelDown()
 {
-    int cnt = ListView_GetItemCount(hList);
+    int cnt = ListView_GetItemCount(list);
     std::vector<int> sel = getSel();
     // nop if:
     // - nothing's selected
@@ -702,180 +701,180 @@ void RulesList::moveSelDown()
         setItemSel(i+1, true);
         setItemSel(i,   false);
         // notify for text change
-        ListView_SetItemText(hList, i+1, 0, LPSTR_TEXTCALLBACK);
-        ListView_SetItemText(hList, i, 0, LPSTR_TEXTCALLBACK);
+        ListView_SetItemText(list, i+1, 0, LPSTR_TEXTCALLBACK);
+        ListView_SetItemText(list, i, 0, LPSTR_TEXTCALLBACK);
     }
 
 }
 
 
 
-static RulesList list;
+static RulesList rlist;
 
 
 
 // update controls state, depending on current selection
 //
-void UIUpdate(HWND hWnd)
+void UIUpdate(HWND wnd)
 {
-    int cnt = ListView_GetItemCount(list);
-    int selCnt = ListView_GetSelectedCount(list);
-    EnableWindow(GetDlgItem(hWnd, IDC_EDIT),   selCnt == 1);
-    EnableWindow(GetDlgItem(hWnd, IDC_REMOVE), selCnt > 0);
-    EnableWindow(GetDlgItem(hWnd, IDC_UP),     selCnt > 0 && 
-        !list.getItemSel(0));
-    EnableWindow(GetDlgItem(hWnd, IDC_DOWN),   selCnt > 0 && 
-        !list.getItemSel(cnt-1));
+    int cnt = ListView_GetItemCount(rlist);
+    int selCnt = ListView_GetSelectedCount(rlist);
+    EnableWindow(GetDlgItem(wnd, IDC_EDIT),   selCnt == 1);
+    EnableWindow(GetDlgItem(wnd, IDC_REMOVE), selCnt > 0);
+    EnableWindow(GetDlgItem(wnd, IDC_UP),     selCnt > 0 && 
+        !rlist.getItemSel(0));
+    EnableWindow(GetDlgItem(wnd, IDC_DOWN),   selCnt > 0 && 
+        !rlist.getItemSel(cnt-1));
 }
 
 
-static bool CmAutoPinOn(HWND hWnd)
+static bool CmAutoPinOn(HWND wnd)
 {
-    bool b = IsDlgButtonChecked(hWnd, IDC_AUTOPIN_ON) == BST_CHECKED;
-    EnableGroup(hWnd, IDC_AUTOPIN_GROUP, b);
+    bool b = IsDlgButtonChecked(wnd, IDC_AUTOPIN_ON) == BST_CHECKED;
+    EnableGroup(wnd, IDC_AUTOPIN_GROUP, b);
 
     // if turned on, disable some buttons
-    if (b) UIUpdate(hWnd);
+    if (b) UIUpdate(wnd);
 
-    PSChanged(hWnd);
+    PSChanged(wnd);
     return true;
 }
 
 
-static bool EvInitDialog(HWND hWnd, HWND /*hFocus*/, LPARAM lParam)
+static bool EvInitDialog(HWND wnd, HWND /*focus*/, LPARAM param)
 {
     // must have a valid data ptr
-    if (!lParam) {
-        EndDialog(hWnd, IDCANCEL);
+    if (!param) {
+        EndDialog(wnd, IDCANCEL);
         return false;
     }
 
     // save the data ptr
-    PROPSHEETPAGE& psp = *reinterpret_cast<PROPSHEETPAGE*>(lParam);
+    PROPSHEETPAGE& psp = *reinterpret_cast<PROPSHEETPAGE*>(param);
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(psp.lParam)->opt;
-    SetWindowLong(hWnd, DWL_USER, psp.lParam);
+    SetWindowLong(wnd, DWL_USER, psp.lParam);
 
 
-    CheckDlgButton(hWnd, IDC_AUTOPIN_ON, opt.autoPinOn);
-    CmAutoPinOn(hWnd);  // simulate check to setup other ctrls
+    CheckDlgButton(wnd, IDC_AUTOPIN_ON, opt.autoPinOn);
+    CmAutoPinOn(wnd);  // simulate check to setup other ctrls
 
-    SendDlgItemMessage(hWnd, IDC_RULE_DELAY_UD, UDM_SETRANGE, 0, 
+    SendDlgItemMessage(wnd, IDC_RULE_DELAY_UD, UDM_SETRANGE, 0, 
         MAKELONG(opt.autoPinDelay.maxV,opt.autoPinDelay.minV));
-    SendDlgItemMessage(hWnd, IDC_RULE_DELAY_UD, UDM_SETPOS, 0, 
+    SendDlgItemMessage(wnd, IDC_RULE_DELAY_UD, UDM_SETPOS, 0, 
         MAKELONG(opt.autoPinDelay.value,0));
 
 
-    list.init(GetDlgItem(hWnd, IDC_LIST));
-    list.setAll(opt.autoPinRules);
+    rlist.init(GetDlgItem(wnd, IDC_LIST));
+    rlist.setAll(opt.autoPinRules);
 
-    UIUpdate(hWnd);
+    UIUpdate(wnd);
 
     return false;
 }
 
 
-static void Apply(HWND hWnd, WindowCreationMonitor& winCreMon)
+static void Apply(HWND wnd, WindowCreationMonitor& winCreMon)
 {
-    Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(hWnd, DWL_USER))->opt;
+    Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
-    bool autoPinOn = IsDlgButtonChecked(hWnd, IDC_AUTOPIN_ON) == BST_CHECKED;
+    bool autoPinOn = IsDlgButtonChecked(wnd, IDC_AUTOPIN_ON) == BST_CHECKED;
     if (opt.autoPinOn != autoPinOn) {
         if (!autoPinOn)
             winCreMon.term();
-        else if (!winCreMon.init(app.hMainWnd, App::WM_QUEUEWINDOW)) {
-            Error(hWnd, ResStr(IDS_ERR_HOOKDLL));
+        else if (!winCreMon.init(app.mainWnd, App::WM_QUEUEWINDOW)) {
+            Error(wnd, ResStr(IDS_ERR_HOOKDLL));
             autoPinOn = false;
         }
     }
 
-    opt.autoPinDelay.value = opt.autoPinDelay.getUI(hWnd, IDC_RULE_DELAY);
+    opt.autoPinDelay.value = opt.autoPinDelay.getUI(wnd, IDC_RULE_DELAY);
 
     if (opt.autoPinOn = autoPinOn)
-        SetTimer(app.hMainWnd, App::TIMERID_AUTOPIN, opt.autoPinDelay.value, 0);
+        SetTimer(app.mainWnd, App::TIMERID_AUTOPIN, opt.autoPinDelay.value, 0);
     else
-        KillTimer(app.hMainWnd, App::TIMERID_AUTOPIN);
+        KillTimer(app.mainWnd, App::TIMERID_AUTOPIN);
 
-    list.getAll(opt.autoPinRules);
+    rlist.getAll(opt.autoPinRules);
 }
 
 
-static bool Validate(HWND hWnd)
+static bool Validate(HWND wnd)
 {
-    Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(hWnd, DWL_USER))->opt;
-    return opt.autoPinDelay.validateUI(hWnd, IDC_RULE_DELAY);
+    Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
+    return opt.autoPinDelay.validateUI(wnd, IDC_RULE_DELAY);
 }
 
 
-BOOL CALLBACK OptAutoPinProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    switch (uMsg) {
+    switch (msg) {
         case WM_INITDIALOG: {
-            return EvInitDialog(hWnd, HWND(wParam), lParam);
+            return EvInitDialog(wnd, HWND(wparam), lparam);
         }
         case WM_DESTROY: {
-            list.term();
+            rlist.term();
             return true;
         }
         case WM_NOTIFY: {
-            NMHDR nmhdr = *reinterpret_cast<NMHDR*>(lParam);
+            NMHDR nmhdr = *reinterpret_cast<NMHDR*>(lparam);
             switch (nmhdr.code) {
             case PSN_SETACTIVE: {
-                HWND hTab = PropSheet_GetTabControl(nmhdr.hwndFrom);
-                app.optionPage = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
-                SetWindowLong(hWnd, DWL_MSGRESULT, 0);
+                HWND tab = PropSheet_GetTabControl(nmhdr.hwndFrom);
+                app.optionPage = SendMessage(tab, TCM_GETCURSEL, 0, 0);
+                SetWindowLong(wnd, DWL_MSGRESULT, 0);
                 return true;
             }
             case PSN_KILLACTIVE: {
-                SetWindowLong(hWnd, DWL_MSGRESULT, !Validate(hWnd));
+                SetWindowLong(wnd, DWL_MSGRESULT, !Validate(wnd));
                 return true;
             }
             case PSN_APPLY: {
-                WindowCreationMonitor& winCreMon = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(hWnd, DWL_USER))->winCreMon;
-                Apply(hWnd, winCreMon);
+                WindowCreationMonitor& winCreMon = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->winCreMon;
+                Apply(wnd, winCreMon);
                 return true;
             }
             case PSN_HELP: {
-                app.help.show(hWnd, _T("::\\optautopin.htm"));
+                app.help.show(wnd, _T("::\\optautopin.htm"));
                 return true;
             }
             case UDN_DELTAPOS: {
-                if (wParam == IDC_RULE_DELAY_UD) {
-                    NM_UPDOWN& nmud = *(NM_UPDOWN*)lParam;
+                if (wparam == IDC_RULE_DELAY_UD) {
+                    NM_UPDOWN& nmud = *(NM_UPDOWN*)lparam;
                     Options& opt = 
-                        reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(hWnd, DWL_USER))->opt;
+                        reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
                     nmud.iDelta *= opt.autoPinDelay.step;
-                    SetWindowLong(hWnd, DWL_MSGRESULT, FALSE);   // allow change
+                    SetWindowLong(wnd, DWL_MSGRESULT, FALSE);   // allow change
                     return true;
                 }
                 else
                     return false;
             }
             case LVN_ITEMCHANGED: {
-                NMLISTVIEW& nmlv = *(NMLISTVIEW*)lParam;
-                if (nmlv.uChanged == LVIF_STATE) UIUpdate(hWnd);
+                NMLISTVIEW& nmlv = *(NMLISTVIEW*)lparam;
+                if (nmlv.uChanged == LVIF_STATE) UIUpdate(wnd);
                 return true;
             }
             case NM_CLICK: {
-                list.checkClick(hWnd);
+                rlist.checkClick(wnd);
                 return true;
             }
             case NM_DBLCLK: {
-                int i = ListView_GetNextItem(list, -1, LVNI_FOCUSED);
+                int i = ListView_GetNextItem(rlist, -1, LVNI_FOCUSED);
                 if (i != -1) {
                     // If an item has been focused and then we click on the empty area
                     // below the last item, we'll still get NM_DBLCLK.
                     // So, we must also check if the focused item is also selected.
-                    if (list.getItemSel(i)) {
+                    if (rlist.getItemSel(i)) {
                         // we can't just send ourselves a IDC_EDIT cmd
                         // because there may be more selected items
                         // (if the CTRL is held)
                         AutoPinRule rule;
-                        if (list.getRule(i, rule)) {
+                        if (rlist.getRule(i, rule)) {
                             int res = LocalizedDialogBoxParam(IDD_EDIT_AUTOPIN_RULE, 
-                                hWnd, APEditRuleDlgProc, LPARAM(&rule));
+                                wnd, APEditRuleDlgProc, LPARAM(&rule));
                             if (res == IDOK) {
-                                list.setRule(i, rule);
-                                PSChanged(hWnd);
+                                rlist.setRule(i, rule);
+                                PSChanged(wnd);
                             }
                         }
                     }
@@ -883,7 +882,7 @@ BOOL CALLBACK OptAutoPinProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 return true;
             }
             case LVN_DELETEITEM: {
-                NMLISTVIEW& nmlv = *(NMLISTVIEW*)lParam;
+                NMLISTVIEW& nmlv = *(NMLISTVIEW*)lparam;
                 LVITEM lvi;
                 lvi.mask = TVIF_PARAM;
                 lvi.iItem = nmlv.iItem;
@@ -893,7 +892,7 @@ BOOL CALLBACK OptAutoPinProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 return true;
             }
             case LVN_GETDISPINFO: {
-                NMLVDISPINFO& di = *(NMLVDISPINFO*)lParam;
+                NMLVDISPINFO& di = *(NMLVDISPINFO*)lparam;
                 const AutoPinRule* rule = (AutoPinRule*)di.item.lParam;
                 if (!rule)
                     return false;
@@ -912,7 +911,7 @@ BOOL CALLBACK OptAutoPinProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 return true;
             }
             case LVN_ITEMCHANGING: {
-                NMLISTVIEW& nm = *(NMLISTVIEW*)lParam;
+                NMLISTVIEW& nm = *(NMLISTVIEW*)lparam;
                 AutoPinRule* rule = (AutoPinRule*)nm.lParam;
                 if (nm.uChanged & LVIF_STATE && nm.uNewState & LVIS_STATEIMAGEMASK) {
                     rule->enabled = !rule->enabled;
@@ -925,56 +924,56 @@ BOOL CALLBACK OptAutoPinProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
         }
         case WM_HELP: {
-            app.help.show(hWnd, _T("::\\optautopin.htm"));
+            app.help.show(wnd, _T("::\\optautopin.htm"));
             return true;
         }
         case WM_COMMAND: {
-            WORD id = LOWORD(wParam), code = HIWORD(wParam);
+            WORD id = LOWORD(wparam), code = HIWORD(wparam);
             switch (id) {
-                case IDC_AUTOPIN_ON:    return CmAutoPinOn(hWnd);
+                case IDC_AUTOPIN_ON:    return CmAutoPinOn(wnd);
                 case IDC_ADD: {
                     AutoPinRule rule;
                     int res = LocalizedDialogBoxParam(IDD_EDIT_AUTOPIN_RULE, 
-                        hWnd, APEditRuleDlgProc, LPARAM(&rule));
+                        wnd, APEditRuleDlgProc, LPARAM(&rule));
                     if (res == IDOK) {
-                        int i = list.addNew();
-                        if (i >= 0 && list.setRule(i, rule))
-                            list.selectSingleRule(i);
-                        PSChanged(hWnd);
+                        int i = rlist.addNew();
+                        if (i >= 0 && rlist.setRule(i, rule))
+                            rlist.selectSingleRule(i);
+                        PSChanged(wnd);
                     }
                     return true;
                 }
                 case IDC_EDIT: {
                     AutoPinRule rule;
-                    int i = list.getFirstSel();
-                    if (i >= 0 && list.getRule(i, rule)) {
+                    int i = rlist.getFirstSel();
+                    if (i >= 0 && rlist.getRule(i, rule)) {
                         int res = LocalizedDialogBoxParam(IDD_EDIT_AUTOPIN_RULE, 
-                            hWnd, APEditRuleDlgProc, LPARAM(&rule));
+                            wnd, APEditRuleDlgProc, LPARAM(&rule));
                         if (res == IDOK) {
-                            list.setRule(i, rule);
-                            PSChanged(hWnd);
+                            rlist.setRule(i, rule);
+                            PSChanged(wnd);
                         }
                     }
                     return true;
                 }
                 case IDC_REMOVE: {
-                    list.remove(list.getSel());
-                    PSChanged(hWnd);
+                    rlist.remove(rlist.getSel());
+                    PSChanged(wnd);
                     return true;
                 }
                 case IDC_UP: {
-                    list.moveSelUp();
-                    PSChanged(hWnd);
+                    rlist.moveSelUp();
+                    PSChanged(wnd);
                     return true;
                 }
                 case IDC_DOWN: {
-                    list.moveSelDown();
-                    PSChanged(hWnd);
+                    rlist.moveSelDown();
+                    PSChanged(wnd);
                     return true;
                 }
                 case IDC_RULE_DELAY:
                     if (code == EN_CHANGE)
-                        PSChanged(hWnd);
+                        PSChanged(wnd);
                     return true;
                 default:
                     return false;

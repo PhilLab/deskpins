@@ -7,11 +7,11 @@
 
 struct App : boost::noncopyable {
     ef::Win::PrevInstance prevInst;
-    HWND      hMainWnd, hAboutDlg, hOptionsDlg, hLayerWnd; //, hActiveModelessDlg;
-    HINSTANCE hInst;
-    HMODULE   hResMod;
+    HWND      mainWnd, aboutDlg, optionsDlg, layerWnd; //, activeModelessDlg;
+    HINSTANCE inst;
+    HMODULE   resMod;
     PinShape  pinShape;
-    HICON     hSmIcon, hSmClrIcon;
+    HICON     smIcon, smClrIcon;
     Help      help;
     int       pinsUsed;
     int       optionPage;
@@ -44,14 +44,14 @@ struct App : boost::noncopyable {
     };
 
     App() : prevInst(_T("EFDeskPinsRunning")),
-        hMainWnd(0), hAboutDlg(0), hOptionsDlg(0), hLayerWnd(0), 
-        /*hActiveModelessDlg(0), */ hInst(0), hResMod(0), 
-        hSmIcon(0), hSmClrIcon(0), 
+        mainWnd(0), aboutDlg(0), optionsDlg(0), layerWnd(0), 
+        /*activeModelessDlg(0), */ inst(0), resMod(0), 
+        smIcon(0), smClrIcon(0), 
         pinsUsed(0), optionPage(0), trayIcon(WM_TRAYICON, 0) {}
-    ~App() { freeResMod(); DeleteObject(hSmIcon); DeleteObject(hSmClrIcon); }
+    ~App() { freeResMod(); DeleteObject(smIcon); DeleteObject(smClrIcon); }
 
 
-    bool loadResMod(const ef::tstring& file, HWND hMsgParent);
+    bool loadResMod(const ef::tstring& file, HWND msgParent);
     void freeResMod();
     bool initComctl();
     bool chkPrevInst();

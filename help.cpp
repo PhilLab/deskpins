@@ -4,11 +4,11 @@
 #include "resource.h"
 
 
-bool Help::init(HINSTANCE hInst, const tstring& fname) 
+bool Help::init(HINSTANCE inst, const tstring& fname) 
 {
     hlpFile = tstring();
 
-    tstring path = ef::dirSpec(ef::Win::getModulePath(hInst));
+    tstring path = ef::dirSpec(ef::Win::getModulePath(inst));
     if (path.empty())
         return false;
 
@@ -25,12 +25,12 @@ bool Help::init(HINSTANCE hInst, const tstring& fname)
 // otherwise, append it to file spec
 //   topic format is:  "::\someTopic.html"  or
 //                     "::\someTopic.html#namedAnchor"
-HWND Help::show(HWND hWnd, const tstring& topic /*= tstring()*/)
+HWND Help::show(HWND wnd, const tstring& topic /*= tstring()*/)
 {
     if (hlpFile.empty()) {
-        Error(hWnd, ResStr(IDS_ERR_HELPMISSING));
+        Error(wnd, ResStr(IDS_ERR_HELPMISSING));
         return 0;
     }
 
-    return ef::Win::HTMLHelp::obj().dispTopic(hWnd, (hlpFile + topic).c_str());
+    return ef::Win::HTMLHelp::obj().dispTopic(wnd, (hlpFile + topic).c_str());
 }

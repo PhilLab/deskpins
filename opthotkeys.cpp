@@ -5,46 +5,46 @@
 #include "resource.h"
 
 
-static bool CmHotkeysOn(HWND hWnd)
+static bool CmHotkeysOn(HWND wnd)
 {
-    bool b = IsDlgButtonChecked(hWnd, IDC_HOTKEYS_ON) == BST_CHECKED;
-    EnableGroup(hWnd, IDC_HOTKEYS_GROUP, b);
-    PSChanged(hWnd);
+    bool b = IsDlgButtonChecked(wnd, IDC_HOTKEYS_ON) == BST_CHECKED;
+    EnableGroup(wnd, IDC_HOTKEYS_GROUP, b);
+    PSChanged(wnd);
     return true;
 }
 
 
-static bool EvInitDialog(HWND hWnd, HWND /*hFocus*/, LPARAM lParam)
+static bool EvInitDialog(HWND wnd, HWND /*focus*/, LPARAM param)
 {
     // must have a valid data ptr
-    if (!lParam) {
-        EndDialog(hWnd, IDCANCEL);
+    if (!param) {
+        EndDialog(wnd, IDCANCEL);
         return false;
     }
 
     // save the data ptr
-    PROPSHEETPAGE& psp = *reinterpret_cast<PROPSHEETPAGE*>(lParam);
+    PROPSHEETPAGE& psp = *reinterpret_cast<PROPSHEETPAGE*>(param);
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(psp.lParam)->opt;
-    SetWindowLong(hWnd, DWL_USER, psp.lParam);
+    SetWindowLong(wnd, DWL_USER, psp.lParam);
 
 
-    CheckDlgButton(hWnd, IDC_HOTKEYS_ON, opt.hotkeysOn);
-    CmHotkeysOn(hWnd);
+    CheckDlgButton(wnd, IDC_HOTKEYS_ON, opt.hotkeysOn);
+    CmHotkeysOn(wnd);
 
-    opt.hotEnterPin.setUI(hWnd, IDC_HOT_PINMODE);
-    opt.hotTogglePin.setUI(hWnd, IDC_HOT_TOGGLEPIN);
+    opt.hotEnterPin.setUI(wnd, IDC_HOT_PINMODE);
+    opt.hotTogglePin.setUI(wnd, IDC_HOT_TOGGLEPIN);
 
     return false;
 }
 
 
-static bool Validate(HWND hWnd)
+static bool Validate(HWND wnd)
 {
     return true;
 }
 
 
-static bool ChangeHotkey(HWND hWnd, 
+static bool ChangeHotkey(HWND wnd, 
                          const HotKey& newHotkey, bool newState, 
                          const HotKey& oldHotkey, bool oldState)
 {
@@ -58,71 +58,71 @@ static bool ChangeHotkey(HWND hWnd,
 
     // turning off
     if (wasOn && !isOn)
-        return newHotkey.unset(app.hMainWnd);
+        return newHotkey.unset(app.mainWnd);
 
     // turning on OR key change
     if ((!wasOn && isOn) || (newHotkey != oldHotkey))
-        return newHotkey.set(app.hMainWnd);
+        return newHotkey.set(app.mainWnd);
 
     // same key is still on
     return true;
 }
 
 
-static void Apply(HWND hWnd)
+static void Apply(HWND wnd)
 {
-    Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(hWnd, DWL_USER))->opt;
+    Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
-    bool hotkeysOn = IsDlgButtonChecked(hWnd, IDC_HOTKEYS_ON) == BST_CHECKED;
+    bool hotkeysOn = IsDlgButtonChecked(wnd, IDC_HOTKEYS_ON) == BST_CHECKED;
 
-    HotKey hkEnter(App::HOTID_ENTERPINMODE);
-    HotKey hkToggle(App::HOTID_TOGGLEPIN);
+    HotKey enterKey(App::HOTID_ENTERPINMODE);
+    HotKey toggleKey(App::HOTID_TOGGLEPIN);
 
-    hkEnter.getUI(hWnd, IDC_HOT_PINMODE);
-    hkToggle.getUI(hWnd, IDC_HOT_TOGGLEPIN);
+    enterKey.getUI(wnd, IDC_HOT_PINMODE);
+    toggleKey.getUI(wnd, IDC_HOT_TOGGLEPIN);
 
     // Set hotkeys and report error if any failed.
     // Get separate success flags to avoid short-circuiting
     // (and set as many keys as possible)
     bool allKeysSet = true;
     allKeysSet &= ChangeHotkey(
-        hWnd, hkEnter, hotkeysOn, opt.hotEnterPin, opt.hotkeysOn);
+        wnd, enterKey, hotkeysOn, opt.hotEnterPin, opt.hotkeysOn);
     allKeysSet &= ChangeHotkey(
-        hWnd, hkToggle, hotkeysOn, opt.hotTogglePin, opt.hotkeysOn);
+        wnd, toggleKey, hotkeysOn, opt.hotTogglePin, opt.hotkeysOn);
 
     opt.hotkeysOn = hotkeysOn;
-    opt.hotEnterPin = hkEnter;
-    opt.hotTogglePin = hkToggle;
+    opt.hotEnterPin = enterKey;
+    opt.hotTogglePin = toggleKey;
 
     if (!allKeysSet)
-        Error(hWnd, ResStr(IDS_ERR_HOTKEYSSET));
+        Error(wnd, ResStr(IDS_ERR_HOTKEYSSET));
 }
 
 
-BOOL CALLBACK OptHotkeysProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK OptHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    switch (uMsg) {
-        case WM_INITDIALOG:  return EvInitDialog(hWnd, HWND(wParam), lParam);
-            //case WM_DESTROY:     return EvTermDialog(hWnd, lParam);
+    switch (msg) {
+        case WM_INITDIALOG:  return EvInitDialog(wnd, HWND(wparam), lparam);
+            //case WM_DESTROY:     return EvTermDialog(wnd, lparam);
         case WM_NOTIFY: {
-            NMHDR nmhdr = *reinterpret_cast<NMHDR*>(lParam);
+            NMHDR nmhdr = *reinterpret_cast<NMHDR*>(lparam);
             switch (nmhdr.code) {
                 case PSN_SETACTIVE: {
-                    HWND hTab = PropSheet_GetTabControl(nmhdr.hwndFrom);
-                    app.optionPage = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
-                    SetWindowLong(hWnd, DWL_MSGRESULT, 0);
+                    HWND tab = PropSheet_GetTabControl(nmhdr.hwndFrom);
+                    app.optionPage = SendMessage(tab, TCM_GETCURSEL, 0, 0);
+                    SetWindowLong(wnd, DWL_MSGRESULT, 0);
                     return true;
                 }
                 case PSN_KILLACTIVE: {
-                    SetWindowLong(hWnd, DWL_MSGRESULT, !Validate(hWnd));
+                    SetWindowLong(wnd, DWL_MSGRESULT, !Validate(wnd));
                     return true;
                 }
                 case PSN_APPLY: {
-                    Apply(hWnd);
+                    Apply(wnd);
                     return true;
                 }
                 case PSN_HELP: {
-                    app.help.show(hWnd, _T("::\\opthotkeys.htm"));
+                    app.help.show(wnd, _T("::\\opthotkeys.htm"));
                     return true;
                 }
                 default:
@@ -130,15 +130,15 @@ BOOL CALLBACK OptHotkeysProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
         }
         case WM_HELP: {
-            app.help.show(hWnd, _T("::\\opthotkeys.htm"));
+            app.help.show(wnd, _T("::\\opthotkeys.htm"));
             return true;
         }
         case WM_COMMAND: {
-            WORD id = LOWORD(wParam), code = HIWORD(wParam);
+            WORD id = LOWORD(wparam), code = HIWORD(wparam);
             switch (id) {
-                case IDC_HOTKEYS_ON:    CmHotkeysOn(hWnd); return true;
+                case IDC_HOTKEYS_ON:    CmHotkeysOn(wnd); return true;
                 case IDC_HOT_PINMODE:
-                case IDC_HOT_TOGGLEPIN: if (code == EN_CHANGE) PSChanged(hWnd); return true;
+                case IDC_HOT_TOGGLEPIN: if (code == EN_CHANGE) PSChanged(wnd); return true;
                 default:                return false;
             }
         }

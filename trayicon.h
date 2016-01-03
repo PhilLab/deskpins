@@ -3,19 +3,19 @@
 
 class TrayIcon : boost::noncopyable {
 public:
-    TrayIcon(UINT msg_, UINT id_);
+    TrayIcon(UINT msg, UINT id);
     ~TrayIcon();
 
-    bool setWnd(HWND hWnd_);
+    bool setWnd(HWND wnd_);
 
-    bool create(HICON hIcon, LPCTSTR tip);
+    bool create(HICON icon, LPCTSTR tip);
     bool destroy();
 
     bool setTip(LPCTSTR tip);
-    bool setIcon(HICON hIcon);
+    bool setIcon(HICON icon);
 
 private:
-    HWND hWnd;
+    HWND wnd;
     UINT id;
     UINT msg;
 };

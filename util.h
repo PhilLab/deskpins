@@ -21,15 +21,15 @@ namespace StdClr { enum {
     white   = 0xffffff,
 }; }
 
-bool IsWndRectEmpty(HWND hWnd);
-HWND GetNonChildParent(HWND hWnd);
-HWND GetTopParent(HWND hWnd);
-bool IsProgManWnd(HWND hWnd);
-bool IsTaskBar(HWND hWnd);
-bool IsTopMost(HWND hWnd);
-void Error(HWND hWnd, const ef::tchar* s);
-void Warning(HWND hWnd, const ef::tchar* s);
-bool GetScrSize(SIZE& szScr);
+bool IsWndRectEmpty(HWND wnd);
+HWND GetNonChildParent(HWND wnd);
+HWND GetTopParent(HWND wnd);
+bool IsProgManWnd(HWND wnd);
+bool IsTaskBar(HWND wnd);
+bool IsTopMost(HWND wnd);
+void Error(HWND wnd, const ef::tchar* s);
+void Warning(HWND wnd, const ef::tchar* s);
+bool GetScrSize(SIZE& sz);
 
 inline bool strmatch(const ef::tchar* s1, const ef::tchar* s2)
 {
@@ -41,9 +41,9 @@ inline bool strimatch(const ef::tchar* s1, const ef::tchar* s2)
     return _tcsicmp(s1, s2) == 0;
 }
 
-HRGN MakeRegionFromBmp(HBITMAP hBmp, COLORREF clrMask);
-void PinWindow(HWND hWnd, HWND hHitWnd, int trackRate, bool silent = false);
-void TogglePin(HWND hWnd, HWND hTarget, int trackRate);
+HRGN MakeRegionFromBmp(HBITMAP bmp, COLORREF clrMask);
+void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent = false);
+void TogglePin(HWND wnd, HWND target, int trackRate);
 
 HMENU LoadLocalizedMenu(LPCTSTR lpMenuName);
 HMENU LoadLocalizedMenu(WORD id);
@@ -58,7 +58,7 @@ HWND  CreateLocalizedDialog  (WORD id, HWND hWndParent,
 
 
 bool RectContains(const RECT& rc1, const RECT& rc2);
-void EnableGroup(HWND hWnd, int id, bool mode);
+void EnableGroup(HWND wnd, int id, bool mode);
 
 std::vector<ef::tstring> GetFiles(ef::tstring mask);
 
@@ -72,8 +72,8 @@ class ResStr {
 public:
     ResStr(DWORD id, int bufLen = 256) {
         str = new ef::tchar[bufLen];
-        if (!app.hResMod || !LoadString(app.hResMod, id, str, bufLen))
-            LoadString(app.hInst, id, str, bufLen);
+        if (!app.resMod || !LoadString(app.resMod, id, str, bufLen))
+            LoadString(app.inst, id, str, bufLen);
     }
 
     ResStr(DWORD id, int bufLen, DWORD p1) {
@@ -126,8 +126,8 @@ public:
 protected:
     void initFmt(DWORD id, int bufLen, DWORD* params) {
         str = new ef::tchar[bufLen];
-        if (!app.hResMod || !LoadString(app.hResMod, id, str, bufLen))
-            LoadString(app.hInst, id, str, bufLen);
+        if (!app.resMod || !LoadString(app.resMod, id, str, bufLen))
+            LoadString(app.inst, id, str, bufLen);
 
         DWORD flags = FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY;
         va_list* va = reinterpret_cast<va_list*>(params);
@@ -141,16 +141,16 @@ private:
 };
 
 
-BOOL MoveWindow(HWND hWnd, const RECT& rc, BOOL repaint = TRUE);
-BOOL Rectangle(HDC hDC, const RECT& rc);
+BOOL MoveWindow(HWND wnd, const RECT& rc, BOOL repaint = TRUE);
+BOOL Rectangle(HDC dc, const RECT& rc);
 
 
-bool PSChanged(HWND hPage);
+bool PSChanged(HWND page);
 ef::tstring RemAccel(ef::tstring s);
 
-bool getBmpSize(HBITMAP hBmp, SIZE& sz);
+bool getBmpSize(HBITMAP bmp, SIZE& sz);
 
-bool remapBmpColors(HBITMAP hBmp, COLORREF clrs[][2], int cnt);
+bool remapBmpColors(HBITMAP bmp, COLORREF clrs[][2], int cnt);
 
 
 ef::tstring substrAfterLast(const ef::tstring& s, const ef::tstring& delim);

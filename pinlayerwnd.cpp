@@ -6,38 +6,38 @@
 static bool gotInitLButtonDown;
 
 
-static void EvLButtonDown(HWND hWnd, UINT /*mk*/, int x, int y)
+static void EvLButtonDown(HWND wnd, UINT /*mk*/, int x, int y)
 {
-    SetCapture(hWnd);
+    SetCapture(wnd);
 
     if (!gotInitLButtonDown)
         gotInitLButtonDown = true;
     else {
         ReleaseCapture();
         POINT pt = { x, y };
-        if (ClientToScreen(hWnd, &pt))
-            PostMessage(GetParent(hWnd), App::WM_PINREQ, pt.x, pt.y);
-        DestroyWindow(hWnd);
+        if (ClientToScreen(wnd, &pt))
+            PostMessage(GetParent(wnd), App::WM_PINREQ, pt.x, pt.y);
+        DestroyWindow(wnd);
     }
 
 }
 
 
-LRESULT CALLBACK PinLayerWndProc(HWND hWnd, UINT uMsg, 
-                                 WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PinLayerWndProc(HWND wnd, UINT msg, 
+                                 WPARAM wparam, LPARAM lparam)
 {
-    switch (uMsg) {
+    switch (msg) {
     case WM_CREATE:
         gotInitLButtonDown = false;
         return false;
 
     case WM_DESTROY:
         mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-        if (hWnd == app.hLayerWnd) app.hLayerWnd = 0;
+        if (wnd == app.layerWnd) app.layerWnd = 0;
         return false;
 
     case WM_LBUTTONDOWN:
-        EvLButtonDown(hWnd, wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        EvLButtonDown(wnd, wparam, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
         return false;
 
     case WM_LBUTTONUP:
@@ -47,9 +47,9 @@ LRESULT CALLBACK PinLayerWndProc(HWND hWnd, UINT uMsg,
     case WM_SYSKEYDOWN:
     case WM_KILLFOCUS:
         ReleaseCapture();
-        DestroyWindow(hWnd);
+        DestroyWindow(wnd);
         return false;
     }
 
-    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    return DefWindowProc(wnd, msg, wparam, lparam);
 }
