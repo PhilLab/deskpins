@@ -131,7 +131,7 @@ void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent /*= false*/)
         wrn = IDS_ERR_ALREADYTOPMOST;
     // hidden wnds are handled by the proxy mechanism
     //else if (!IsWindowVisible(hitWnd))
-    //  Error(hWnd, "Cannot pin a hidden window");
+    //  Error(wnd, "Cannot pin a hidden window");
     else {
         // create a pin wnd
         HWND pin = CreateWindowEx(
@@ -168,7 +168,7 @@ static HWND HasPin(HWND wnd)
     // enumerate all pin windows
     HWND pin = 0;
     while ((pin = FindWindowEx(0, pin, App::WNDCLS_PIN, 0)) != 0)
-        //if (GetParent(hPin) == hWnd)
+        //if (GetParent(pin) == wnd)
         if (HWND(SendMessage(pin, App::WM_PIN_GETPINNEDWND, 0, 0)) == wnd)
             return pin;
 

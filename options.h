@@ -63,7 +63,7 @@ struct AutoPinRule {
         const ef::tstring& c = ef::tstring(), 
         bool b = true) : descr(d), ttl(t), cls(c), enabled(b) {}
 
-    bool match(HWND hWnd) const;
+    bool match(HWND wnd) const;
 
     bool load(ef::Win::RegKeyH& key, int i);
     bool save(ef::Win::RegKeyH& key, int i) const;

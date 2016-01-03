@@ -164,10 +164,10 @@ void App::createSmClrIcon(COLORREF clr)
             { StdClr::maroon, Dark(clr) }
         };
         remapBmpColors(ii.hbmColor, clrMap, ARRSIZE(clrMap));
-        HICON hNewIcon = CreateIconIndirect(&ii);
-        if (hNewIcon) {
+        HICON newIcon = CreateIconIndirect(&ii);
+        if (newIcon) {
             DestroyIcon(smClrIcon);
-            smClrIcon = hNewIcon;
+            smClrIcon = newIcon;
         }
         // (assuming non-monochrome)
         // destroy bmps returned from GetIconInfo()

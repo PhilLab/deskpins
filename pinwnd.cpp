@@ -140,11 +140,11 @@ static void EvDestroy(HWND wnd, PinData& pd)
 
 //static HWND static_hAppWnd = 0;
 //
-//static BOOL CALLBACK EnumThreadWndCollectProc(HWND hWnd, LPARAM lParam)
+//static BOOL CALLBACK EnumThreadWndCollectProc(HWND wnd, LPARAM param)
 //{
-//    vector<HWND>& wndList = *(vector<HWND>*)lParam;
-//    if (hWnd == static_hAppWnd || GetWindow(hWnd, GW_OWNER) == static_hAppWnd)
-//    wndList.push_back(hWnd);
+//    vector<HWND>& wndList = *(vector<HWND>*)param;
+//    if (wnd == static_hAppWnd || GetWindow(wnd, GW_OWNER) == static_hAppWnd)
+//    wndList.push_back(wnd);
 //    return true;  // continue enumeration
 //}
 
@@ -433,7 +433,7 @@ static void PlaceOnCaption(HWND wnd, const PinData& pd)
 
     // reveal VCL app wnd :)
     //if (rcPinned.top >= rcPinned.bottom || rcPinned.left >= rcPinned.right)
-    //  MoveWindow(pd.hPinnedWnd, rcPinned.left, rcPinned.top, 200, 100, true);
+    //  MoveWindow(pd.pinnedWnd, rcPinned.left, rcPinned.top, 200, 100, true);
 
 }
 

@@ -111,7 +111,7 @@ unsigned __stdcall dispatcher(void* args)
 //------------------------------------------
 
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
+int WINAPI WinMain(HINSTANCE inst, HINSTANCE, LPSTR, int)
 {
     // FIXME: sending cmdline options to already running instance; must use a different method
     /*
@@ -134,7 +134,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
     }*/
 
     //COMInitializer comInit;
-    app.inst = hInstance;
+    app.inst = inst;
 
     // load settings as soon as possible
     opt.load();
@@ -171,7 +171,7 @@ static bool isWin8orGreater()
 }
 
 
-static void CmNewPin(HWND hWnd)
+static void CmNewPin(HWND wnd)
 {
     // avoid re-entrancy
     if (app.layerWnd) return;
@@ -186,7 +186,7 @@ static void CmNewPin(HWND hWnd)
         _T("DeskPin"),
         WS_POPUP | WS_VISIBLE,
         layerWndPos.x, layerWndPos.y, layerWndSize.cx, layerWndSize.cy,
-        hWnd, 0, app.inst, 0);
+        wnd, 0, app.inst, 0);
 
     if (!app.layerWnd) return;
 
@@ -201,23 +201,23 @@ static void CmNewPin(HWND hWnd)
 }
 
 
-static void EvPinReq(HWND hWnd, int x, int y)
+static void EvPinReq(HWND wnd, int x, int y)
 {
     POINT pt = {x,y};
-    HWND hHitWnd = GetTopParent(WindowFromPoint(pt));
-    PinWindow(hWnd, hHitWnd, opt.trackRate.value);
+    HWND hitWnd = GetTopParent(WindowFromPoint(pt));
+    PinWindow(wnd, hitWnd, opt.trackRate.value);
 }
 
 
-static void CmRemovePins(HWND /*hWnd*/)
+static void CmRemovePins(HWND /*wnd*/)
 {
-    HWND hPin;
-    while ((hPin = FindWindow(App::WNDCLS_PIN, 0)) != 0)
-        DestroyWindow(hPin);
+    HWND pin;
+    while ((pin = FindWindow(App::WNDCLS_PIN, 0)) != 0)
+        DestroyWindow(pin);
 }
 
 
-static void FixOptPSPos(HWND hWnd)
+static void FixOptPSPos(HWND wnd)
 {
     // - find taskbar ("Shell_TrayWnd")
     // - find notification area ("TrayNotifyWnd") (child of taskbar)
@@ -225,12 +225,12 @@ static void FixOptPSPos(HWND hWnd)
     // - determine quadrant of screen which includes the center point
     // - position prop sheet at proper corner of workarea
     RECT rc, rcWA, rcNW;
-    HWND hTrayWnd, hNotityWnd;
-    if (GetWindowRect(hWnd, &rc)
+    HWND trayWnd, notityWnd;
+    if (GetWindowRect(wnd, &rc)
         && SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWA, 0)
-        && (hTrayWnd = FindWindow(_T("Shell_TrayWnd"), _T("")))
-        && (hNotityWnd = FindWindowEx(hTrayWnd, 0, _T("TrayNotifyWnd"), _T("")))
-        && GetWindowRect(hNotityWnd, &rcNW))
+        && (trayWnd = FindWindow(_T("Shell_TrayWnd"), _T("")))
+        && (notityWnd = FindWindowEx(trayWnd, 0, _T("TrayNotifyWnd"), _T("")))
+        && GetWindowRect(notityWnd, &rcNW))
     {
         // '/2' simplified from the following two inequalities
         bool isLeft = (rcNW.left + rcNW.right) < GetSystemMetrics(SM_CXSCREEN);
@@ -238,7 +238,7 @@ static void FixOptPSPos(HWND hWnd)
         int x = isLeft ? rcWA.left : rcWA.right - (rc.right - rc.left);
         int y = isTop ? rcWA.top : rcWA.bottom - (rc.bottom - rc.top);
         OffsetRect(&rc, x-rc.left, y-rc.top);
-        MoveWindow(hWnd, rc);
+        MoveWindow(wnd, rc);
     }
 
 }
@@ -256,32 +256,32 @@ trayIconTip()
 static WNDPROC orgOptPSProc;
 
 
-LRESULT CALLBACK OptPSSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK OptPSSubclass(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    if (uMsg == WM_SHOWWINDOW) {
-        FixOptPSPos(hWnd);
+    if (msg == WM_SHOWWINDOW) {
+        FixOptPSPos(wnd);
 
         // also set the big icon (for Alt-Tab)
-        SendMessage(hWnd, WM_SETICON, ICON_BIG, 
+        SendMessage(wnd, WM_SETICON, ICON_BIG, 
             LPARAM(LoadIcon(app.inst, MAKEINTRESOURCE(IDI_APP))));
 
-        LRESULT ret = CallWindowProc(orgOptPSProc, hWnd, uMsg, wParam, lParam);
-        SetWindowLong(hWnd, GWL_WNDPROC, LONG(orgOptPSProc));
+        LRESULT ret = CallWindowProc(orgOptPSProc, wnd, msg, wparam, lparam);
+        SetWindowLong(wnd, GWL_WNDPROC, LONG(orgOptPSProc));
         orgOptPSProc = 0;
         return ret;
     }
 
-    return CallWindowProc(orgOptPSProc, hWnd, uMsg, wParam, lParam);
+    return CallWindowProc(orgOptPSProc, wnd, msg, wparam, lparam);
 }
 
 
 // remove WS_EX_CONTEXTHELP and subclass to fix pos
-static int CALLBACK OptPSCallback(HWND hWnd, UINT uMsg, LPARAM lParam)
+static int CALLBACK OptPSCallback(HWND wnd, UINT msg, LPARAM param)
 {
-    if (uMsg == PSCB_INITIALIZED) {
+    if (msg == PSCB_INITIALIZED) {
         // remove caption help button
-        ef::Win::WndH(hWnd).modifyExStyle(WS_EX_CONTEXTHELP, 0);
-        orgOptPSProc = WNDPROC(SetWindowLong(hWnd, GWL_WNDPROC, LONG(OptPSSubclass)));
+        ef::Win::WndH(wnd).modifyExStyle(WS_EX_CONTEXTHELP, 0);
+        orgOptPSProc = WNDPROC(SetWindowLong(wnd, GWL_WNDPROC, LONG(OptPSSubclass)));
     }
 
     return 0;
@@ -289,7 +289,7 @@ static int CALLBACK OptPSCallback(HWND hWnd, UINT uMsg, LPARAM lParam)
 
 
 static void BuildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[], 
-    int dlgIds[], DLGPROC dlgProcs[], int pageCnt, HWND hParentWnd, 
+    int dlgIds[], DLGPROC dlgProcs[], int pageCnt, HWND parentWnd, 
     OptionsPropSheetData& data, ResStr& capStr)
 {
     for (int n = 0; n < pageCnt; ++n) {
@@ -300,15 +300,14 @@ static void BuildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[],
         psp[n].hIcon       = 0;
         psp[n].pszTitle    = 0;
         psp[n].pfnDlgProc  = dlgProcs[n];
-        psp[n].lParam      = 0;
+        psp[n].lParam      = reinterpret_cast<LPARAM>(&data);
         psp[n].pfnCallback = 0;
         psp[n].pcRefParent = 0;
-        psp[n].lParam      = reinterpret_cast<LPARAM>(&data);
     }
 
     psh.dwSize      = sizeof(psh);
     psh.dwFlags     = PSH_HASHELP | PSH_PROPSHEETPAGE | PSH_USECALLBACK | PSH_USEHICON;
-    psh.hwndParent  = hParentWnd;
+    psh.hwndParent  = parentWnd;
     psh.hInstance   = app.resMod ? app.resMod : app.inst;
     psh.hIcon       = app.smIcon;
     psh.pszCaption  = capStr;
@@ -321,7 +320,7 @@ static void BuildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[],
 }
 
 
-static void CmOptions(HWND hWnd, WindowCreationMonitor& winCreMon)
+static void CmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
 {
     // sentry to avoid multiple dialogs
     static bool isOptDlgOn;
@@ -355,11 +354,11 @@ static void CmOptions(HWND hWnd, WindowCreationMonitor& winCreMon)
     // res mod. Unless we do this ref-count trick, any pages that were
     // not loaded before the lang change apply would fail to be created.
     //
-    HINSTANCE hCurResMod = 0;
+    HINSTANCE curResMod = 0;
     if (!opt.uiFile.empty()) {
         tchar buf[MAX_PATH];
         GetModuleFileName(app.resMod, buf, sizeof(buf));
-        hCurResMod = LoadLibrary(buf);
+        curResMod = LoadLibrary(buf);
     }
 
     //#ifdef TEST_OPTIONS_PAGE
@@ -370,12 +369,12 @@ static void CmOptions(HWND hWnd, WindowCreationMonitor& winCreMon)
         tstring msg = ResStr(IDS_ERR_DLGCREATE);
         msg += _T("\r\n");
         msg += ef::Win::getLastErrorStr();
-        Error(hWnd, msg.c_str());
+        Error(wnd, msg.c_str());
     }
 
-    if (hCurResMod) {
-        FreeLibrary(hCurResMod);
-        hCurResMod = 0;
+    if (curResMod) {
+        FreeLibrary(curResMod);
+        curResMod = 0;
     }
 
     // reset tray tip, in case lang was changed
@@ -385,8 +384,8 @@ static void CmOptions(HWND hWnd, WindowCreationMonitor& winCreMon)
 
     //#ifdef TEST_OPTIONS_PAGE
     //  // PostMessage() stalls the debugger a bit...
-    //  //PostMessage(hWnd, WM_COMMAND, CM_CLOSE, 0);
-    //  DestroyWindow(hWnd);
+    //  //PostMessage(wnd, WM_COMMAND, CM_CLOSE, 0);
+    //  DestroyWindow(wnd);
     //#endif
 }
 
@@ -394,58 +393,58 @@ static void CmOptions(HWND hWnd, WindowCreationMonitor& winCreMon)
 // set and manage tray menu images
 class TrayMenuDecorations {
 public:
-    TrayMenuDecorations(HMENU hMenu)
+    TrayMenuDecorations(HMENU menu)
     {
         int w = GetSystemMetrics(SM_CXMENUCHECK);
         int h = GetSystemMetrics(SM_CYMENUCHECK);
 
-        HDC    hMemDC  = CreateCompatibleDC(0);
-        HFONT  hFnt    = ef::Win::FontH::create(_T("Marlett"), h, SYMBOL_CHARSET, ef::Win::FontH::noStyle);
+        HDC    memDC  = CreateCompatibleDC(0);
+        HFONT  fnt    = ef::Win::FontH::create(_T("Marlett"), h, SYMBOL_CHARSET, ef::Win::FontH::noStyle);
         HBRUSH bkBrush = HBRUSH(GetStockObject(WHITE_BRUSH));
 
-        HGDIOBJ orgFnt = GetCurrentObject(hMemDC, OBJ_FONT);
-        HGDIOBJ orgBmp = GetCurrentObject(hMemDC, OBJ_BITMAP);
+        HGDIOBJ orgFnt = GetCurrentObject(memDC, OBJ_FONT);
+        HGDIOBJ orgBmp = GetCurrentObject(memDC, OBJ_BITMAP);
 
-        hBmpClose = makeBmp(hMemDC, w, h, bkBrush, hMenu, CM_CLOSE, hFnt, _T("r"));
-        hBmpAbout = makeBmp(hMemDC, w, h, bkBrush, hMenu, CM_ABOUT, hFnt, _T("s"));
+        bmpClose = makeBmp(memDC, w, h, bkBrush, menu, CM_CLOSE, fnt, _T("r"));
+        bmpAbout = makeBmp(memDC, w, h, bkBrush, menu, CM_ABOUT, fnt, _T("s"));
 
-        SelectObject(hMemDC, orgBmp);
-        SelectObject(hMemDC, orgFnt);
+        SelectObject(memDC, orgBmp);
+        SelectObject(memDC, orgFnt);
 
-        DeleteObject(hFnt);
-        DeleteDC(hMemDC);
+        DeleteObject(fnt);
+        DeleteDC(memDC);
     }
 
     ~TrayMenuDecorations()
     {
-        if (hBmpClose) DeleteObject(hBmpClose);
-        if (hBmpAbout) DeleteObject(hBmpAbout);
+        if (bmpClose) DeleteObject(bmpClose);
+        if (bmpAbout) DeleteObject(bmpAbout);
     }
 
 protected:
     TrayMenuDecorations(const TrayMenuDecorations&);
     TrayMenuDecorations& operator=(const TrayMenuDecorations&);
 
-    HBITMAP hBmpClose, hBmpAbout;
+    HBITMAP bmpClose, bmpAbout;
 
-    HBITMAP makeBmp(HDC dc, int w, int h, HBRUSH bkBrush, HMENU hMenu, int idCmd, HFONT fnt, const TCHAR* c)
+    HBITMAP makeBmp(HDC dc, int w, int h, HBRUSH bkBrush, HMENU menu, int idCmd, HFONT fnt, const TCHAR* c)
     {
-        HBITMAP hRetBmp = CreateBitmap(w, h, 1, 1, 0);
-        if (hRetBmp) {
+        HBITMAP retBmp = CreateBitmap(w, h, 1, 1, 0);
+        if (retBmp) {
             RECT rc = {0, 0, w, h};
             SelectObject(dc, fnt);
-            SelectObject(dc, hRetBmp);
+            SelectObject(dc, retBmp);
             FillRect(dc, &rc, bkBrush);
             DrawText(dc, c, 1, &rc, DT_CENTER | DT_NOPREFIX);
-            SetMenuItemBitmaps(hMenu, idCmd, MF_BYCOMMAND, hRetBmp, hRetBmp);
+            SetMenuItemBitmaps(menu, idCmd, MF_BYCOMMAND, retBmp, retBmp);
         }
-        return hRetBmp;
+        return retBmp;
     }
 
 };
 
 
-static void EvTrayIcon(HWND hWnd, WPARAM id, LPARAM msg)
+static void EvTrayIcon(HWND wnd, WPARAM id, LPARAM msg)
 {
     static bool gotLButtonDblClk = false;
 
@@ -454,7 +453,7 @@ static void EvTrayIcon(HWND hWnd, WPARAM id, LPARAM msg)
     switch (msg) {
         case WM_LBUTTONUP: {
             if (!opt.dblClkTray || gotLButtonDblClk) {
-                SendMessage(hWnd, WM_COMMAND, CM_NEWPIN, 0);
+                SendMessage(wnd, WM_COMMAND, CM_NEWPIN, 0);
                 gotLButtonDblClk = false;
             }
             break;
@@ -464,18 +463,18 @@ static void EvTrayIcon(HWND hWnd, WPARAM id, LPARAM msg)
             break;
         }
         case WM_RBUTTONDOWN: {
-            SetForegroundWindow(hWnd);
-            HMENU hDummy = LoadLocalizedMenu(IDM_TRAY);
-            HMENU hMenu = GetSubMenu(hDummy,0);
-            SetMenuDefaultItem(hMenu, CM_NEWPIN, false);
+            SetForegroundWindow(wnd);
+            HMENU dummy = LoadLocalizedMenu(IDM_TRAY);
+            HMENU menu = GetSubMenu(dummy,0);
+            SetMenuDefaultItem(menu, CM_NEWPIN, false);
 
-            TrayMenuDecorations tmd(hMenu);
+            TrayMenuDecorations tmd(menu);
 
             POINT pt;
             GetCursorPos(&pt);
-            TrackPopupMenu(hMenu, TPM_RIGHTBUTTON, pt.x, pt.y, 0, hWnd, 0);
-            DestroyMenu(hDummy);
-            SendMessage(hWnd, WM_NULL, 0, 0);
+            TrackPopupMenu(menu, TPM_RIGHTBUTTON, pt.x, pt.y, 0, wnd, 0);
+            DestroyMenu(dummy);
+            SendMessage(wnd, WM_NULL, 0, 0);
 
             break;
         }
@@ -484,17 +483,17 @@ static void EvTrayIcon(HWND hWnd, WPARAM id, LPARAM msg)
 }
 
 
-static void EvHotkey(HWND hWnd, int idHotKey)
+static void EvHotkey(HWND wnd, int idHotKey)
 {
     // ignore if there's an active pin layer
     if (app.layerWnd) return;
 
     switch (idHotKey) {
     case App::HOTID_ENTERPINMODE:
-        PostMessage(hWnd, WM_COMMAND, CM_NEWPIN, 0);
+        PostMessage(wnd, WM_COMMAND, CM_NEWPIN, 0);
         break;
     case App::HOTID_TOGGLEPIN:
-        TogglePin(hWnd, GetForegroundWindow(), opt.trackRate.value);
+        TogglePin(wnd, GetForegroundWindow(), opt.trackRate.value);
         break;
     }
 
@@ -505,39 +504,39 @@ static void EvHotkey(HWND hWnd, int idHotKey)
 // =======================================================================
 
 
-static void UpdateStatusMessage(HWND hWnd)
+static void UpdateStatusMessage(HWND wnd)
 {
     //ResStr s = app.pinsUsed == 0 ? ResStr(IDS_PINSUSED_0) :
     //           app.pinsUsed == 1 ? ResStr(IDS_PINSUSED_1) :
     //                               ResStr(IDS_PINSUSED_N, 100, app.pinsUsed);
-    SetDlgItemInt(hWnd, IDC_STATUS, app.pinsUsed, false);
+    SetDlgItemInt(wnd, IDC_STATUS, app.pinsUsed, false);
 }
 
 
-static bool EvInitDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
+static bool EvInitDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
 {
-    app.aboutDlg = hWnd;
+    app.aboutDlg = wnd;
 
-    UpdateStatusMessage(hWnd);
+    UpdateStatusMessage(wnd);
 
-    hBoldGUIFont = ef::Win::FontH::create(ef::Win::FontH::getStockDefaultGui(), 0, ef::Win::FontH::bold);
-    hUnderlineGUIFont = ef::Win::FontH::create(ef::Win::FontH::getStockDefaultGui(), 0, ef::Win::FontH::underline);
+    boldGUIFont = ef::Win::FontH::create(ef::Win::FontH::getStockDefaultGui(), 0, ef::Win::FontH::bold);
+    underlineGUIFont = ef::Win::FontH::create(ef::Win::FontH::getStockDefaultGui(), 0, ef::Win::FontH::underline);
 
-    if (hBoldGUIFont) {
+    if (boldGUIFont) {
         // make status and its label bold
-        ef::Win::WndH status = GetDlgItem(hWnd, IDC_STATUS);
-        status.setFont(hBoldGUIFont);
-        status.getWindow(GW_HWNDPREV).setFont(hBoldGUIFont);
+        ef::Win::WndH status = GetDlgItem(wnd, IDC_STATUS);
+        status.setFont(boldGUIFont);
+        status.getWindow(GW_HWNDPREV).setFont(boldGUIFont);
     }
 
     // set dlg icons
-    HICON hAppIcon = LoadIcon(app.inst, MAKEINTRESOURCE(IDI_APP));
-    SendMessage(hWnd, WM_SETICON, ICON_BIG,   LPARAM(hAppIcon));
-    SendMessage(hWnd, WM_SETICON, ICON_SMALL, LPARAM(app.smIcon));
+    HICON appIcon = LoadIcon(app.inst, MAKEINTRESOURCE(IDI_APP));
+    SendMessage(wnd, WM_SETICON, ICON_BIG,   LPARAM(appIcon));
+    SendMessage(wnd, WM_SETICON, ICON_SMALL, LPARAM(app.smIcon));
 
     // set static icon if dlg was loaded from lang dll
     if (app.resMod)
-        SendDlgItemMessage(hWnd,IDC_LOGO,STM_SETIMAGE,IMAGE_ICON,LPARAM(hAppIcon));
+        SendDlgItemMessage(wnd,IDC_LOGO,STM_SETIMAGE,IMAGE_ICON,LPARAM(appIcon));
 
     struct Link {
         int id;
@@ -552,33 +551,33 @@ static bool EvInitDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
 
     ef::Win::FontH font = ef::Win::FontH::getStockDefaultGui();
     BOOST_FOREACH(const Link& link, links) {
-        SetDlgItemText(hWnd, link.id, link.title);
-        UrlLink* ul = UrlLink::subclass(hWnd, link.id);
-        ul->setFonts(font, hUnderlineGUIFont ? hUnderlineGUIFont : font, font);
+        SetDlgItemText(wnd, link.id, link.title);
+        UrlLink* ul = UrlLink::subclass(wnd, link.id);
+        ul->setFonts(font, underlineGUIFont ? underlineGUIFont : font, font);
         ul->setColors(RGB(0,0,255), RGB(255,0,0), RGB(128,0,128));
         ul->setUrl(link.url);
     }
 
     //#ifdef TEST_OPTIONS_PAGE
-    //  SendMessage(hWnd, WM_COMMAND, CM_OPTIONS, 0);
+    //  SendMessage(wnd, WM_COMMAND, CM_OPTIONS, 0);
     //#endif
 
     return true;
 }
 
 
-static void EvTermDlg(HWND hWnd, HFONT& hBoldGUIFont, HFONT& hUnderlineGUIFont)
+static void EvTermDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
 {
     app.aboutDlg = 0;
 
-    if (hBoldGUIFont) {
-        DeleteObject(hBoldGUIFont);
-        hBoldGUIFont = 0;
+    if (boldGUIFont) {
+        DeleteObject(boldGUIFont);
+        boldGUIFont = 0;
     }
 
-    if (hUnderlineGUIFont) {
-        DeleteObject(hUnderlineGUIFont);
-        hUnderlineGUIFont = 0;
+    if (underlineGUIFont) {
+        DeleteObject(underlineGUIFont);
+        underlineGUIFont = 0;
     }
 
 }
@@ -599,33 +598,33 @@ static void showSpecialInfo(HWND parent)
 }
 
 
-static BOOL CALLBACK AboutDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK AboutDlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    static HFONT   hBoldGUIFont, hUnderlineGUIFont;
+    static HFONT   boldGUIFont, underlineGUIFont;
 
-    switch (uMsg) {
+    switch (msg) {
         case WM_INITDIALOG:
-            return EvInitDlg(hWnd, hBoldGUIFont, hUnderlineGUIFont);
+            return EvInitDlg(wnd, boldGUIFont, underlineGUIFont);
         case WM_DESTROY:
-            EvTermDlg(hWnd, hBoldGUIFont, hUnderlineGUIFont);
+            EvTermDlg(wnd, boldGUIFont, underlineGUIFont);
             return true;
         case App::WM_PINSTATUS:
-            UpdateStatusMessage(hWnd);
+            UpdateStatusMessage(wnd);
             return true;
         //case WM_ACTIVATE:
-        //  app.activeModelessDlg = (LOWORD(wParam) == WA_INACTIVE) ? 0 : hWnd;
+        //  app.activeModelessDlg = (LOWORD(wparam) == WA_INACTIVE) ? 0 : wnd;
         //  return false;
         case WM_COMMAND: {
-            int id = LOWORD(wParam);
-            int code = HIWORD(wParam);
+            int id = LOWORD(wparam);
+            int code = HIWORD(wparam);
             switch (id) {
                 case IDOK:
                 case IDCANCEL:
-                    DestroyWindow(hWnd);
+                    DestroyWindow(wnd);
                     return true;
                 case IDC_LOGO:
                     if (code == STN_DBLCLK) {
-                        showSpecialInfo(hWnd);
+                        showSpecialInfo(wnd);
                         return true;
                     }
             }
@@ -639,42 +638,42 @@ static BOOL CALLBACK AboutDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 // =======================================================================
 // =======================================================================
 
-LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static UINT taskbarMsg = RegisterWindowMessage(_T("TaskbarCreated"));
     static PendingWindows pendWnds;
     static WindowCreationMonitor* winCreMon;
 
-    switch (uMsg) {
+    switch (msg) {
         case WM_CREATE: {
-            app.mainWnd = hWnd;
+            app.mainWnd = wnd;
             //winCreMon = new HookDllWindowCreationMonitor();
             winCreMon = new EventHookWindowCreationMonitor();
 
-            if (opt.autoPinOn && !winCreMon->init(hWnd, App::WM_QUEUEWINDOW)) {
-                Error(hWnd, ResStr(IDS_ERR_HOOKDLL));
+            if (opt.autoPinOn && !winCreMon->init(wnd, App::WM_QUEUEWINDOW)) {
+                Error(wnd, ResStr(IDS_ERR_HOOKDLL));
                 opt.autoPinOn = false;
             }
 
             app.smIcon = HICON(LoadImage(app.inst, MAKEINTRESOURCE(IDI_APP), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
             app.createSmClrIcon(opt.pinClr);
 
-            // first set the hWnd (this can only be done once)...
-            app.trayIcon.setWnd(hWnd);
+            // first set the wnd (this can only be done once)...
+            app.trayIcon.setWnd(wnd);
             // .. and then create the notification icon
             app.trayIcon.create(app.smClrIcon, trayIconTip().c_str());
 
             // setup hotkeys
             if (opt.hotkeysOn) {
                 bool allKeysSet = true;
-                allKeysSet &= opt.hotEnterPin.set(hWnd);
-                allKeysSet &= opt.hotTogglePin.set(hWnd);
+                allKeysSet &= opt.hotEnterPin.set(wnd);
+                allKeysSet &= opt.hotTogglePin.set(wnd);
                 if (!allKeysSet)
-                    Error(hWnd, ResStr(IDS_ERR_HOTKEYSSET));
+                    Error(wnd, ResStr(IDS_ERR_HOTKEYSSET));
             }
 
             if (opt.autoPinOn)
-                SetTimer(hWnd, App::TIMERID_AUTOPIN, opt.autoPinDelay.value, 0);
+                SetTimer(wnd, App::TIMERID_AUTOPIN, opt.autoPinDelay.value, 0);
 
             // init pin image/shape/dims
             app.pinShape.initShape();
@@ -689,39 +688,39 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             delete winCreMon;
             winCreMon = 0;
 
-            SendMessage(hWnd, WM_COMMAND, CM_REMOVEPINS, 0);
+            SendMessage(wnd, WM_COMMAND, CM_REMOVEPINS, 0);
 
             // remove hotkeys
-            opt.hotEnterPin.unset(hWnd);
-            opt.hotTogglePin.unset(hWnd);
+            opt.hotEnterPin.unset(wnd);
+            opt.hotTogglePin.unset(wnd);
 
             PostQuitMessage(0);
             break;
         }
         case App::WM_TRAYICON:
-            EvTrayIcon(hWnd, wParam, lParam);
+            EvTrayIcon(wnd, wparam, lparam);
             break;
         case App::WM_PINREQ:
-            EvPinReq(hWnd, int(wParam), int(lParam));
+            EvPinReq(wnd, int(wparam), int(lparam));
             break;
         case WM_HOTKEY:
-            EvHotkey(hWnd, wParam);
+            EvHotkey(wnd, wparam);
             break;
         case WM_TIMER:
-            if (wParam == App::TIMERID_AUTOPIN) pendWnds.check(hWnd, opt);
+            if (wparam == App::TIMERID_AUTOPIN) pendWnds.check(wnd, opt);
             break;
         case App::WM_QUEUEWINDOW:
-            pendWnds.add(HWND(wParam));
+            pendWnds.add(HWND(wparam));
             break;
         case App::WM_PINSTATUS:
-            if (lParam) ++app.pinsUsed; else --app.pinsUsed;
+            if (lparam) ++app.pinsUsed; else --app.pinsUsed;
             if (app.aboutDlg) SendMessage(app.aboutDlg, App::WM_PINSTATUS, 0, 0);
             app.trayIcon.setTip(trayIconTip().c_str());
             break;
         case WM_COMMAND:
-            switch (LOWORD(wParam)) {
+            switch (LOWORD(wparam)) {
                 case IDHELP:
-                    app.help.show(hWnd);
+                    app.help.show(wnd);
                     break;
                 case CM_ABOUT:
                     if (app.aboutDlg)
@@ -732,38 +731,38 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     }
                     break;
                 case CM_NEWPIN: 
-                    CmNewPin(hWnd);
+                    CmNewPin(wnd);
                     break;
                 case CM_REMOVEPINS:
-                    CmRemovePins(hWnd);
+                    CmRemovePins(wnd);
                     break;
                 case CM_OPTIONS:
-                    CmOptions(hWnd, *winCreMon);
+                    CmOptions(wnd, *winCreMon);
                     break;
                 case CM_CLOSE:
-                    DestroyWindow(hWnd);
+                    DestroyWindow(wnd);
                     break;
                     //case ID_TEST:
-                    //  CmTest(hWnd);
+                    //  CmTest(wnd);
                     //  break;
                 default:
                     break;
             }
             break;
         case WM_ENDSESSION: {
-            if (wParam)
+            if (wparam)
                 opt.save();
             return 0;
         }
         //case WM_SETTINGSCHANGE:
         //case WM_DISPLAYCHANGE:
         default:
-            if (uMsg == taskbarMsg) {
+            if (msg == taskbarMsg) {
                 // taskbar recreated; reset the tray icon
                 app.trayIcon.create(app.smClrIcon, trayIconTip().c_str());
                 break;
             }
-            return DefWindowProc(hWnd, uMsg, wParam, lParam);
+            return DefWindowProc(wnd, msg, wparam, lparam);
     }
 
     return 0;
