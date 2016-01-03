@@ -32,6 +32,7 @@ LRESULT CALLBACK PinLayerWndProc(HWND hWnd, UINT uMsg,
         return false;
 
     case WM_DESTROY:
+        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
         if (hWnd == app.hLayerWnd) app.hLayerWnd = 0;
         return false;
 
