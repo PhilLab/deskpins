@@ -58,35 +58,31 @@ AutoPinRule::match(HWND wnd) const
 }
 
 
+class NumFlagValueName {
+    const int num;
+public:
+    NumFlagValueName(int num) : num(num) {}
+    std::wstring operator()(WCHAR flag) {
+        WCHAR buf[20];
+        wsprintf(buf, L"%d%c", num, flag);
+        return buf;
+    }
+};
+
+
 bool 
 AutoPinRule::load(ef::Win::RegKeyH& key, int i)
 {
-    // convert index to str and make room for one more char (the flag)
-    WCHAR val[20];
-    if (_itow_s(i, val, 10) != 0)
+    NumFlagValueName val(i);
+    DWORD enabled_dw;
+    if (!key.getString(val(L'D'), descr) || 
+        !key.getString(val(L'T'), ttl) ||
+        !key.getString(val(L'C'), cls) ||
+        !key.getDWord(val(L'E'), enabled_dw))
+    {
         return false;
-    WCHAR* flag = val + wcslen(val);
-    *(flag+1) = L'\0';
-
-    std::wstring tmp;
-    DWORD dw;
-
-    *flag = L'D';
-    if (!key.getString(val, tmp)) return false;
-    descr = tmp;
-
-    *flag = L'T';
-    if (!key.getString(val, tmp)) return false;
-    ttl = tmp;
-
-    *flag = L'C';
-    if (!key.getString(val, tmp)) return false;
-    cls = tmp;
-
-    *flag = L'E';
-    if (!key.getDWord(val, dw)) return false;
-    enabled = dw != 0;
-
+    }
+    enabled = enabled_dw != 0;
     return true;
 }
 
@@ -94,17 +90,11 @@ AutoPinRule::load(ef::Win::RegKeyH& key, int i)
 bool 
 AutoPinRule::save(ef::Win::RegKeyH& key, int i) const
 {
-    // convert index to str and make room for one more char (the flag)
-    WCHAR val[20];
-    if (_itow_s(i, val, 10) != 0)
-        return false;
-    WCHAR* flag = val + wcslen(val);
-    *(flag+1) = L'\0';
-
-    return (*flag = L'D', key.setString(val, descr))
-        && (*flag = L'T', key.setString(val, ttl))
-        && (*flag = L'C', key.setString(val, cls))
-        && (*flag = L'E', key.setDWord (val, enabled));
+    NumFlagValueName val(i);
+    return key.setString(val(L'D'), descr) &&
+           key.setString(val(L'T'), ttl) &&
+           key.setString(val(L'C'), cls) &&
+           key.setDWord(val(L'E'), enabled);
 }
 
 
