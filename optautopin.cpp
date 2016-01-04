@@ -315,48 +315,12 @@ public:
         ScreenToClient(list, &hti.pt);
         int i = ListView_HitTest(list, &hti);
         if (i >= 0 && hti.flags & LVHT_ONITEMSTATEICON) {
-            if (emuChk) toggleItem(i);
             PSChanged(page);
         }
     }
 
-    void toggleItem(int i)
-    {
-        AutoPinRule* rule = getData(i);
-        if (rule) {
-            rule->enabled = !rule->enabled;
-            ListView_Update(list, i);
-        }
-    }
-
-    static LRESULT CALLBACK WndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
-    {
-        RulesList* list = (RulesList*)GetWindowLong(wnd, GWL_USERDATA);
-        if (!list || !list->orgProc)
-            return DefWindowProc(wnd, msg, wparam, lparam);
-
-        if (msg == WM_CHAR && wparam == VK_SPACE) {
-            RulesList* list = (RulesList*)GetWindowLong(wnd, GWL_USERDATA);
-            if (list)
-                list->onSpace();
-            return 0;
-        }
-
-        return CallWindowProc(list->orgProc, wnd, msg, wparam, lparam);    
-    }
-
-    void onSpace()
-    {
-        int i = ListView_GetNextItem(list, -1, LVNI_FOCUSED);
-        if (i != -1)
-            toggleItem(i);
-    }
-
 protected:
     HWND list;
-    HIMAGELIST ilChecks;
-    bool emuChk;
-    WNDPROC orgProc;
 
     AutoPinRule* getData(int i) const;
     bool setData(int i, AutoPinRule* rule);
@@ -364,9 +328,8 @@ protected:
 };
 
 
-RulesList::RulesList() : list(0), emuChk(ef::Win::getDllVer(L"comctl32.dll") < ef::Win::packVer(4,70))
+RulesList::RulesList() : list(0)
 {
-    //emuChk = true;
 }
 
 
@@ -374,68 +337,7 @@ void RulesList::init(HWND wnd)
 {
     list = wnd;
 
-    // LVS_EX_CHECKBOXES is only available in comctl32 4.70+
-    // (like LVS_EX_GRIDLINES and LVS_EX_FULLROWSELECT),
-    // so we emulate it on earlier versions
-
-    if (emuChk) {
-        orgProc = WNDPROC(SetWindowLong(list, GWL_WNDPROC, LONG(WndProc)));
-        SetWindowLong(list, GWL_USERDATA, LONG(this));
-
-        HDC dc = CreateCompatibleDC(0);
-        if (dc) {
-            HBITMAP bmp = CreateCompatibleBitmap(dc, 32, 16);
-            if (bmp) {
-                HGDIOBJ orgBmp = SelectObject(dc, bmp);
-                if (orgBmp) {
-                    HFONT fnt = CreateFont(16, 0, 0,0,FW_NORMAL, false, false, false, 
-                        SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
-                        DEFAULT_PITCH | FF_DONTCARE, L"Marlett");
-                    if (fnt) {
-                        HGDIOBJ orgFnt = SelectObject(dc, fnt);
-                        if (orgFnt) {
-                            //ab
-                            RECT rc = {0,0,16,16};
-                            for (int n = 0; n < 2; ++n) {
-                                FillRect(dc, &rc, HBRUSH(GetStockObject(WHITE_BRUSH)));
-                                SelectObject(dc, GetStockObject(NULL_BRUSH));
-
-                                RECT rc2;
-                                CopyRect(&rc2, &rc);
-
-                                InflateRect(&rc2, -1, -1);
-                                Rectangle(dc, rc2);
-                                InflateRect(&rc2, -1, -1);
-                                Rectangle(dc, rc2);
-                                InflateRect(&rc2, -1, -1);
-
-                                if (n == 1) {
-                                    SetBkMode(dc, TRANSPARENT);
-                                    DrawText(dc, L"a", 1, &rc, DT_NOPREFIX | DT_CENTER);
-                                }
-
-                                OffsetRect(&rc, 16, 0);
-                            }
-
-                            SelectObject(dc, orgFnt);
-                            DeleteObject(fnt);
-                        }
-                    }
-                    SelectObject(dc, orgBmp);
-
-                    ilChecks = ImageList_Create(16, 16, ILC_COLOR4 | ILC_MASK, 0, 1);
-                    ImageList_AddMasked(ilChecks, bmp, RGB(255,255,255));
-                    ListView_SetImageList(list, ilChecks, LVSIL_STATE);
-                }
-                DeleteObject(bmp);
-            }
-            DeleteDC(dc);
-        }
-
-    }
-    else {
-        ListView_SetExtendedListViewStyle(list, LVS_EX_CHECKBOXES);
-    }
+    ListView_SetExtendedListViewStyle(list, LVS_EX_CHECKBOXES);
 
     ListView_SetCallbackMask(list, LVIS_STATEIMAGEMASK);
 
@@ -470,12 +372,6 @@ void RulesList::init(HWND wnd)
 
 void RulesList::term()
 {
-    if (ef::Win::WndH(list).getStyle() & LVS_SHAREIMAGELISTS)
-        ImageList_Destroy(ilChecks);
-
-    if (emuChk)
-        SetWindowLong(list, GWL_WNDPROC, LONG(orgProc));
-
     list = 0;
 }
 
