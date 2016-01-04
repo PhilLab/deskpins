@@ -336,36 +336,17 @@ RulesList::RulesList() : list(0)
 void RulesList::init(HWND wnd)
 {
     list = wnd;
-
     ListView_SetExtendedListViewStyle(list, LVS_EX_CHECKBOXES);
-
     ListView_SetCallbackMask(list, LVIS_STATEIMAGEMASK);
 
-    HWND dlg = GetParent(wnd);
-
-    // get the column text from the dummy static ctrl
-    // delete it and move the top edge of the list to cover its place
-    HWND dummy = GetDlgItem(dlg, IDC_DUMMY);
-    std::wstring label = ef::Win::WndH(dummy).getText();
+    // adjust column size to client width
     RECT rc;
-    GetWindowRect(dummy, &rc);
-    DestroyWindow(dummy);  dummy = 0;
-    ScreenToClient(dlg, (POINT*)&rc);  // only top needed
-    int top = rc.top;
-
-    GetWindowRect(list, &rc);
-    MapWindowPoints(0, dlg, (POINT*)&rc, 2);
-    rc.top = top;
-    MoveWindow(list, rc, true);
-
-    // we'll set the column size to client width
     GetClientRect(list, &rc);    
-
     LVCOLUMN lvc;
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt  = LVCFMT_LEFT;
     lvc.cx   = rc.right - rc.left;
-    lvc.pszText = const_cast<LPWSTR>(label.c_str());
+    lvc.pszText = L"Rules";
     ListView_InsertColumn(list, 0, LPARAM(&lvc));
 }
 
