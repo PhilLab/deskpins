@@ -133,7 +133,6 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE, LPSTR, int)
         }
     }*/
 
-    //COMInitializer comInit;
     app.inst = inst;
 
     // load settings as soon as possible
@@ -153,10 +152,10 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE, LPSTR, int)
 
     MSG msg;
     while (GetMessage(&msg, 0, 0, 0)) {
-        //if (!app.activeModelessDlg || !IsDialogMessage(app.activeModelessDlg, &msg)) {
+        //if (app.activeModelessDlg && IsDialogMessage(app.activeModelessDlg, &msg))
+        //    continue;
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        //}
     }
 
     opt.save();
@@ -209,7 +208,7 @@ static void EvPinReq(HWND wnd, int x, int y)
 }
 
 
-static void CmRemovePins(HWND /*wnd*/)
+static void CmRemovePins(HWND wnd)
 {
     HWND pin;
     while ((pin = FindWindow(App::WNDCLS_PIN, 0)) != 0)
@@ -244,8 +243,7 @@ static void FixOptPSPos(HWND wnd)
 }
 
 
-static tstring 
-trayIconTip()
+static tstring trayIconTip()
 {
     TCHAR s[100];
     wsprintf(s, _T("%s - %s: %d"), App::APPNAME, ResStr(IDS_TRAYTIP, 50), app.pinsUsed);
@@ -500,10 +498,6 @@ static void EvHotkey(HWND wnd, int idHotKey)
 }
 
 
-// =======================================================================
-// =======================================================================
-
-
 static void UpdateStatusMessage(HWND wnd)
 {
     //ResStr s = app.pinsUsed == 0 ? ResStr(IDS_PINSUSED_0) :
@@ -634,9 +628,6 @@ static BOOL CALLBACK AboutDlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpar
     return false;
 }
 
-
-// =======================================================================
-// =======================================================================
 
 LRESULT CALLBACK MainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {

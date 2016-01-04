@@ -138,17 +138,6 @@ static void EvDestroy(HWND wnd, PinData& pd)
 }
 
 
-//static HWND static_hAppWnd = 0;
-//
-//static BOOL CALLBACK EnumThreadWndCollectProc(HWND wnd, LPARAM param)
-//{
-//    vector<HWND>& wndList = *(vector<HWND>*)param;
-//    if (wnd == static_hAppWnd || GetWindow(wnd, GW_OWNER) == static_hAppWnd)
-//    wndList.push_back(wnd);
-//    return true;  // continue enumeration
-//}
-
-
 // helper to collect all non-child windows of a thread
 class ThreadWnds {
 public:
@@ -193,14 +182,6 @@ static void FixPopupZOrder(HWND appWnd)
     ThreadWnds threadWnds(appWnd);
     if (!threadWnds.collect())
         return;
-
-    //vector<HWND> wndList;
-    //DWORD idThread = GetWindowThreadProcessId(appWnd, 0);
-    //static_hAppWnd = appWnd;
-    //if (!EnumThreadWindows(idThread, (WNDENUMPROC)EnumThreadWndCollectProc,
-    //  LPARAM(&wndList))) return;
-
-    //typedef vector<HWND>::const_iterator It;
 
     // HACK: here I'm assuming that EnumThreadWindows returns
     // HWNDs acoording to their z-order (is this documented anywhere?)

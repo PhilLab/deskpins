@@ -66,8 +66,6 @@ bool App::initComctl()
 {
     INITCOMMONCONTROLSEX iccx;
     iccx.dwSize = sizeof(iccx);
-    //iccx.dwICC = ICC_LISTVIEW_CLASSES | ICC_HOTKEY_CLASS | 
-    //             ICC_TAB_CLASSES | ICC_UPDOWN_CLASS;
     iccx.dwICC = ICC_WIN95_CLASSES;
     bool ret = !!InitCommonControlsEx(&iccx);
     if (!ret)
@@ -174,9 +172,4 @@ void App::createSmClrIcon(COLORREF clr)
         DeleteObject(ii.hbmColor);
         DeleteObject(ii.hbmMask);
     }
-
-    tstring ss;
-
-
 }
-

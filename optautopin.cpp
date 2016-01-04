@@ -409,8 +409,6 @@ void RulesList::init(HWND wnd)
                                 Rectangle(dc, rc2);
                                 InflateRect(&rc2, -1, -1);
 
-                                //SetTextColor(dc, RGB(0,255,0));
-                                //SetBkColor(dc, RGB(0,255,0));
                                 if (n == 1) {
                                     SetBkMode(dc, TRANSPARENT);
                                     DrawText(dc, _T("a"), 1, &rc, DT_NOPREFIX | DT_CENTER);
@@ -436,8 +434,7 @@ void RulesList::init(HWND wnd)
 
     }
     else {
-        ListView_SetExtendedListViewStyle(list, LVS_EX_CHECKBOXES 
-            /*| LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT*/);
+        ListView_SetExtendedListViewStyle(list, LVS_EX_CHECKBOXES);
     }
 
     ListView_SetCallbackMask(list, LVIS_STATEIMAGEMASK);
@@ -708,9 +705,7 @@ void RulesList::moveSelDown()
 }
 
 
-
 static RulesList rlist;
-
 
 
 // update controls state, depending on current selection
@@ -741,7 +736,7 @@ static bool CmAutoPinOn(HWND wnd)
 }
 
 
-static bool EvInitDialog(HWND wnd, HWND /*focus*/, LPARAM param)
+static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
 {
     // must have a valid data ptr
     if (!param) {

@@ -93,7 +93,7 @@ tstring getHelpFileDescr(const tstring& path, const tstring& name)
         boost::scoped_array<char> buf(new char[len]);
         if (ReadFileBack(file, buf.get(), len)) {
             boost::scoped_array<wchar_t> wbuf(new wchar_t[len]);
-            if (MultiByteToWideChar(CP_THREAD_ACP, 0, buf.get(), len, wbuf.get(), len/*, 0, 0*/))
+            if (MultiByteToWideChar(CP_THREAD_ACP, 0, buf.get(), len, wbuf.get(), len))
                 ret.assign(wbuf.get(), len);
         }
     }
@@ -121,7 +121,7 @@ void loadHelpFiles(HWND combo, const tstring& path, const tstring& cur)
 }
 
 
-static bool EvInitDialog(HWND wnd, HWND /*focus*/, LPARAM param)
+static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
 {
     // must have a valid data ptr
     if (!param) {

@@ -5,6 +5,9 @@
 #include "resource.h"
 
 
+#define OWNERDRAW_CLR_BUTTON  0
+
+
 static HBRUSH GetPinClrBrush(HWND wnd)
 {
     HWND ctrl = GetDlgItem(wnd, IDC_PIN_COLOR_BOX);
@@ -30,7 +33,7 @@ static void SetPinClrBrush(HWND wnd, COLORREF clr)
 }
 
 
-static bool EvInitDialog(HWND wnd, HWND /*focus*/, LPARAM lparam)
+static bool EvInitDialog(HWND wnd, HWND focus, LPARAM lparam)
 {
     // must have a valid data ptr
     if (!lparam) {
@@ -43,6 +46,11 @@ static bool EvInitDialog(HWND wnd, HWND /*focus*/, LPARAM lparam)
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(psp.lParam)->opt;
     SetWindowLong(wnd, DWL_USER, psp.lParam);
 
+#if OWNERDRAW_CLR_BUTTON
+    LONG style = GetWindowLong(GetDlgItem(wnd, IDC_PIN_COLOR), GWL_STYLE);
+    style |= BS_OWNERDRAW;
+    SetWindowLong(GetDlgItem(wnd, IDC_PIN_COLOR), GWL_STYLE, style);
+#endif
 
     SetPinClrBrush(wnd, opt.pinClr);
 
@@ -65,7 +73,9 @@ static void EvTermDialog(HWND wnd)
 }
 
 
-/*
+#if OWNERDRAW_CLR_BUTTON
+
+// TODO: add vistual styles support
 static bool EvDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
 {
     if (id != IDC_PIN_COLOR)
@@ -98,13 +108,15 @@ static bool EvDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
     DeleteObject(brush);
 
     rc.left = rc2.right + 4;
-    char buf[40];
+    tchar buf[40];
     GetDlgItemText(wnd, id, buf, sizeof(buf));
     DrawText(dc, buf, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
     SetWindowLong(wnd, DWL_MSGRESULT, true);
     return true;
-}*/
+}
+
+#endif
 
 
 static bool Validate(HWND wnd)
@@ -135,7 +147,7 @@ static BOOL CALLBACK EnumWndProcPinsUpdate(HWND wnd, LPARAM)
 {
     if (strimatch(App::WNDCLS_PIN, ef::Win::WndH(wnd).getClassName().c_str()))
         InvalidateRect(wnd, 0, false);
-    return true;    // continue enumeration
+    return true;    // continue
 }
 
 
@@ -149,7 +161,7 @@ static BOOL CALLBACK ResetPinTimersEnumProc(HWND wnd, LPARAM param)
 {
     if (strimatch(App::WNDCLS_PIN, ef::Win::WndH(wnd).getClassName().c_str()))
         SendMessage(wnd, App::WM_PIN_RESETTIMER, param, 0);
-    return true;    // continue enumeration
+    return true;    // continue
 }
 
 
@@ -229,8 +241,10 @@ BOOL CALLBACK OptPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 default:                    return false;
             }
         }
-        //case WM_DRAWITEM:
-        //    return EvDrawItem(wnd, wparam, (DRAWITEMSTRUCT*)lparam);
+#if OWNERDRAW_CLR_BUTTON
+        case WM_DRAWITEM:
+            return EvDrawItem(wnd, wparam, (DRAWITEMSTRUCT*)lparam);
+#endif
         case WM_CTLCOLORSTATIC:
             if (HWND(lparam) == GetDlgItem(wnd, IDC_PIN_COLOR_BOX))
                 return BOOL(GetPinClrBrush(wnd));

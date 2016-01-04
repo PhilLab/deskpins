@@ -105,46 +105,6 @@ private:
 };
 
 
-/*// Hook DLL manager (singleton).
-// Handles dynamic loading/unloading on request.
-//
-class HookDll : boost::noncopyable {
-private:
-    typedef bool (*initF)(HWND wnd, int msgId);
-    typedef bool (*termF)();
-
-public:
-    static HookDll& obj() {
-        static HookDll hookDll;
-        return hookDll;
-    }
-
-    ~HookDll() {
-        term();
-    }
-
-    bool init(HWND wnd, int msgId);
-    bool term();
-
-private:
-    HookDll() : dll(0), dllInitFunc(0), dllTermFunc(0)
-    {
-    }
-
-    HookDll(const HookDll&);
-    HookDll& operator=(const HookDll&);
-
-    HMODULE dll;
-    initF dllInitFunc;
-    termF dllTermFunc;
-
-    /*bool isLoaded() {
-        return dll != 0;
-    }*-/
-
-};*/
-
-
 class Options;
 
 // Manager of new windows for autopin checking.

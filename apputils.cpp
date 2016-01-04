@@ -9,44 +9,6 @@ HWND EventHookWindowCreationMonitor::wnd = 0;
 int EventHookWindowCreationMonitor::msgId = 0;
 
 
-/*bool HookDll::init(HWND wnd, int msgId)
-{
-    if (!dll) {
-        dll = LoadLibrary(_T("dphook.dll"));
-        if (!dll)
-            return false;
-    }
-
-    dllInitFunc = initF(GetProcAddress(dll, "init"));
-    dllTermFunc = termF(GetProcAddress(dll, "term"));
-    if (!dllInitFunc || !dllTermFunc) {
-        term();
-        return false;
-    }
-
-    return dllInitFunc(wnd, msgId);
-}
-
-
-bool HookDll::term()
-{
-    if (!dll)
-        return true;
-
-    if (dllTermFunc)
-        dllTermFunc();
-
-    bool ok = FreeLibrary(dll);
-    if (ok)
-        dll = 0;
-
-    return ok;
-}*/
-
-
-//-------------------------------------------------------------
-
-
 void PendingWindows::add(HWND wnd)
 {
     Entry entry(wnd, GetTickCount());

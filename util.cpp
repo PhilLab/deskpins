@@ -10,17 +10,6 @@ bool IsWndRectEmpty(HWND wnd)
 }
 
 
-/*
-// I thought that GetWindowLong(GWW_HWNDPARENT) returned the real parent
-// and GetParent() returned the owner (as stated in MSDN).
-// However, Spy++ shows the opposite...
-HWND GetOwner(HWND wnd)
-{
-return reinterpret_cast<HWND>(::GetWindowLong(wnd, GWL_HWNDPARENT));
-}
-*/
-
-
 bool IsChild(HWND wnd)
 {
     return (ef::Win::WndH(wnd).getStyle() & WS_CHILD) != 0;
@@ -36,7 +25,7 @@ HWND GetNonChildParent(HWND wnd)
 }
 
 
-HWND GetTopParent(HWND wnd /*, bool mustBeVisible = false*/)
+HWND GetTopParent(HWND wnd /*, bool mustBeVisible*/)
 {
     // ------------------------------------------------------
     // NOTE: 'mustBeVisible' is not used currently
@@ -115,7 +104,7 @@ bool GetScrSize(SIZE& sz)
 }
 
 
-void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent /*= false*/)
+void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
 {
     int err = 0, wrn = 0;
 
@@ -237,7 +226,6 @@ HWND CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFun
 HWND CreateLocalizedDialog(WORD id, HWND hParent, DLGPROC lpDialogFunc) {
     return CreateLocalizedDialog(MAKEINTRESOURCE(id), hParent, lpDialogFunc);
 }
-
 
 
 // TODO: move to eflib?

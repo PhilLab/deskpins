@@ -14,7 +14,7 @@ static bool CmHotkeysOn(HWND wnd)
 }
 
 
-static bool EvInitDialog(HWND wnd, HWND /*focus*/, LPARAM param)
+static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
 {
     // must have a valid data ptr
     if (!param) {
