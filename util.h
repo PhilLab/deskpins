@@ -33,12 +33,12 @@ bool GetScrSize(SIZE& sz);
 
 inline bool strmatch(LPCWSTR s1, LPCWSTR s2)
 {
-    return _tcscmp(s1, s2) == 0;
+    return wcscmp(s1, s2) == 0;
 }
 
 inline bool strimatch(LPCWSTR s1, LPCWSTR s2)
 {
-    return _tcsicmp(s1, s2) == 0;
+    return _wcsicmp(s1, s2) == 0;
 }
 
 HRGN MakeRegionFromBmp(HBITMAP bmp, COLORREF clrMask);
@@ -96,18 +96,18 @@ public:
 
     ResStr(const ResStr& other)
     {
-        const size_t buflen = _tcslen(other.str) + 1;
+        const size_t buflen = wcslen(other.str) + 1;
         str = new WCHAR[buflen];
-        _tcscpy_s(str, buflen, other.str);
+        wcscpy_s(str, buflen, other.str);
     }
 
     ResStr& operator=(const ResStr& other)
     {
         if (*this != other) {
             delete[] str;
-            const size_t buflen = _tcslen(other.str) + 1;
+            const size_t buflen = wcslen(other.str) + 1;
             str = new WCHAR[buflen];
-            _tcscpy_s(str, buflen, other.str);
+            wcscpy_s(str, buflen, other.str);
         }
     }
 

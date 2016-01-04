@@ -897,7 +897,7 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     std::wstring s = rule->descr;
                     if (int(s.length()) > di.item.cchTextMax-1)
                         s = s.substr(0, di.item.cchTextMax-1);
-                    _tcscpy_s(di.item.pszText, di.item.cchTextMax, s.c_str());
+                    wcscpy_s(di.item.pszText, di.item.cchTextMax, s.c_str());
                 }
                 if (di.item.mask & LVIF_STATE) {
                     di.item.stateMask = LVIS_STATEIMAGEMASK;

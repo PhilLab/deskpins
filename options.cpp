@@ -65,7 +65,7 @@ AutoPinRule::load(ef::Win::RegKeyH& key, int i)
     WCHAR val[20];
     if (_itow_s(i, val, 10) != 0)
         return false;
-    WCHAR* flag = val + _tcslen(val);
+    WCHAR* flag = val + wcslen(val);
     *(flag+1) = L'\0';
 
     std::wstring tmp;
@@ -98,7 +98,7 @@ AutoPinRule::save(ef::Win::RegKeyH& key, int i) const
     WCHAR val[20];
     if (_itow_s(i, val, 10) != 0)
         return false;
-    WCHAR* flag = val + _tcslen(val);
+    WCHAR* flag = val + wcslen(val);
     *(flag+1) = L'\0';
 
     return (*flag = L'D', key.setString(val, descr))
