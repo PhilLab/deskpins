@@ -6,70 +6,69 @@
 #include "resource.h"
 
 
-BOOL CALLBACK TargetWndProc(HWND, UINT, WPARAM, LPARAM);
+class TargetCtl : boost::noncopyable
+{
+public:
+    ~TargetCtl() {}
 
+    static bool subclass(HWND wnd)
+    {
+        WNDPROC orgProc = WNDPROC(GetWindowLong(wnd, GWL_WNDPROC));
+        if (!orgProc)
+            return false;
+        TargetCtl* data = new TargetCtl();
+        data->orgProc = orgProc;
+        data->cursShowing = true;
+        data->curs = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_BULLSEYE));
+        SetWindowLong(wnd, GWL_USERDATA, LONG(data));
+        SetWindowLong(wnd, GWL_WNDPROC, LONG(wndProc));
+        return true;
+    }
 
-struct TargetWndData {
+private:
     WNDPROC orgProc;
     bool    cursShowing;
     HCURSOR curs;
 
-    TargetWndData(HWND wnd)
+    TargetCtl() {}
+
+    static BOOL CALLBACK wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
-        orgProc = WNDPROC(GetWindowLong(wnd, GWL_WNDPROC));
-        if (!orgProc)
-            throw 0;  // TODO: use an exception
-        SetWindowLong(wnd, GWL_USERDATA, LONG(this));
-        SetWindowLong(wnd, GWL_WNDPROC, LONG(TargetWndProc));
+        TargetCtl& data = *(TargetCtl*)GetWindowLong(wnd, GWL_USERDATA);
 
-        cursShowing = true;
-        curs = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_BULLSEYE));
+        switch (msg) {
+            case WM_NCDESTROY: {
+                WNDPROC orgProc = data.orgProc;
+                delete &data;
+                return CallWindowProc(orgProc, wnd, msg, wparam, lparam);
+            }
+            case WM_PAINT: {
+                LRESULT ret = CallWindowProc(data.orgProc, wnd, msg, wparam, lparam);
+                HDC dc = GetDC(wnd);
+                if (dc) {
+                    if (data.cursShowing) {
+                        RECT rc;
+                        GetClientRect(wnd, &rc);
+                        int x = (rc.right  - GetSystemMetrics(SM_CXCURSOR)) / 2;
+                        int y = (rc.bottom - GetSystemMetrics(SM_CYCURSOR)) / 2;          
+                        DrawIcon(dc, x+1, y+1, data.curs);
+                    }
+                    ReleaseDC(wnd, dc);
+                }
+                return ret;
+            }
+            case WM_USER: {
+                data.cursShowing = wparam != 0;
+                InvalidateRect(wnd, 0, true);
+                UpdateWindow(wnd);
+                return 0;
+            }
+        }
+
+        return CallWindowProc(data.orgProc, wnd, msg, wparam, lparam);
     }
-
-    ~TargetWndData() {}
-
-private:
-    TargetWndData(const TargetWndData&);
-    TargetWndData& operator=(const TargetWndData&);
 
 };
-
-
-BOOL CALLBACK TargetWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    TargetWndData& data = *(TargetWndData*)GetWindowLong(wnd, GWL_USERDATA);
-
-    switch (msg) {
-        case WM_NCDESTROY: {
-            WNDPROC orgProc = data.orgProc;
-            delete &data;
-            return CallWindowProc(orgProc, wnd, msg, wparam, lparam);
-        }
-        case WM_PAINT: {
-            LRESULT ret = CallWindowProc(data.orgProc, wnd, msg, wparam, lparam);
-            HDC dc = GetDC(wnd);
-            if (dc) {
-                if (data.cursShowing) {
-                    RECT rc;
-                    GetClientRect(wnd, &rc);
-                    int x = (rc.right  - GetSystemMetrics(SM_CXCURSOR)) / 2;
-                    int y = (rc.bottom - GetSystemMetrics(SM_CYCURSOR)) / 2;          
-                    DrawIcon(dc, x+1, y+1, data.curs);
-                }
-                ReleaseDC(wnd, dc);
-            }
-            return ret;
-        }
-        case WM_USER: {
-            data.cursShowing = wparam != 0;
-            InvalidateRect(wnd, 0, true);
-            UpdateWindow(wnd);
-            return 0;
-        }
-    }
-
-    return CallWindowProc(data.orgProc, wnd, msg, wparam, lparam);
-}
 
 
 void MarkWnd(HWND wnd, bool mode)
@@ -155,13 +154,8 @@ BOOL CALLBACK APEditRuleDlgProc(
             SetDlgItemText(wnd, IDC_TITLE, rule.ttl.c_str());
             SetDlgItemText(wnd, IDC_CLASS, rule.cls.c_str());
 
-            try { 
-                new TargetWndData(GetDlgItem(wnd, IDC_TTLPICK));
-                new TargetWndData(GetDlgItem(wnd, IDC_CLSPICK));
-            } 
-            catch (int) {
-                // oh, well...
-            }
+            TargetCtl::subclass(GetDlgItem(wnd, IDC_TTLPICK));
+            TargetCtl::subclass(GetDlgItem(wnd, IDC_CLSPICK));
 
             // create tooltip for target icons
             tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, L"",
