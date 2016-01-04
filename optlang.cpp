@@ -45,7 +45,7 @@ tstring getLangFileDescr(const tstring& path, const tstring& file)
 
 void loadLangFiles(HWND combo, const tstring& path, const tstring& cur)
 {
-    std::vector<tstring> files = GetFiles(path + _T("lang*.dll"));
+    std::vector<tstring> files = GetFiles(path + L"lang*.dll");
     files.push_back(tstring());    // special entry
 
     for (int n = 0; n < int(files.size()); ++n) {
@@ -103,7 +103,7 @@ tstring getHelpFileDescr(const tstring& path, const tstring& name)
 
 void loadHelpFiles(HWND combo, const tstring& path, const tstring& cur)
 {
-    std::vector<tstring> files = GetFiles(path + _T("DeskPins*.chm"));
+    std::vector<tstring> files = GetFiles(path + L"DeskPins*.chm");
 
     for (int n = 0; n < int(files.size()); ++n) {
         Data* data = new Data;
@@ -137,8 +137,8 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
     tstring exePath = ef::dirSpec(ef::Win::getModulePath(app.inst));
     if (!exePath.empty()) {
 #ifdef DEBUG
-        loadLangFiles(GetDlgItem(wnd, IDC_UILANG),   exePath + _T("..\\localization\\"), opt.uiFile);
-        loadHelpFiles(GetDlgItem(wnd, IDC_HELPLANG), exePath + _T("..\\help\\"),         opt.helpFile);
+        loadLangFiles(GetDlgItem(wnd, IDC_UILANG),   exePath + L"..\\localization\\", opt.uiFile);
+        loadHelpFiles(GetDlgItem(wnd, IDC_HELPLANG), exePath + L"..\\help\\",         opt.helpFile);
 #else
         loadLangFiles(GetDlgItem(wnd, IDC_UILANG),   exePath, opt.uiFile);
         loadHelpFiles(GetDlgItem(wnd, IDC_HELPLANG), exePath, opt.helpFile);
@@ -164,7 +164,7 @@ static void Apply(HWND wnd)
         if (app.loadResMod(uiFile.c_str(), wnd))
             opt.uiFile = uiFile;
         else
-            opt.uiFile = _T("");
+            opt.uiFile = L"";
     }
 
     opt.helpFile = getComboSel(GetDlgItem(wnd, IDC_HELPLANG));
@@ -194,7 +194,7 @@ BOOL CALLBACK OptLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     break;
                 }
                 case PSN_HELP: {
-                    app.help.show(wnd, _T("::\\optlang.htm"));
+                    app.help.show(wnd, L"::\\optlang.htm");
                     break;
                 }
                 default:
@@ -211,7 +211,7 @@ BOOL CALLBACK OptLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
         }
         case WM_HELP: {
-            app.help.show(wnd, _T("::\\optlang.htm"));
+            app.help.show(wnd, L"::\\optlang.htm");
             break;
         }
         case WM_DELETEITEM: {

@@ -122,7 +122,7 @@ BOOL CALLBACK OptHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     return true;
                 }
                 case PSN_HELP: {
-                    app.help.show(wnd, _T("::\\opthotkeys.htm"));
+                    app.help.show(wnd, L"::\\opthotkeys.htm");
                     return true;
                 }
                 default:
@@ -130,7 +130,7 @@ BOOL CALLBACK OptHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }
         }
         case WM_HELP: {
-            app.help.show(wnd, _T("::\\opthotkeys.htm"));
+            app.help.show(wnd, L"::\\opthotkeys.htm");
             return true;
         }
         case WM_COMMAND: {

@@ -9,10 +9,10 @@
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 
 
-const tchar* App::APPNAME         = _T("DeskPins");
-const tchar* App::WNDCLS_MAIN     = _T("EFDeskPins");
-const tchar* App::WNDCLS_PIN      = _T("EFPinWnd");
-const tchar* App::WNDCLS_PINLAYER = _T("EFPinLayerWnd");
+const tchar* App::APPNAME         = L"DeskPins";
+const tchar* App::WNDCLS_MAIN     = L"EFDeskPins";
+const tchar* App::WNDCLS_PIN      = L"EFPinWnd";
+const tchar* App::WNDCLS_PINLAYER = L"EFPinLayerWnd";
 
 
 // Load a resource dll and store it in 'resMod'.
@@ -33,7 +33,7 @@ bool App::loadResMod(const tstring& file, HWND msgParent)
     tstring s = ef::dirSpec(ef::Win::getModulePath(inst));
     if (!s.empty()) {
 #ifdef _DEBUG
-        s += _T("..\\Localization\\");
+        s += L"..\\Localization\\";
 #endif
         s += file;
         resMod = LoadLibrary(s.c_str());
@@ -42,8 +42,8 @@ bool App::loadResMod(const tstring& file, HWND msgParent)
     // display warning if failed
     if (!resMod) {
         tchar buf[MAX_PATH + 100];
-        const tchar* msg = _T("Could not load language file: %s\r\n")
-            _T("Reverting to English interface.");
+        const tchar* msg = L"Could not load language file: %s\r\n"
+            L"Reverting to English interface.";
         wsprintf(buf, msg, file.c_str());
         Error(msgParent, buf);
     }

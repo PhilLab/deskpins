@@ -207,7 +207,7 @@ BOOL CALLBACK OptPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     Apply(wnd);
                     return true;
                 case PSN_HELP: {
-                    app.help.show(wnd, _T("::\\optpins.htm"));
+                    app.help.show(wnd, L"::\\optpins.htm");
                     return true;
                 }
                 case UDN_DELTAPOS: {
@@ -227,7 +227,7 @@ BOOL CALLBACK OptPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }
         }
         case WM_HELP: {
-            app.help.show(wnd, _T("::\\optpins.htm"));
+            app.help.show(wnd, L"::\\optpins.htm");
             return true;
         }
         case WM_COMMAND: {

@@ -5,21 +5,21 @@
 
 const HKEY  Options::HKCU              = HKEY_CURRENT_USER;
 
-const tchar* Options::REG_PATH_EF      = _T("Software\\Elias Fotinis");
-const tchar* Options::REG_APR_SUBPATH  = _T("AutoPinRules");
+const tchar* Options::REG_PATH_EF      = L"Software\\Elias Fotinis";
+const tchar* Options::REG_APR_SUBPATH  = L"AutoPinRules";
 
-const tchar* Options::REG_PINCLR       = _T("PinColor");
-const tchar* Options::REG_POLLRATE     = _T("PollRate");
-const tchar* Options::REG_TRAYDBLCLK   = _T("TrayDblClk");
-const tchar* Options::REG_AUTOPINON    = _T("Enabled");
-const tchar* Options::REG_AUTOPINDELAY = _T("Delay");
-const tchar* Options::REG_AUTOPINCOUNT = _T("Count");
-const tchar* Options::REG_AUTOPINRULE  = _T("AutoPinRule%d");
-const tchar* Options::REG_HOTKEYSON    = _T("HotKeysOn");
-const tchar* Options::REG_HOTNEWPIN    = _T("HotKeyNewPin");
-const tchar* Options::REG_HOTTOGGLEPIN = _T("HotKeyTogglePin");
-const tchar* Options::REG_LCLUI        = _T("LocalizedUI");
-const tchar* Options::REG_LCLHELP      = _T("LocalizedHelp");
+const tchar* Options::REG_PINCLR       = L"PinColor";
+const tchar* Options::REG_POLLRATE     = L"PollRate";
+const tchar* Options::REG_TRAYDBLCLK   = L"TrayDblClk";
+const tchar* Options::REG_AUTOPINON    = L"Enabled";
+const tchar* Options::REG_AUTOPINDELAY = L"Delay";
+const tchar* Options::REG_AUTOPINCOUNT = L"Count";
+const tchar* Options::REG_AUTOPINRULE  = L"AutoPinRule%d";
+const tchar* Options::REG_HOTKEYSON    = L"HotKeysOn";
+const tchar* Options::REG_HOTNEWPIN    = L"HotKeyNewPin";
+const tchar* Options::REG_HOTTOGGLEPIN = L"HotKeyTogglePin";
+const tchar* Options::REG_LCLUI        = L"LocalizedUI";
+const tchar* Options::REG_LCLHELP      = L"LocalizedHelp";
 
 
 bool 
@@ -66,24 +66,24 @@ AutoPinRule::load(ef::Win::RegKeyH& key, int i)
     if (_itot_s(i, val, 10) != 0)
         return false;
     tchar* flag = val + _tcslen(val);
-    *(flag+1) = _T('\0');
+    *(flag+1) = L'\0';
 
     tstring tmp;
     DWORD dw;
 
-    *flag = _T('D');
+    *flag = L'D';
     if (!key.getString(val, tmp)) return false;
     descr = tmp;
 
-    *flag = _T('T');
+    *flag = L'T';
     if (!key.getString(val, tmp)) return false;
     ttl = tmp;
 
-    *flag = _T('C');
+    *flag = L'C';
     if (!key.getString(val, tmp)) return false;
     cls = tmp;
 
-    *flag = _T('E');
+    *flag = L'E';
     if (!key.getDWord(val, dw)) return false;
     enabled = dw != 0;
 
@@ -99,12 +99,12 @@ AutoPinRule::save(ef::Win::RegKeyH& key, int i) const
     if (_itot_s(i, val, 10) != 0)
         return false;
     tchar* flag = val + _tcslen(val);
-    *(flag+1) = _T('\0');
+    *(flag+1) = L'\0';
 
-    return (*flag = _T('D'), key.setString(val, descr))
-        && (*flag = _T('T'), key.setString(val, ttl))
-        && (*flag = _T('C'), key.setString(val, cls))
-        && (*flag = _T('E'), key.setDWord (val, enabled));
+    return (*flag = L'D', key.setString(val, descr))
+        && (*flag = L'T', key.setString(val, ttl))
+        && (*flag = L'C', key.setString(val, cls))
+        && (*flag = L'E', key.setDWord (val, enabled));
 }
 
 
@@ -120,7 +120,7 @@ Options::Options() :
     hotTogglePin(App::HOTID_TOGGLEPIN, VK_F12, MOD_CONTROL),
     autoPinOn(false),
     autoPinDelay(200,100,10000,50),
-    helpFile(_T("DeskPins.chm"))    // init, in case key doesn't exist
+    helpFile(L"DeskPins.chm")    // init, in case key doesn't exist
 {
     // set higher tracking rate for Win2K+ (higher WM_TIMER resolution)
 
@@ -137,7 +137,7 @@ Options::~Options()
 bool 
 Options::save() const
 {
-    tstring appKeyPath = tstring(REG_PATH_EF) + _T('\\') + App::APPNAME;
+    tstring appKeyPath = tstring(REG_PATH_EF) + L'\\' + App::APPNAME;
     ef::Win::AutoRegKeyH key = ef::Win::RegKeyH::create(HKCU, appKeyPath);
     if (!key) return false;
 
@@ -168,7 +168,7 @@ Options::save() const
 bool
 Options::load()
 {
-    tstring appKeyPath = tstring(REG_PATH_EF) + _T('\\') + App::APPNAME;
+    tstring appKeyPath = tstring(REG_PATH_EF) + L'\\' + App::APPNAME;
     ef::Win::AutoRegKeyH key = ef::Win::RegKeyH::open(HKCU, appKeyPath);
     if (!key) return false;
 
@@ -222,7 +222,7 @@ Options::load()
         helpFile = buf;
 
     if (helpFile.empty())
-        helpFile = _T("DeskPins.chm");
+        helpFile = L"DeskPins.chm";
 
     return true;
 }

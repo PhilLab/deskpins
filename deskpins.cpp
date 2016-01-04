@@ -84,7 +84,7 @@ struct DispatcherParams
 HWND findAppWindow()
 {
     for (int i = 0; i < 20; ++i) {
-        HWND wnd = FindWindow(_T("EFDeskPins"), _T("DeskPins"));
+        HWND wnd = FindWindow(L"EFDeskPins", L"DeskPins");
         if (wnd) return wnd;
     }
     return 0;
@@ -100,7 +100,7 @@ unsigned __stdcall dispatcher(void* args)
 
     HWND wnd = findAppWindow();
     if (!wnd)
-        throw _T("error: could not find app window");
+        throw L"error: could not find app window";
 
     if (dp.doneEvent)
         SetEvent(dp.doneEvent);
@@ -122,7 +122,7 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE, LPSTR, int)
         unsigned tid;
         HANDLE thread = (HANDLE)_beginthreadex(0, 0, dispatcher, (void*)args, 0, &tid);
         if (!thread)
-            throw _T("error: could not create thread");
+            throw L"error: could not create thread";
         CloseHandle(thread);
 
         if (dp.doneEvent) {
@@ -139,7 +139,7 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE, LPSTR, int)
     opt.load();
 
     // setup UI dll & help early to get correct language msgs
-    if (!app.loadResMod(opt.uiFile.c_str(), 0)) opt.uiFile = _T("");
+    if (!app.loadResMod(opt.uiFile.c_str(), 0)) opt.uiFile = L"";
     app.help.init(app.inst, opt.helpFile);
 
     if (!app.chkPrevInst() || !app.initComctl())
@@ -182,7 +182,7 @@ static void CmNewPin(HWND wnd)
     app.layerWnd = CreateWindowEx(
         WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW,
         App::WNDCLS_PINLAYER,
-        _T("DeskPin"),
+        L"DeskPin",
         WS_POPUP | WS_VISIBLE,
         layerWndPos.x, layerWndPos.y, layerWndSize.cx, layerWndSize.cy,
         wnd, 0, app.inst, 0);
@@ -227,8 +227,8 @@ static void FixOptPSPos(HWND wnd)
     HWND trayWnd, notityWnd;
     if (GetWindowRect(wnd, &rc)
         && SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWA, 0)
-        && (trayWnd = FindWindow(_T("Shell_TrayWnd"), _T("")))
-        && (notityWnd = FindWindowEx(trayWnd, 0, _T("TrayNotifyWnd"), _T("")))
+        && (trayWnd = FindWindow(L"Shell_TrayWnd", L""))
+        && (notityWnd = FindWindowEx(trayWnd, 0, L"TrayNotifyWnd", L""))
         && GetWindowRect(notityWnd, &rcNW))
     {
         // '/2' simplified from the following two inequalities
@@ -246,7 +246,7 @@ static void FixOptPSPos(HWND wnd)
 static tstring trayIconTip()
 {
     TCHAR s[100];
-    wsprintf(s, _T("%s - %s: %d"), App::APPNAME, ResStr(IDS_TRAYTIP, 50), app.pinsUsed);
+    wsprintf(s, L"%s - %s: %d", App::APPNAME, ResStr(IDS_TRAYTIP, 50), app.pinsUsed);
     return s;
 }
 
@@ -365,7 +365,7 @@ static void CmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
 
     if (PropertySheet(&psh) == -1) {
         tstring msg = ResStr(IDS_ERR_DLGCREATE);
-        msg += _T("\r\n");
+        msg += L"\r\n";
         msg += ef::Win::getLastErrorStr();
         Error(wnd, msg.c_str());
     }
@@ -397,14 +397,14 @@ public:
         int h = GetSystemMetrics(SM_CYMENUCHECK);
 
         HDC    memDC  = CreateCompatibleDC(0);
-        HFONT  fnt    = ef::Win::FontH::create(_T("Marlett"), h, SYMBOL_CHARSET, ef::Win::FontH::noStyle);
+        HFONT  fnt    = ef::Win::FontH::create(L"Marlett", h, SYMBOL_CHARSET, ef::Win::FontH::noStyle);
         HBRUSH bkBrush = HBRUSH(GetStockObject(WHITE_BRUSH));
 
         HGDIOBJ orgFnt = GetCurrentObject(memDC, OBJ_FONT);
         HGDIOBJ orgBmp = GetCurrentObject(memDC, OBJ_BITMAP);
 
-        bmpClose = makeBmp(memDC, w, h, bkBrush, menu, CM_CLOSE, fnt, _T("r"));
-        bmpAbout = makeBmp(memDC, w, h, bkBrush, menu, CM_ABOUT, fnt, _T("s"));
+        bmpClose = makeBmp(memDC, w, h, bkBrush, menu, CM_CLOSE, fnt, L"r");
+        bmpAbout = makeBmp(memDC, w, h, bkBrush, menu, CM_ABOUT, fnt, L"s");
 
         SelectObject(memDC, orgBmp);
         SelectObject(memDC, orgFnt);
@@ -539,8 +539,8 @@ static bool EvInitDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
     };
 
     Link links[] = {
-        { IDC_MAIL, _T("efotinis@gmail.com"), _T("mailto:efotinis@gmail.com") },
-        { IDC_WEB, _T("Deskpins webpage"), _T("http://efotinis.neocities.org/deskpins/index.html") }
+        { IDC_MAIL, L"efotinis@gmail.com", L"mailto:efotinis@gmail.com" },
+        { IDC_WEB, L"Deskpins webpage", L"http://efotinis.neocities.org/deskpins/index.html" }
     };
 
     ef::Win::FontH font = ef::Win::FontH::getStockDefaultGui();
@@ -580,15 +580,15 @@ static void EvTermDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
 static void showSpecialInfo(HWND parent)
 {
 #if defined(_DEBUG)
-    const tchar* build = _T("Debug");
+    const tchar* build = L"Debug";
 #else
-    const tchar* build = _T("Release");
+    const tchar* build = L"Release";
 #endif
 
     // TODO: remove build info and add something more useful (e.g. "portable")
     tchar buf[1000];
-    wsprintf(buf, _T("Build: %s"), build);
-    MessageBox(parent, buf, _T("Info"), MB_ICONINFORMATION);
+    wsprintf(buf, L"Build: %s", build);
+    MessageBox(parent, buf, L"Info", MB_ICONINFORMATION);
 }
 
 
@@ -631,7 +631,7 @@ static BOOL CALLBACK AboutDlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpar
 
 LRESULT CALLBACK MainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    static UINT taskbarMsg = RegisterWindowMessage(_T("TaskbarCreated"));
+    static UINT taskbarMsg = RegisterWindowMessage(L"TaskbarCreated");
     static PendingWindows pendWnds;
     static WindowCreationMonitor* winCreMon;
 

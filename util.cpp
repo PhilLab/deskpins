@@ -65,14 +65,14 @@ HWND GetTopParent(HWND wnd /*, bool mustBeVisible*/)
 
 bool IsProgManWnd(HWND wnd)
 { 
-    return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), _T("ProgMan"))
-        && strimatch(ef::Win::WndH(wnd).getText().c_str(), _T("Program Manager"));
+    return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), L"ProgMan")
+        && strimatch(ef::Win::WndH(wnd).getText().c_str(), L"Program Manager");
 }
 
 
 bool IsTaskBar(HWND wnd)
 {
-    return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), _T("Shell_TrayWnd"));
+    return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), L"Shell_TrayWnd");
 }
 
 
@@ -126,7 +126,7 @@ void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
         HWND pin = CreateWindowEx(
             WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
             App::WNDCLS_PIN,
-            _T(""),
+            L"",
             WS_POPUP | WS_VISIBLE,
             0, 0, 0, 0,   // real pos/size set on wnd assignment
             0, 0, app.inst, 0);
@@ -327,7 +327,7 @@ bool PSChanged(HWND page)
 // from a string and returns the result
 tstring RemAccel(tstring s)
 {
-    tstring::size_type i = s.find_first_of(_T("&"));
+    tstring::size_type i = s.find_first_of(L"&");
     if (i != tstring::npos) s.erase(i, 1);
     return s;
 }

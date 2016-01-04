@@ -164,7 +164,7 @@ BOOL CALLBACK APEditRuleDlgProc(
             }
 
             // create tooltip for target icons
-            tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""),
+            tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, L"",
                 WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                 wnd, 0, app.inst, 0);
@@ -177,11 +177,11 @@ BOOL CALLBACK APEditRuleDlgProc(
             ti.lParam = 0;
 
             ti.uId = UINT_PTR(GetDlgItem(wnd, IDC_TTLPICK));
-            ti.lpszText = _T("Drag icon to get window title");
+            ti.lpszText = L"Drag icon to get window title";
             SendMessage(tooltip, TTM_ADDTOOL, 0, LPARAM(&ti));
 
             ti.uId = UINT_PTR(GetDlgItem(wnd, IDC_CLSPICK));
-            ti.lpszText = _T("Drag icon to get window class");
+            ti.lpszText = L"Drag icon to get window class";
             SendMessage(tooltip, TTM_ADDTOOL, 0, LPARAM(&ti));
 
             return true;
@@ -231,7 +231,7 @@ BOOL CALLBACK APEditRuleDlgProc(
             return true;
         }
         case WM_HELP: {
-            app.help.show(wnd, _T("::\\editruledlg.htm"));
+            app.help.show(wnd, L"::\\editruledlg.htm");
             return true;
         }
         case WM_COMMAND: {
@@ -252,7 +252,7 @@ BOOL CALLBACK APEditRuleDlgProc(
                     EndDialog(wnd, id);
                     return true;
                 case IDHELP:
-                    app.help.show(wnd, _T("::\\editruledlg.htm"));
+                    app.help.show(wnd, L"::\\editruledlg.htm");
                     return true;
                 case IDC_TTLPICK:
                 case IDC_CLSPICK: {
@@ -364,7 +364,7 @@ protected:
 };
 
 
-RulesList::RulesList() : list(0), emuChk(ef::Win::getDllVer(_T("comctl32.dll")) < ef::Win::packVer(4,70))
+RulesList::RulesList() : list(0), emuChk(ef::Win::getDllVer(L"comctl32.dll") < ef::Win::packVer(4,70))
 {
     //emuChk = true;
 }
@@ -390,7 +390,7 @@ void RulesList::init(HWND wnd)
                 if (orgBmp) {
                     HFONT fnt = CreateFont(16, 0, 0,0,FW_NORMAL, false, false, false, 
                         SYMBOL_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 
-                        DEFAULT_PITCH | FF_DONTCARE, _T("Marlett"));
+                        DEFAULT_PITCH | FF_DONTCARE, L"Marlett");
                     if (fnt) {
                         HGDIOBJ orgFnt = SelectObject(dc, fnt);
                         if (orgFnt) {
@@ -411,7 +411,7 @@ void RulesList::init(HWND wnd)
 
                                 if (n == 1) {
                                     SetBkMode(dc, TRANSPARENT);
-                                    DrawText(dc, _T("a"), 1, &rc, DT_NOPREFIX | DT_CENTER);
+                                    DrawText(dc, L"a", 1, &rc, DT_NOPREFIX | DT_CENTER);
                                 }
 
                                 OffsetRect(&rc, 16, 0);
@@ -829,7 +829,7 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 return true;
             }
             case PSN_HELP: {
-                app.help.show(wnd, _T("::\\optautopin.htm"));
+                app.help.show(wnd, L"::\\optautopin.htm");
                 return true;
             }
             case UDN_DELTAPOS: {
@@ -919,7 +919,7 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }
         }
         case WM_HELP: {
-            app.help.show(wnd, _T("::\\optautopin.htm"));
+            app.help.show(wnd, L"::\\optautopin.htm");
             return true;
         }
         case WM_COMMAND: {

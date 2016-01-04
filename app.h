@@ -43,7 +43,7 @@ struct App : boost::noncopyable {
         TIMERID_AUTOPIN = 1,
     };
 
-    App() : prevInst(_T("EFDeskPinsRunning")),
+    App() : prevInst(L"EFDeskPinsRunning"),
         mainWnd(0), aboutDlg(0), optionsDlg(0), layerWnd(0), 
         /*activeModelessDlg(0), */ inst(0), resMod(0), 
         smIcon(0), smClrIcon(0), 

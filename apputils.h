@@ -68,7 +68,7 @@ public:
 
     bool init(HWND wnd, int msgId) {
         if (!dll) {
-            dll = LoadLibrary(_T("dphook.dll"));
+            dll = LoadLibrary(L"dphook.dll");
             if (!dll)
                 return false;
         }

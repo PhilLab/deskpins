@@ -455,6 +455,6 @@ static BOOL CALLBACK EnumThreadWndProc(HWND wnd, LPARAM param)
 
 static bool IsVCLAppWnd(HWND wnd)
 {
-    return strimatch(_T("TApplication"), ef::Win::WndH(wnd).getClassName().c_str()) 
+    return strimatch(L"TApplication", ef::Win::WndH(wnd).getClassName().c_str()) 
         && IsWndRectEmpty(wnd);
 }

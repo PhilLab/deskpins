@@ -13,7 +13,7 @@ bool Help::init(HINSTANCE inst, const tstring& fname)
         return false;
 
 #if defined(DEBUG) || defined(_DEBUG)
-    path += _T("..\\help\\");
+    path += L"..\\help\\";
 #endif
 
     hlpFile = path + fname;
