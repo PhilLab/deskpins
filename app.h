@@ -17,10 +17,10 @@ struct App : boost::noncopyable {
     int       optionPage;
     TrayIcon  trayIcon;
 
-    static const ef::tchar* APPNAME;
-    static const ef::tchar* WNDCLS_MAIN;
-    static const ef::tchar* WNDCLS_PIN;
-    static const ef::tchar* WNDCLS_PINLAYER;
+    static LPCWSTR APPNAME;
+    static LPCWSTR WNDCLS_MAIN;
+    static LPCWSTR WNDCLS_PIN;
+    static LPCWSTR WNDCLS_PINLAYER;
 
     enum {
         // app messages
@@ -51,7 +51,7 @@ struct App : boost::noncopyable {
     ~App() { freeResMod(); DeleteObject(smIcon); DeleteObject(smClrIcon); }
 
 
-    bool loadResMod(const ef::tstring& file, HWND msgParent);
+    bool loadResMod(const std::wstring& file, HWND msgParent);
     void freeResMod();
     bool initComctl();
     bool chkPrevInst();

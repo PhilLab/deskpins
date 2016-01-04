@@ -82,14 +82,14 @@ bool IsTopMost(HWND wnd)
 }
 
 
-void Error(HWND wnd, const tchar* s)
+void Error(HWND wnd, LPCWSTR s)
 {
     ResStr caption(IDS_ERRBOXTTITLE, 50, reinterpret_cast<DWORD>(App::APPNAME));
     MessageBox(wnd, s, caption, MB_ICONSTOP | MB_TOPMOST);
 }
 
 
-void Warning(HWND wnd, const tchar* s)
+void Warning(HWND wnd, LPCWSTR s)
 {
     ResStr caption(IDS_WRNBOXTTITLE, 50, reinterpret_cast<DWORD>(App::APPNAME));
     MessageBox(wnd, s, caption, MB_ICONWARNING | MB_TOPMOST);
@@ -265,9 +265,9 @@ void EnableGroup(HWND wnd, int id, bool mode)
 
 
 // TODO: move to eflib?
-std::vector<tstring> GetFiles(tstring mask)
+std::vector<std::wstring> GetFiles(std::wstring mask)
 {
-    std::vector<tstring> ret;
+    std::vector<std::wstring> ret;
     for (ef::Win::FileFinder fde(mask, ef::Win::FileFinder::files); fde; ++fde)
         ret.push_back(fde.getName());
     return ret;
@@ -325,10 +325,10 @@ bool PSChanged(HWND page)
 
 // removes the first accelerator prefix ('&')
 // from a string and returns the result
-tstring RemAccel(tstring s)
+std::wstring RemAccel(std::wstring s)
 {
-    tstring::size_type i = s.find_first_of(L"&");
-    if (i != tstring::npos) s.erase(i, 1);
+    std::wstring::size_type i = s.find_first_of(L"&");
+    if (i != std::wstring::npos) s.erase(i, 1);
     return s;
 }
 
@@ -407,8 +407,8 @@ bool remapBmpColors(HBITMAP bmp, COLORREF clrs[][2], int cnt)
 // Returns the part of a string after the last occurrence of a token.
 // Example: substrAfter("foobar", "oo") --> "bar"
 // Returns "" on error.
-tstring substrAfterLast(const tstring& s, const tstring& delim)
+std::wstring substrAfterLast(const std::wstring& s, const std::wstring& delim)
 {
-    tstring::size_type i = s.find_last_of(delim);
-    return i == tstring::npos ? tstring() : s.substr(i + delim.length());
+    std::wstring::size_type i = s.find_last_of(delim);
+    return i == std::wstring::npos ? L"" : s.substr(i + delim.length());
 }

@@ -9,10 +9,10 @@
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
 
 
-const tchar* App::APPNAME         = L"DeskPins";
-const tchar* App::WNDCLS_MAIN     = L"EFDeskPins";
-const tchar* App::WNDCLS_PIN      = L"EFPinWnd";
-const tchar* App::WNDCLS_PINLAYER = L"EFPinLayerWnd";
+LPCWSTR App::APPNAME         = L"DeskPins";
+LPCWSTR App::WNDCLS_MAIN     = L"EFDeskPins";
+LPCWSTR App::WNDCLS_PIN      = L"EFPinWnd";
+LPCWSTR App::WNDCLS_PINLAYER = L"EFPinLayerWnd";
 
 
 // Load a resource dll and store it in 'resMod'.
@@ -20,7 +20,7 @@ const tchar* App::WNDCLS_PINLAYER = L"EFPinLayerWnd";
 // On error (or if file is nul), 'resMod' is set to 0 
 // to use the built-in EXE resources.
 // Returns success.
-bool App::loadResMod(const tstring& file, HWND msgParent)
+bool App::loadResMod(const std::wstring& file, HWND msgParent)
 {
     // unload current
     freeResMod();
@@ -30,7 +30,7 @@ bool App::loadResMod(const tstring& file, HWND msgParent)
         return true;
 
     // try to load module if it's a DLL
-    tstring s = ef::dirSpec(ef::Win::getModulePath(inst));
+    std::wstring s = ef::dirSpec(ef::Win::getModulePath(inst));
     if (!s.empty()) {
 #ifdef _DEBUG
         s += L"..\\Localization\\";
@@ -41,8 +41,8 @@ bool App::loadResMod(const tstring& file, HWND msgParent)
 
     // display warning if failed
     if (!resMod) {
-        tchar buf[MAX_PATH + 100];
-        const tchar* msg = L"Could not load language file: %s\r\n"
+        WCHAR buf[MAX_PATH + 100];
+        LPCWSTR msg = L"Could not load language file: %s\r\n"
             L"Reverting to English interface.";
         wsprintf(buf, msg, file.c_str());
         Error(msgParent, buf);

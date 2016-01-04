@@ -32,8 +32,8 @@ struct HotKey {
         return !!UnregisterHotKey(wnd, id);
     }
 
-    bool load(ef::Win::RegKeyH& key, const ef::tchar* val);
-    bool save(ef::Win::RegKeyH& key, const ef::tchar* val) const;
+    bool load(ef::Win::RegKeyH& key, LPCWSTR val);
+    bool save(ef::Win::RegKeyH& key, LPCWSTR val) const;
 
     void getUI(HWND wnd, int id)
     {
@@ -53,14 +53,14 @@ struct HotKey {
 
 
 struct AutoPinRule {
-    ef::tstring descr;
-    ef::tstring ttl;
-    ef::tstring cls;
-    bool   enabled;
+    std::wstring descr;
+    std::wstring ttl;
+    std::wstring cls;
+    bool enabled;
 
-    AutoPinRule(const ef::tstring& d = ef::tstring(ResStr(IDS_NEWRULEDESCR)), 
-        const ef::tstring& t = ef::tstring(), 
-        const ef::tstring& c = ef::tstring(), 
+    AutoPinRule(const std::wstring& d = std::wstring(ResStr(IDS_NEWRULEDESCR)), 
+        const std::wstring& t = L"", 
+        const std::wstring& c = L"", 
         bool b = true) : descr(d), ttl(t), cls(c), enabled(b) {}
 
     bool match(HWND wnd) const;
@@ -142,7 +142,7 @@ struct ScalarOption {
 
         // report error
         HWND prevSib = GetWindow(GetDlgItem(wnd, id), GW_HWNDPREV);
-        ef::tstring label = RemAccel(ef::Win::WndH(prevSib).getText());
+        std::wstring label = RemAccel(ef::Win::WndH(prevSib).getText());
         ResStr str(IDS_WRN_UIRANGE, 256, DWORD_PTR(label.c_str()), DWORD(minV), DWORD(maxV));
         Warning(wnd, str);
         SetFocus(GetDlgItem(wnd, id));
@@ -168,8 +168,8 @@ public:
     AutoPinRules  autoPinRules;
     IntOption     autoPinDelay;
     // lang
-    ef::tstring   uiFile;     // empty means built-in exe resources
-    ef::tstring   helpFile;   // empty defaults to 'deskpins.chm'
+    std::wstring  uiFile;     // empty means built-in exe resources
+    std::wstring  helpFile;   // empty defaults to 'deskpins.chm'
 
     Options();
     ~Options();
@@ -181,21 +181,21 @@ protected:
     // constants
     static const HKEY   HKCU;
 
-    static const ef::tchar* REG_PATH_EF;
-    static const ef::tchar* REG_APR_SUBPATH;
+    static LPCWSTR REG_PATH_EF;
+    static LPCWSTR REG_APR_SUBPATH;
 
-    static const ef::tchar* REG_PINCLR;
-    static const ef::tchar* REG_POLLRATE;
-    static const ef::tchar* REG_TRAYDBLCLK;
-    static const ef::tchar* REG_AUTOPINON;
-    static const ef::tchar* REG_AUTOPINDELAY;
-    static const ef::tchar* REG_AUTOPINCOUNT;
-    static const ef::tchar* REG_AUTOPINRULE;
-    static const ef::tchar* REG_HOTKEYSON;
-    static const ef::tchar* REG_HOTNEWPIN;
-    static const ef::tchar* REG_HOTTOGGLEPIN;
-    static const ef::tchar* REG_LCLUI;
-    static const ef::tchar* REG_LCLHELP;
+    static LPCWSTR REG_PINCLR;
+    static LPCWSTR REG_POLLRATE;
+    static LPCWSTR REG_TRAYDBLCLK;
+    static LPCWSTR REG_AUTOPINON;
+    static LPCWSTR REG_AUTOPINDELAY;
+    static LPCWSTR REG_AUTOPINCOUNT;
+    static LPCWSTR REG_AUTOPINRULE;
+    static LPCWSTR REG_HOTKEYSON;
+    static LPCWSTR REG_HOTNEWPIN;
+    static LPCWSTR REG_HOTTOGGLEPIN;
+    static LPCWSTR REG_LCLUI;
+    static LPCWSTR REG_LCLHELP;
 
     // utilities
     bool REGOK(DWORD err) { return err == ERROR_SUCCESS; }

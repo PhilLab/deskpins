@@ -27,16 +27,16 @@ HWND GetTopParent(HWND wnd);
 bool IsProgManWnd(HWND wnd);
 bool IsTaskBar(HWND wnd);
 bool IsTopMost(HWND wnd);
-void Error(HWND wnd, const ef::tchar* s);
-void Warning(HWND wnd, const ef::tchar* s);
+void Error(HWND wnd, LPCWSTR s);
+void Warning(HWND wnd, LPCWSTR s);
 bool GetScrSize(SIZE& sz);
 
-inline bool strmatch(const ef::tchar* s1, const ef::tchar* s2)
+inline bool strmatch(LPCWSTR s1, LPCWSTR s2)
 {
     return _tcscmp(s1, s2) == 0;
 }
 
-inline bool strimatch(const ef::tchar* s1, const ef::tchar* s2)
+inline bool strimatch(LPCWSTR s1, LPCWSTR s2)
 {
     return _tcsicmp(s1, s2) == 0;
 }
@@ -60,7 +60,7 @@ HWND  CreateLocalizedDialog  (WORD id, HWND hWndParent,
 bool RectContains(const RECT& rc1, const RECT& rc2);
 void EnableGroup(HWND wnd, int id, bool mode);
 
-std::vector<ef::tstring> GetFiles(ef::tstring mask);
+std::vector<std::wstring> GetFiles(std::wstring mask);
 
 
 COLORREF Light(COLORREF clr);
@@ -71,7 +71,7 @@ COLORREF Dark(COLORREF clr);
 class ResStr {
 public:
     ResStr(DWORD id, int bufLen = 256) {
-        str = new ef::tchar[bufLen];
+        str = new WCHAR[bufLen];
         if (!app.resMod || !LoadString(app.resMod, id, str, bufLen))
             LoadString(app.inst, id, str, bufLen);
     }
@@ -97,7 +97,7 @@ public:
     ResStr(const ResStr& other)
     {
         const size_t buflen = _tcslen(other.str) + 1;
-        str = new ef::tchar[buflen];
+        str = new WCHAR[buflen];
         _tcscpy_s(str, buflen, other.str);
     }
 
@@ -106,7 +106,7 @@ public:
         if (*this != other) {
             delete[] str;
             const size_t buflen = _tcslen(other.str) + 1;
-            str = new ef::tchar[buflen];
+            str = new WCHAR[buflen];
             _tcscpy_s(str, buflen, other.str);
         }
     }
@@ -115,28 +115,28 @@ public:
         delete[] str;
     }
 
-    operator const ef::tchar*() const {
+    operator LPCWSTR() const {
         return str;
     }
 
-    operator ef::tchar*() {
+    operator LPWSTR() {
         return str;
     }
 
 protected:
     void initFmt(DWORD id, int bufLen, DWORD* params) {
-        str = new ef::tchar[bufLen];
+        str = new WCHAR[bufLen];
         if (!app.resMod || !LoadString(app.resMod, id, str, bufLen))
             LoadString(app.inst, id, str, bufLen);
 
         DWORD flags = FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY;
         va_list* va = reinterpret_cast<va_list*>(params);
-        if (!FormatMessage(flags, tstring(str).c_str(), 0, 0, str, bufLen, va))
+        if (!FormatMessage(flags, std::wstring(str).c_str(), 0, 0, str, bufLen, va))
             *str = 0;
     }
 
 private:
-    ef::tchar* str;
+    LPWSTR str;
 
 };
 
@@ -146,11 +146,11 @@ BOOL Rectangle(HDC dc, const RECT& rc);
 
 
 bool PSChanged(HWND page);
-ef::tstring RemAccel(ef::tstring s);
+std::wstring RemAccel(std::wstring s);
 
 bool getBmpSize(HBITMAP bmp, SIZE& sz);
 
 bool remapBmpColors(HBITMAP bmp, COLORREF clrs[][2], int cnt);
 
 
-ef::tstring substrAfterLast(const ef::tstring& s, const ef::tstring& delim);
+std::wstring substrAfterLast(const std::wstring& s, const std::wstring& delim);

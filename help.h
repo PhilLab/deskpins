@@ -5,9 +5,9 @@ class Help : boost::noncopyable {
 public:
     Help() {}
 
-    bool init(HINSTANCE inst, const ef::tstring& fname);
-    HWND show(HWND wnd, const ef::tstring& topic = ef::tstring());
+    bool init(HINSTANCE inst, const std::wstring& fname);
+    HWND show(HWND wnd, const std::wstring& topic = L"");
 
 protected:
-    ef::tstring hlpFile;
+    std::wstring hlpFile;
 };

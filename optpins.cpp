@@ -108,7 +108,7 @@ static bool EvDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
     DeleteObject(brush);
 
     rc.left = rc2.right + 4;
-    tchar buf[40];
+    WCHAR buf[40];
     GetDlgItemText(wnd, id, buf, sizeof(buf));
     DrawText(dc, buf, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 

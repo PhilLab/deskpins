@@ -20,7 +20,6 @@
 #include <prsht.h>
 #include <commdlg.h>
 #include <process.h>
-#include <tchar.h>
 
 #include <cstdlib>      // abs
 #include <string>
@@ -51,6 +50,3 @@
 #include "ef/Win/WinSys.hpp"
 #include <ef/std/TChar.hpp>
 #include <ef/Win/WndH.hpp>
-
-using ef::tchar;
-using ef::tstring;

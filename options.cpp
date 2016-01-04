@@ -5,25 +5,25 @@
 
 const HKEY  Options::HKCU              = HKEY_CURRENT_USER;
 
-const tchar* Options::REG_PATH_EF      = L"Software\\Elias Fotinis";
-const tchar* Options::REG_APR_SUBPATH  = L"AutoPinRules";
+LPCWSTR Options::REG_PATH_EF      = L"Software\\Elias Fotinis";
+LPCWSTR Options::REG_APR_SUBPATH  = L"AutoPinRules";
 
-const tchar* Options::REG_PINCLR       = L"PinColor";
-const tchar* Options::REG_POLLRATE     = L"PollRate";
-const tchar* Options::REG_TRAYDBLCLK   = L"TrayDblClk";
-const tchar* Options::REG_AUTOPINON    = L"Enabled";
-const tchar* Options::REG_AUTOPINDELAY = L"Delay";
-const tchar* Options::REG_AUTOPINCOUNT = L"Count";
-const tchar* Options::REG_AUTOPINRULE  = L"AutoPinRule%d";
-const tchar* Options::REG_HOTKEYSON    = L"HotKeysOn";
-const tchar* Options::REG_HOTNEWPIN    = L"HotKeyNewPin";
-const tchar* Options::REG_HOTTOGGLEPIN = L"HotKeyTogglePin";
-const tchar* Options::REG_LCLUI        = L"LocalizedUI";
-const tchar* Options::REG_LCLHELP      = L"LocalizedHelp";
+LPCWSTR Options::REG_PINCLR       = L"PinColor";
+LPCWSTR Options::REG_POLLRATE     = L"PollRate";
+LPCWSTR Options::REG_TRAYDBLCLK   = L"TrayDblClk";
+LPCWSTR Options::REG_AUTOPINON    = L"Enabled";
+LPCWSTR Options::REG_AUTOPINDELAY = L"Delay";
+LPCWSTR Options::REG_AUTOPINCOUNT = L"Count";
+LPCWSTR Options::REG_AUTOPINRULE  = L"AutoPinRule%d";
+LPCWSTR Options::REG_HOTKEYSON    = L"HotKeysOn";
+LPCWSTR Options::REG_HOTNEWPIN    = L"HotKeyNewPin";
+LPCWSTR Options::REG_HOTTOGGLEPIN = L"HotKeyTogglePin";
+LPCWSTR Options::REG_LCLUI        = L"LocalizedUI";
+LPCWSTR Options::REG_LCLHELP      = L"LocalizedHelp";
 
 
 bool 
-HotKey::load(ef::Win::RegKeyH& key, const tchar* val)
+HotKey::load(ef::Win::RegKeyH& key, LPCWSTR val)
 {
     DWORD dw;
     if (!key.getDWord(val, dw))
@@ -40,7 +40,7 @@ HotKey::load(ef::Win::RegKeyH& key, const tchar* val)
 
 
 bool 
-HotKey::save(ef::Win::RegKeyH& key, const tchar* val) const
+HotKey::save(ef::Win::RegKeyH& key, LPCWSTR val) const
 {
     return key.setDWord(val, MAKEWORD(vk, mod));
 }
@@ -62,13 +62,13 @@ bool
 AutoPinRule::load(ef::Win::RegKeyH& key, int i)
 {
     // convert index to str and make room for one more char (the flag)
-    tchar val[20];
+    WCHAR val[20];
     if (_itot_s(i, val, 10) != 0)
         return false;
-    tchar* flag = val + _tcslen(val);
+    WCHAR* flag = val + _tcslen(val);
     *(flag+1) = L'\0';
 
-    tstring tmp;
+    std::wstring tmp;
     DWORD dw;
 
     *flag = L'D';
@@ -95,10 +95,10 @@ bool
 AutoPinRule::save(ef::Win::RegKeyH& key, int i) const
 {
     // convert index to str and make room for one more char (the flag)
-    tchar val[20];
+    WCHAR val[20];
     if (_itot_s(i, val, 10) != 0)
         return false;
-    tchar* flag = val + _tcslen(val);
+    WCHAR* flag = val + _tcslen(val);
     *(flag+1) = L'\0';
 
     return (*flag = L'D', key.setString(val, descr))
@@ -137,7 +137,7 @@ Options::~Options()
 bool 
 Options::save() const
 {
-    tstring appKeyPath = tstring(REG_PATH_EF) + L'\\' + App::APPNAME;
+    std::wstring appKeyPath = std::wstring(REG_PATH_EF) + L'\\' + App::APPNAME;
     ef::Win::AutoRegKeyH key = ef::Win::RegKeyH::create(HKCU, appKeyPath);
     if (!key) return false;
 
@@ -168,12 +168,12 @@ Options::save() const
 bool
 Options::load()
 {
-    tstring appKeyPath = tstring(REG_PATH_EF) + L'\\' + App::APPNAME;
+    std::wstring appKeyPath = std::wstring(REG_PATH_EF) + L'\\' + App::APPNAME;
     ef::Win::AutoRegKeyH key = ef::Win::RegKeyH::open(HKCU, appKeyPath);
     if (!key) return false;
 
     DWORD dw;
-    tstring buf;
+    std::wstring buf;
 
     if (key.getDWord(REG_PINCLR, dw)) {
         pinClr = COLORREF(dw & 0xFFFFFF);

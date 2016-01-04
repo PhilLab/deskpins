@@ -9,17 +9,17 @@ const DWORD CHM_MARKER_SIG = 0xefda7a00;  // from chmmark.py
 
 
 struct Data {
-    tstring fname, dispName, descr;
-    Data(const tstring& fname_    = tstring(), 
-        const tstring& dispName_ = tstring(), 
-        const tstring& descr_    = tstring())
-        : fname(fname_), dispName(dispName_), descr(descr_) {}
+    std::wstring fname, dispName, descr;
+    Data(const std::wstring& fname   = L"", 
+        const std::wstring& dispName = L"", 
+        const std::wstring& descr    = L"")
+        : fname(fname), dispName(dispName), descr(descr) {}
 };
 
 
-tstring getComboSel(HWND wnd)
+std::wstring getComboSel(HWND wnd)
 {
-    tstring ret;
+    std::wstring ret;
     int n = SendMessage(wnd, CB_GETCURSEL, 0, 0);
     if (n != CB_ERR) {
         int i = SendMessage(wnd, CB_GETITEMDATA, n, 0);
@@ -31,10 +31,10 @@ tstring getComboSel(HWND wnd)
 }
 
 
-tstring getLangFileDescr(const tstring& path, const tstring& file)
+std::wstring getLangFileDescr(const std::wstring& path, const std::wstring& file)
 {
     HINSTANCE inst = file.empty() ? app.inst : LoadLibrary((path+file).c_str());
-    tchar buf[100];
+    WCHAR buf[100];
     if (!inst || !LoadString(inst, IDS_LANG, buf, sizeof(buf)))
         *buf = '\0';
     if (!file.empty() && inst)   // release inst if we had to load it
@@ -43,10 +43,10 @@ tstring getLangFileDescr(const tstring& path, const tstring& file)
 }
 
 
-void loadLangFiles(HWND combo, const tstring& path, const tstring& cur)
+void loadLangFiles(HWND combo, const std::wstring& path, const std::wstring& cur)
 {
-    std::vector<tstring> files = GetFiles(path + L"lang*.dll");
-    files.push_back(tstring());    // special entry
+    std::vector<std::wstring> files = GetFiles(path + L"lang*.dll");
+    files.push_back(L"");    // special entry
 
     for (int n = 0; n < int(files.size()); ++n) {
         Data* data = new Data;
@@ -73,7 +73,7 @@ static bool ReadFileBack(HANDLE file, void* buf, int bytes)
 }
 
 
-tstring getHelpFileDescr(const tstring& path, const tstring& name)
+std::wstring getHelpFileDescr(const std::wstring& path, const std::wstring& name)
 {
     // Data layout:
     //  {CHM file data...}
@@ -81,7 +81,7 @@ tstring getHelpFileDescr(const tstring& path, const tstring& name)
     //  DWORD size
     //  DWORD sig
 
-    tstring ret;
+    std::wstring ret;
     DWORD sig, len;
     ef::Win::AutoFileH file = ef::Win::FileH::create(path + name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (file != INVALID_HANDLE_VALUE &&
@@ -92,7 +92,7 @@ tstring getHelpFileDescr(const tstring& path, const tstring& name)
     {
         boost::scoped_array<char> buf(new char[len]);
         if (ReadFileBack(file, buf.get(), len)) {
-            boost::scoped_array<wchar_t> wbuf(new wchar_t[len]);
+            boost::scoped_array<WCHAR> wbuf(new WCHAR[len]);
             if (MultiByteToWideChar(CP_THREAD_ACP, 0, buf.get(), len, wbuf.get(), len))
                 ret.assign(wbuf.get(), len);
         }
@@ -101,9 +101,9 @@ tstring getHelpFileDescr(const tstring& path, const tstring& name)
 }
 
 
-void loadHelpFiles(HWND combo, const tstring& path, const tstring& cur)
+void loadHelpFiles(HWND combo, const std::wstring& path, const std::wstring& cur)
 {
-    std::vector<tstring> files = GetFiles(path + L"DeskPins*.chm");
+    std::vector<std::wstring> files = GetFiles(path + L"DeskPins*.chm");
 
     for (int n = 0; n < int(files.size()); ++n) {
         Data* data = new Data;
@@ -134,7 +134,7 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(psp.lParam)->opt;
     SetWindowLong(wnd, DWL_USER, psp.lParam);
 
-    tstring exePath = ef::dirSpec(ef::Win::getModulePath(app.inst));
+    std::wstring exePath = ef::dirSpec(ef::Win::getModulePath(app.inst));
     if (!exePath.empty()) {
 #ifdef DEBUG
         loadLangFiles(GetDlgItem(wnd, IDC_UILANG),   exePath + L"..\\localization\\", opt.uiFile);
@@ -159,7 +159,7 @@ static void Apply(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
-    tstring uiFile = getComboSel(GetDlgItem(wnd, IDC_UILANG));
+    std::wstring uiFile = getComboSel(GetDlgItem(wnd, IDC_UILANG));
     if (opt.uiFile != uiFile) {
         if (app.loadResMod(uiFile.c_str(), wnd))
             opt.uiFile = uiFile;

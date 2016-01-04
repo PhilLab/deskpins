@@ -240,7 +240,7 @@ BOOL CALLBACK APEditRuleDlgProc(
                 case IDOK: {
                     AutoPinRule& rule = 
                         *reinterpret_cast<AutoPinRule*>(GetWindowLong(wnd, DWL_USER));
-                    tchar buf[256];
+                    WCHAR buf[256];
                     GetDlgItemText(wnd, IDC_DESCR, buf, sizeof(buf));  rule.descr = buf;
                     GetDlgItemText(wnd, IDC_TITLE, buf, sizeof(buf));  rule.ttl = buf;
                     GetDlgItemText(wnd, IDC_CLASS, buf, sizeof(buf));  rule.cls = buf;
@@ -444,7 +444,7 @@ void RulesList::init(HWND wnd)
     // get the column text from the dummy static ctrl
     // delete it and move the top edge of the list to cover its place
     HWND dummy = GetDlgItem(dlg, IDC_DUMMY);
-    tstring label = ef::Win::WndH(dummy).getText();
+    std::wstring label = ef::Win::WndH(dummy).getText();
     RECT rc;
     GetWindowRect(dummy, &rc);
     DestroyWindow(dummy);  dummy = 0;
@@ -463,7 +463,7 @@ void RulesList::init(HWND wnd)
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt  = LVCFMT_LEFT;
     lvc.cx   = rc.right - rc.left;
-    lvc.pszText = const_cast<tchar*>(label.c_str());
+    lvc.pszText = const_cast<LPWSTR>(label.c_str());
     ListView_InsertColumn(list, 0, LPARAM(&lvc));
 }
 
@@ -894,7 +894,7 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 // fill in the requested fields
                 if (di.item.mask & LVIF_TEXT) {
                     //di.item.cchTextMax is 260..264 bytes
-                    tstring s = rule->descr;
+                    std::wstring s = rule->descr;
                     if (int(s.length()) > di.item.cchTextMax-1)
                         s = s.substr(0, di.item.cchTextMax-1);
                     _tcscpy_s(di.item.pszText, di.item.cchTextMax, s.c_str());

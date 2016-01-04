@@ -243,7 +243,7 @@ static void FixOptPSPos(HWND wnd)
 }
 
 
-static tstring trayIconTip()
+static std::wstring trayIconTip()
 {
     TCHAR s[100];
     wsprintf(s, L"%s - %s: %d", App::APPNAME, ResStr(IDS_TRAYTIP, 50), app.pinsUsed);
@@ -354,7 +354,7 @@ static void CmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
     //
     HINSTANCE curResMod = 0;
     if (!opt.uiFile.empty()) {
-        tchar buf[MAX_PATH];
+        WCHAR buf[MAX_PATH];
         GetModuleFileName(app.resMod, buf, sizeof(buf));
         curResMod = LoadLibrary(buf);
     }
@@ -364,7 +364,7 @@ static void CmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
     //#endif
 
     if (PropertySheet(&psh) == -1) {
-        tstring msg = ResStr(IDS_ERR_DLGCREATE);
+        std::wstring msg = ResStr(IDS_ERR_DLGCREATE);
         msg += L"\r\n";
         msg += ef::Win::getLastErrorStr();
         Error(wnd, msg.c_str());
@@ -534,8 +534,8 @@ static bool EvInitDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
 
     struct Link {
         int id;
-        const tchar* title;
-        const tchar* url;
+        LPCWSTR title;
+        LPCWSTR url;
     };
 
     Link links[] = {
@@ -580,13 +580,13 @@ static void EvTermDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
 static void showSpecialInfo(HWND parent)
 {
 #if defined(_DEBUG)
-    const tchar* build = L"Debug";
+    LPCWSTR build = L"Debug";
 #else
-    const tchar* build = L"Release";
+    LPCWSTR build = L"Release";
 #endif
 
     // TODO: remove build info and add something more useful (e.g. "portable")
-    tchar buf[1000];
+    WCHAR buf[1000];
     wsprintf(buf, L"Build: %s", build);
     MessageBox(parent, buf, L"Info", MB_ICONINFORMATION);
 }
