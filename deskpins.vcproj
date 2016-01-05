@@ -469,19 +469,11 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\bugs.txt"
-			>
-		</File>
-		<File
 			RelativePath=".\changelog.txt"
 			>
 		</File>
 		<File
 			RelativePath=".\readme.md"
-			>
-		</File>
-		<File
-			RelativePath=".\todo.txt"
 			>
 		</File>
 	</Files>

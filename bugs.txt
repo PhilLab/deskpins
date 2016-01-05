@@ -1,1 +1,0 @@
-Proxy mode not handled ok for Inno installers (VCL-based), e.g. bao0995u.exe.
