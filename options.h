@@ -67,6 +67,7 @@ struct AutoPinRule {
 
     bool load(ef::Win::RegKeyH& key, int i);
     bool save(ef::Win::RegKeyH& key, int i) const;
+    static void remove(ef::Win::RegKeyH& key, int i);
 };
 
 

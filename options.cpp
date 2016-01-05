@@ -98,6 +98,17 @@ AutoPinRule::save(ef::Win::RegKeyH& key, int i) const
 }
 
 
+void 
+AutoPinRule::remove(ef::Win::RegKeyH& key, int i)
+{
+    NumFlagValueName val(i);
+    key.deleteValue(val(L'D'));
+    key.deleteValue(val(L'T'));
+    key.deleteValue(val(L'C'));
+    key.deleteValue(val(L'E'));
+}
+
+
 // ----------------------------------------------------------------------
 
 
@@ -141,11 +152,18 @@ Options::save() const
 
     ef::Win::AutoRegKeyH apKey = ef::Win::RegKeyH::create(key, REG_APR_SUBPATH);
     if (apKey) {
+        int oldCount;
+        if (!apKey.getDWord(REG_AUTOPINCOUNT, reinterpret_cast<DWORD&>(oldCount)))
+            oldCount = 0;
         apKey.setDWord(REG_AUTOPINON, autoPinOn);
         apKey.setDWord(REG_AUTOPINDELAY, autoPinDelay.value);
         apKey.setDWord(REG_AUTOPINCOUNT, autoPinRules.size());
-        for (int n = 0; n < int(autoPinRules.size()); ++n)
+        int n;
+        for (n = 0; n < int(autoPinRules.size()); ++n)
             autoPinRules[n].save(apKey, n);
+        // remove old left-over rules
+        for (; n < oldCount; ++n)
+            AutoPinRule::remove(apKey, n);
     }
 
     key.setString(REG_LCLUI, uiFile);
