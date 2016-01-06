@@ -63,6 +63,9 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM lparam)
         opt.dblClkTray ? IDC_TRAY_DOUBLE_CLICK : IDC_TRAY_SINGLE_CLICK,
         BST_CHECKED);
 
+    if (opt.runOnStartup)
+        CheckDlgButton(wnd, IDC_RUN_ON_STARTUP, BST_CHECKED);
+
     return false;
 }
 
@@ -181,6 +184,8 @@ static void Apply(HWND wnd)
         EnumWindows(ResetPinTimersEnumProc, opt.trackRate.value = rate);
 
     opt.dblClkTray = IsDlgButtonChecked(wnd, IDC_TRAY_DOUBLE_CLICK) == BST_CHECKED;
+
+    opt.runOnStartup = IsDlgButtonChecked(wnd, IDC_RUN_ON_STARTUP) == BST_CHECKED;
 }
 
 

@@ -50,3 +50,4 @@
 #include "ef/Win/WinSys.hpp"
 #include <ef/std/TChar.hpp>
 #include <ef/Win/WndH.hpp>
+#include <ef/Win/ModuleH.hpp>

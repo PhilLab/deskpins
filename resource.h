@@ -69,7 +69,7 @@
 #define IDC_TTLPICK                     1047
 #define IDC_CLSPICK                     1048
 #define IDC_PIN_COLOR_BOX               1051
-#define IDC_DUMMY                       1053
+#define IDC_RUN_ON_STARTUP              1055
 #define CM_NEWPIN                       11842
 #define CM_REMOVEPINS                   11843
 #define CM_CLOSE                        11844
@@ -82,7 +82,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         1055
+#define _APS_NEXT_CONTROL_VALUE         1056
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

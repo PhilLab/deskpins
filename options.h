@@ -161,6 +161,7 @@ public:
     COLORREF      pinClr;
     IntOption     trackRate;
     bool          dblClkTray;
+    bool          runOnStartup;
     // hotkeys
     bool          hotkeysOn;
     HotKey        hotEnterPin, hotTogglePin;
@@ -184,6 +185,7 @@ protected:
 
     static LPCWSTR REG_PATH_EF;
     static LPCWSTR REG_APR_SUBPATH;
+    static LPCWSTR REG_PATH_RUN;
 
     static LPCWSTR REG_PINCLR;
     static LPCWSTR REG_POLLRATE;

@@ -7,6 +7,7 @@ const HKEY  Options::HKCU              = HKEY_CURRENT_USER;
 
 LPCWSTR Options::REG_PATH_EF      = L"Software\\Elias Fotinis";
 LPCWSTR Options::REG_APR_SUBPATH  = L"AutoPinRules";
+LPCWSTR Options::REG_PATH_RUN     = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 
 LPCWSTR Options::REG_PINCLR       = L"PinColor";
 LPCWSTR Options::REG_POLLRATE     = L"PollRate";
@@ -116,6 +117,7 @@ Options::Options() :
     pinClr(RGB(255,0,0)),
     trackRate(100,10,1000,10),
     dblClkTray(false),
+    runOnStartup(false),
     hotkeysOn(true),
     hotEnterPin(App::HOTID_ENTERPINMODE, VK_F11, MOD_CONTROL),
     hotTogglePin(App::HOTID_TOGGLEPIN, VK_F12, MOD_CONTROL),
@@ -145,6 +147,13 @@ Options::save() const
     key.setDWord(REG_PINCLR, pinClr < 7 ? 0 : pinClr);   // HACK: see load()
     key.setDWord(REG_POLLRATE, trackRate.value);
     key.setDWord(REG_TRAYDBLCLK, dblClkTray);
+    ef::Win::AutoRegKeyH runKey = ef::Win::RegKeyH::create(HKCU, REG_PATH_RUN);
+    if (runKey) {
+        if (runOnStartup)
+            runKey.setString(App::APPNAME, ef::Win::ModuleH(0).getFileName());
+        else
+            runKey.deleteValue(App::APPNAME);
+    }
 
     key.setDWord(REG_HOTKEYSON, hotkeysOn);
     hotEnterPin.save(key, REG_HOTNEWPIN);
@@ -203,6 +212,9 @@ Options::load()
         trackRate = dw;
     if (key.getDWord(REG_TRAYDBLCLK, dw))
         dblClkTray = dw != 0;
+    ef::Win::AutoRegKeyH runKey = ef::Win::RegKeyH::open(HKCU, REG_PATH_RUN);
+    if (runKey)
+        runOnStartup = runKey.getValueType(App::APPNAME) == REG_SZ;
 
     if (key.getDWord(REG_HOTKEYSON, dw))
         hotkeysOn = dw != 0;
