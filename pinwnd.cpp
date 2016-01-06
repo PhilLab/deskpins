@@ -7,21 +7,21 @@
 
 class PinData;
 
-static LRESULT EvCreate(HWND wnd, PinData& pd);
-static void EvDestroy(HWND wnd, PinData& pd);
-static void EvTimer(HWND wnd, PinData& pd, UINT id);
-static void EvPaint(HWND wnd, PinData& pd);
-static void EvLClick(HWND wnd, PinData& pd);
-static bool EvPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate);
-static HWND EvGetPinnedWnd(HWND wnd, PinData& pd);
-static void EvPinResetTimer(HWND wnd, PinData& pd, int pollRate);
+static LRESULT evCreate(HWND wnd, PinData& pd);
+static void evDestroy(HWND wnd, PinData& pd);
+static void evTimer(HWND wnd, PinData& pd, UINT id);
+static void evPaint(HWND wnd, PinData& pd);
+static void evLClick(HWND wnd, PinData& pd);
+static bool evPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate);
+static HWND evGetPinnedWnd(HWND wnd, PinData& pd);
+static void evPinResetTimer(HWND wnd, PinData& pd, int pollRate);
 
-static bool IsVCLAppWnd(HWND wnd);
-static bool SelectProxy(HWND wnd, const PinData& pd);
-static BOOL CALLBACK EnumThreadWndProc(HWND wnd, LPARAM param);
-static void FixTopStyle(HWND /*wnd*/, const PinData& pd);
-static void PlaceOnCaption(HWND wnd, const PinData& pd);
-static bool FixVisible(HWND wnd, const PinData& pd);
+static bool isVCLAppWnd(HWND wnd);
+static bool selectProxy(HWND wnd, const PinData& pd);
+static BOOL CALLBACK enumThreadWndProc(HWND wnd, LPARAM param);
+static void fixTopStyle(HWND /*wnd*/, const PinData& pd);
+static void placeOnCaption(HWND wnd, const PinData& pd);
+static bool fixVisible(HWND wnd, const PinData& pd);
 
 
 // Data object assigned to each pin wnd.
@@ -76,7 +76,7 @@ private:
 
 // Pin wnd proc.
 //
-LRESULT CALLBACK PinWndProc(HWND wnd, UINT msg, 
+LRESULT CALLBACK pinWndProc(HWND wnd, UINT msg, 
                             WPARAM wparam, LPARAM lparam)
 {
     if (msg == WM_NCCREATE) {
@@ -90,21 +90,21 @@ LRESULT CALLBACK PinWndProc(HWND wnd, UINT msg,
     PinData* pd = PinData::get(wnd);
     if (pd) {
         switch (msg) {
-            case WM_CREATE:         return EvCreate(wnd, *pd);
-            case WM_DESTROY:        return EvDestroy(wnd, *pd), 0;
-            case WM_TIMER:          return EvTimer(wnd, *pd, wparam), 0;
-            case WM_PAINT:          return EvPaint(wnd, *pd), 0;
-            case WM_LBUTTONDOWN:    return EvLClick(wnd, *pd), 0;
-            case App::WM_PIN_RESETTIMER:   return EvPinResetTimer(wnd, *pd, int(wparam)), 0;
-            case App::WM_PIN_ASSIGNWND:    return EvPinAssignWnd(wnd, *pd, HWND(wparam), int(lparam));
-            case App::WM_PIN_GETPINNEDWND: return LRESULT(EvGetPinnedWnd(wnd, *pd));
+            case WM_CREATE:         return evCreate(wnd, *pd);
+            case WM_DESTROY:        return evDestroy(wnd, *pd), 0;
+            case WM_TIMER:          return evTimer(wnd, *pd, wparam), 0;
+            case WM_PAINT:          return evPaint(wnd, *pd), 0;
+            case WM_LBUTTONDOWN:    return evLClick(wnd, *pd), 0;
+            case App::WM_PIN_RESETTIMER:   return evPinResetTimer(wnd, *pd, int(wparam)), 0;
+            case App::WM_PIN_ASSIGNWND:    return evPinAssignWnd(wnd, *pd, HWND(wparam), int(lparam));
+            case App::WM_PIN_GETPINNEDWND: return LRESULT(evGetPinnedWnd(wnd, *pd));
         }
     }
     return DefWindowProc(wnd, msg, wparam, lparam);
 }
 
 
-static LRESULT EvCreate(HWND wnd, PinData& pd)
+static LRESULT evCreate(HWND wnd, PinData& pd)
 {
     // send 'pin created' notification
     PostMessage(pd.callbackWnd, App::WM_PINSTATUS, WPARAM(wnd), true);
@@ -124,7 +124,7 @@ static LRESULT EvCreate(HWND wnd, PinData& pd)
 }
 
 
-static void EvDestroy(HWND wnd, PinData& pd)
+static void evDestroy(HWND wnd, PinData& pd)
 {
     if (pd.topMostWnd) {
         SetWindowPos(pd.topMostWnd, HWND_NOTOPMOST, 0,0,0,0, 
@@ -172,7 +172,7 @@ protected:
 // - move all disabled wnds (starting from the bottom one)
 //   behind the last enabled
 //
-static void FixPopupZOrder(HWND appWnd)
+static void fixPopupZOrder(HWND appWnd)
 {
     // - find the most visible, disabled, top-level wnd (wnd X)
     // - find all non-disabled, top-level wnds and place them
@@ -223,7 +223,7 @@ static void FixPopupZOrder(HWND appWnd)
 }
 
 
-static void EvTimer(HWND wnd, PinData& pd, UINT id)
+static void evTimer(HWND wnd, PinData& pd, UINT id)
 {
     if (id != 1) return;
 
@@ -239,24 +239,24 @@ static void EvTimer(HWND wnd, PinData& pd, UINT id)
 
     if (pd.proxyMode
         && (!pd.proxyWnd || !IsWindowVisible(pd.proxyWnd))
-        && !SelectProxy(wnd, pd))
+        && !selectProxy(wnd, pd))
         return;
 
     // bugfix: disabled proxy mode check so that FixVisible()
     // is called even on normal apps that hide the window on minimize
     // (just like our About dlg)
-    if (/*pd->proxyMode &&*/ !FixVisible(wnd, pd))
+    if (/*pd->proxyMode &&*/ !fixVisible(wnd, pd))
         return;
 
     if (pd.proxyMode && !IsWindowEnabled(pd.topMostWnd))
-        FixPopupZOrder(pd.topMostWnd);
+        fixPopupZOrder(pd.topMostWnd);
 
-    FixTopStyle(wnd, pd);
-    PlaceOnCaption(wnd, pd);
+    fixTopStyle(wnd, pd);
+    placeOnCaption(wnd, pd);
 }
 
 
-static void EvPaint(HWND wnd, PinData&)
+static void evPaint(HWND wnd, PinData&)
 {
     PAINTSTRUCT ps;
     if (HDC dc = BeginPaint(wnd, &ps)) {
@@ -275,13 +275,13 @@ static void EvPaint(HWND wnd, PinData&)
 }
 
 
-static void EvLClick(HWND wnd, PinData&)
+static void evLClick(HWND wnd, PinData&)
 {
     DestroyWindow(wnd);
 }
 
 
-static bool EvPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate)
+static bool evPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate)
 {
     // this shouldn't happen; it means the pin is already used
     if (pd.topMostWnd) return false;
@@ -290,7 +290,7 @@ static bool EvPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate)
     pd.topMostWnd = target;
 
     // decide proxy mode
-    if (!IsWindowVisible(target) || IsWndRectEmpty(target) || IsVCLAppWnd(target)) {
+    if (!IsWindowVisible(target) || isWndRectEmpty(target) || isVCLAppWnd(target)) {
         // set proxy mode flag; we'll find a proxy wnd later
         pd.proxyMode = true;
     }
@@ -300,11 +300,11 @@ static bool EvPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate)
         // (SetParent() only works with windows of the same process)
         SetLastError(0);
         if (!SetWindowLong(wnd, GWL_HWNDPARENT, LONG(pd.getPinOwner())) && GetLastError())
-            Error(wnd, ResStr(IDS_ERR_SETPINPARENTFAIL));
+            error(wnd, ResStr(IDS_ERR_SETPINPARENTFAIL));
     }
 
     if (!SetWindowPos(pd.topMostWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE))
-        Error(wnd, ResStr(IDS_ERR_SETTOPMOSTFAIL));
+        error(wnd, ResStr(IDS_ERR_SETTOPMOSTFAIL));
 
     // set wnd region
     if (app.pinShape.getRgn()) {
@@ -318,7 +318,7 @@ static bool EvPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate)
     // set pin size, move it on the caption, and make it visible
     SetWindowPos(wnd, 0, 0,0,app.pinShape.getW(),app.pinShape.getH(), 
         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE); // NOTE: added SWP_NOACTIVATE
-    PlaceOnCaption(wnd, pd);
+    placeOnCaption(wnd, pd);
     ShowWindow(wnd, SW_SHOW);
 
     SetForegroundWindow(pd.topMostWnd);
@@ -330,13 +330,13 @@ static bool EvPinAssignWnd(HWND wnd, PinData& pd, HWND target, int pollRate)
 }
 
 
-static HWND EvGetPinnedWnd(HWND wnd, PinData& pd)
+static HWND evGetPinnedWnd(HWND wnd, PinData& pd)
 {
     return pd.topMostWnd;
 }
 
 
-static void EvPinResetTimer(HWND wnd, PinData& pd, int pollRate)
+static void evPinResetTimer(HWND wnd, PinData& pd, int pollRate)
 {
     // only set it if there's a pinned window
     if (pd.topMostWnd)
@@ -349,7 +349,7 @@ static void EvPinResetTimer(HWND wnd, PinData& pd, int pollRate)
 // change pin state to pinned wnd state.
 // Return whether the pin is visible
 // (if so, the caller should perform further adjustments)
-static bool FixVisible(HWND wnd, const PinData& pd)
+static bool fixVisible(HWND wnd, const PinData& pd)
 {
     // insanity check
     if (!IsWindow(pd.topMostWnd)) return false;
@@ -370,7 +370,7 @@ static bool FixVisible(HWND wnd, const PinData& pd)
 
 
 // patch for VCL apps (clearing of WS_EX_TOPMOST bit)
-static void FixTopStyle(HWND /*wnd*/, const PinData& pd)
+static void fixTopStyle(HWND /*wnd*/, const PinData& pd)
 {
     if (!(ef::Win::WndH(pd.topMostWnd).getExStyle() & WS_EX_TOPMOST))
         SetWindowPos(pd.topMostWnd, HWND_TOPMOST, 0,0,0,0, 
@@ -378,7 +378,7 @@ static void FixTopStyle(HWND /*wnd*/, const PinData& pd)
 }
 
 
-static void PlaceOnCaption(HWND wnd, const PinData& pd)
+static void placeOnCaption(HWND wnd, const PinData& pd)
 {
     HWND pinOwner = pd.getPinOwner();
     if (!pinOwner) return;
@@ -419,18 +419,18 @@ static void PlaceOnCaption(HWND wnd, const PinData& pd)
 }
 
 
-static bool SelectProxy(HWND wnd, const PinData& pd)
+static bool selectProxy(HWND wnd, const PinData& pd)
 {
     HWND appWnd = pd.topMostWnd;
     if (!IsWindow(appWnd)) return false;
 
     DWORD thread = GetWindowThreadProcessId(appWnd, 0);
-    return EnumThreadWindows(thread, (WNDENUMPROC)EnumThreadWndProc, 
+    return EnumThreadWindows(thread, (WNDENUMPROC)enumThreadWndProc, 
         LPARAM(wnd)) && pd.getPinOwner();
 }
 
 
-static BOOL CALLBACK EnumThreadWndProc(HWND wnd, LPARAM param)
+static BOOL CALLBACK enumThreadWndProc(HWND wnd, LPARAM param)
 {
     HWND pin = HWND(param);
     PinData* pd = PinData::get(pin);
@@ -438,7 +438,7 @@ static BOOL CALLBACK EnumThreadWndProc(HWND wnd, LPARAM param)
         return false;
 
     if (GetWindow(wnd, GW_OWNER) == pd->topMostWnd) {
-        if (IsWindowVisible(wnd) && !IsIconic(wnd) && !IsWndRectEmpty(wnd)) {
+        if (IsWindowVisible(wnd) && !IsIconic(wnd) && !isWndRectEmpty(wnd)) {
             pd->proxyWnd = wnd;
             SetWindowLong(pin, GWL_HWNDPARENT, LONG(wnd));
             // we must also move it in front of the new owner
@@ -453,8 +453,8 @@ static BOOL CALLBACK EnumThreadWndProc(HWND wnd, LPARAM param)
 }
 
 
-static bool IsVCLAppWnd(HWND wnd)
+static bool isVCLAppWnd(HWND wnd)
 {
     return strimatch(L"TApplication", ef::Win::WndH(wnd).getClassName().c_str()) 
-        && IsWndRectEmpty(wnd);
+        && isWndRectEmpty(wnd);
 }

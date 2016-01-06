@@ -22,9 +22,9 @@ bool PinShape::initImage(COLORREF clr) {
     }
 
     COLORREF clrMap[][2] = {
-        { StdClr::white,  Light(clr) }, 
+        { StdClr::white,  light(clr) }, 
         { StdClr::silver, clr        }, 
-        { StdClr::gray,   Dark(clr)  }
+        { StdClr::gray,   dark(clr)  }
     };
     return (bmp = LoadBitmap(app.inst, MAKEINTRESOURCE(IDB_PIN)))
         && remapBmpColors(bmp, clrMap, ARRSIZE(clrMap));

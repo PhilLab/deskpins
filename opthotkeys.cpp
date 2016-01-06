@@ -5,16 +5,16 @@
 #include "resource.h"
 
 
-static bool CmHotkeysOn(HWND wnd)
+static bool cmHotkeysOn(HWND wnd)
 {
     bool b = IsDlgButtonChecked(wnd, IDC_HOTKEYS_ON) == BST_CHECKED;
-    EnableGroup(wnd, IDC_HOTKEYS_GROUP, b);
-    PSChanged(wnd);
+    enableGroup(wnd, IDC_HOTKEYS_GROUP, b);
+    psChanged(wnd);
     return true;
 }
 
 
-static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
+static bool evInitDialog(HWND wnd, HWND focus, LPARAM param)
 {
     // must have a valid data ptr
     if (!param) {
@@ -29,7 +29,7 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
 
 
     CheckDlgButton(wnd, IDC_HOTKEYS_ON, opt.hotkeysOn);
-    CmHotkeysOn(wnd);
+    cmHotkeysOn(wnd);
 
     opt.hotEnterPin.setUI(wnd, IDC_HOT_PINMODE);
     opt.hotTogglePin.setUI(wnd, IDC_HOT_TOGGLEPIN);
@@ -38,13 +38,13 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
 }
 
 
-static bool Validate(HWND wnd)
+static bool validate(HWND wnd)
 {
     return true;
 }
 
 
-static bool ChangeHotkey(HWND wnd, 
+static bool changeHotkey(HWND wnd, 
                          const HotKey& newHotkey, bool newState, 
                          const HotKey& oldHotkey, bool oldState)
 {
@@ -69,7 +69,7 @@ static bool ChangeHotkey(HWND wnd,
 }
 
 
-static void Apply(HWND wnd)
+static void apply(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
@@ -85,9 +85,9 @@ static void Apply(HWND wnd)
     // Get separate success flags to avoid short-circuiting
     // (and set as many keys as possible)
     bool allKeysSet = true;
-    allKeysSet &= ChangeHotkey(
+    allKeysSet &= changeHotkey(
         wnd, enterKey, hotkeysOn, opt.hotEnterPin, opt.hotkeysOn);
-    allKeysSet &= ChangeHotkey(
+    allKeysSet &= changeHotkey(
         wnd, toggleKey, hotkeysOn, opt.hotTogglePin, opt.hotkeysOn);
 
     opt.hotkeysOn = hotkeysOn;
@@ -95,14 +95,14 @@ static void Apply(HWND wnd)
     opt.hotTogglePin = toggleKey;
 
     if (!allKeysSet)
-        Error(wnd, ResStr(IDS_ERR_HOTKEYSSET));
+        error(wnd, ResStr(IDS_ERR_HOTKEYSSET));
 }
 
 
-BOOL CALLBACK OptHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+BOOL CALLBACK optHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
-        case WM_INITDIALOG:  return EvInitDialog(wnd, HWND(wparam), lparam);
+        case WM_INITDIALOG:  return evInitDialog(wnd, HWND(wparam), lparam);
             //case WM_DESTROY:     return EvTermDialog(wnd, lparam);
         case WM_NOTIFY: {
             NMHDR nmhdr = *reinterpret_cast<NMHDR*>(lparam);
@@ -114,11 +114,11 @@ BOOL CALLBACK OptHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     return true;
                 }
                 case PSN_KILLACTIVE: {
-                    SetWindowLong(wnd, DWL_MSGRESULT, !Validate(wnd));
+                    SetWindowLong(wnd, DWL_MSGRESULT, !validate(wnd));
                     return true;
                 }
                 case PSN_APPLY: {
-                    Apply(wnd);
+                    apply(wnd);
                     return true;
                 }
                 case PSN_HELP: {
@@ -136,9 +136,9 @@ BOOL CALLBACK OptHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
         case WM_COMMAND: {
             WORD id = LOWORD(wparam), code = HIWORD(wparam);
             switch (id) {
-                case IDC_HOTKEYS_ON:    CmHotkeysOn(wnd); return true;
+                case IDC_HOTKEYS_ON:    cmHotkeysOn(wnd); return true;
                 case IDC_HOT_PINMODE:
-                case IDC_HOT_TOGGLEPIN: if (code == EN_CHANGE) PSChanged(wnd); return true;
+                case IDC_HOT_TOGGLEPIN: if (code == EN_CHANGE) psChanged(wnd); return true;
                 default:                return false;
             }
         }

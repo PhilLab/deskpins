@@ -21,15 +21,15 @@ namespace StdClr { enum {
     white   = 0xffffff,
 }; }
 
-bool IsWndRectEmpty(HWND wnd);
-HWND GetNonChildParent(HWND wnd);
-HWND GetTopParent(HWND wnd);
-bool IsProgManWnd(HWND wnd);
-bool IsTaskBar(HWND wnd);
-bool IsTopMost(HWND wnd);
-void Error(HWND wnd, LPCWSTR s);
-void Warning(HWND wnd, LPCWSTR s);
-bool GetScrSize(SIZE& sz);
+bool isWndRectEmpty(HWND wnd);
+HWND getNonChildParent(HWND wnd);
+HWND getTopParent(HWND wnd);
+bool isProgManWnd(HWND wnd);
+bool isTaskBar(HWND wnd);
+bool isTopMost(HWND wnd);
+void error(HWND wnd, LPCWSTR s);
+void warning(HWND wnd, LPCWSTR s);
+bool getScrSize(SIZE& sz);
 
 inline bool strmatch(LPCWSTR s1, LPCWSTR s2)
 {
@@ -41,9 +41,9 @@ inline bool strimatch(LPCWSTR s1, LPCWSTR s2)
     return _wcsicmp(s1, s2) == 0;
 }
 
-HRGN MakeRegionFromBmp(HBITMAP bmp, COLORREF clrMask);
-void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent = false);
-void TogglePin(HWND wnd, HWND target, int trackRate);
+HRGN makeRegionFromBmp(HBITMAP bmp, COLORREF clrMask);
+void pinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent = false);
+void togglePin(HWND wnd, HWND target, int trackRate);
 
 HMENU LoadLocalizedMenu(LPCTSTR lpMenuName);
 HMENU LoadLocalizedMenu(WORD id);
@@ -57,14 +57,14 @@ HWND  CreateLocalizedDialog  (WORD id, HWND hWndParent,
                               DLGPROC lpDialogFunc);
 
 
-bool RectContains(const RECT& rc1, const RECT& rc2);
-void EnableGroup(HWND wnd, int id, bool mode);
+bool rectContains(const RECT& rc1, const RECT& rc2);
+void enableGroup(HWND wnd, int id, bool mode);
 
-std::vector<std::wstring> GetFiles(std::wstring mask);
+std::vector<std::wstring> getFiles(std::wstring mask);
 
 
-COLORREF Light(COLORREF clr);
-COLORREF Dark(COLORREF clr);
+COLORREF light(COLORREF clr);
+COLORREF dark(COLORREF clr);
 
 
 // automatically handles language
@@ -141,12 +141,12 @@ private:
 };
 
 
-BOOL MoveWindow(HWND wnd, const RECT& rc, BOOL repaint = TRUE);
-BOOL Rectangle(HDC dc, const RECT& rc);
+BOOL moveWindow(HWND wnd, const RECT& rc, BOOL repaint = TRUE);
+BOOL rectangle(HDC dc, const RECT& rc);
 
 
-bool PSChanged(HWND page);
-std::wstring RemAccel(std::wstring s);
+bool psChanged(HWND page);
+std::wstring remAccel(std::wstring s);
 
 bool getBmpSize(HBITMAP bmp, SIZE& sz);
 

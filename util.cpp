@@ -3,29 +3,29 @@
 #include "resource.h"
 
 
-bool IsWndRectEmpty(HWND wnd)
+bool isWndRectEmpty(HWND wnd)
 {
     RECT rc;
     return GetWindowRect(wnd, &rc) && IsRectEmpty(&rc);
 }
 
 
-bool IsChild(HWND wnd)
+bool isChild(HWND wnd)
 {
     return (ef::Win::WndH(wnd).getStyle() & WS_CHILD) != 0;
 }
 
 
-HWND GetNonChildParent(HWND wnd)
+HWND getNonChildParent(HWND wnd)
 {
-    while (IsChild(wnd))
+    while (isChild(wnd))
         wnd = GetParent(wnd);
 
     return wnd;
 }
 
 
-HWND GetTopParent(HWND wnd /*, bool mustBeVisible*/)
+HWND getTopParent(HWND wnd /*, bool mustBeVisible*/)
 {
     // ------------------------------------------------------
     // NOTE: 'mustBeVisible' is not used currently
@@ -49,7 +49,7 @@ HWND GetTopParent(HWND wnd /*, bool mustBeVisible*/)
     // for the rest use GetWindow(GW_OWNER)
     //
     for (;;) {
-        HWND parent = IsChild(wnd)
+        HWND parent = isChild(wnd)
             ? GetParent(wnd)
             : GetWindow(wnd, GW_OWNER);
 
@@ -63,33 +63,33 @@ HWND GetTopParent(HWND wnd /*, bool mustBeVisible*/)
 }
 
 
-bool IsProgManWnd(HWND wnd)
+bool isProgManWnd(HWND wnd)
 { 
     return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), L"ProgMan")
         && strimatch(ef::Win::WndH(wnd).getText().c_str(), L"Program Manager");
 }
 
 
-bool IsTaskBar(HWND wnd)
+bool isTaskBar(HWND wnd)
 {
     return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), L"Shell_TrayWnd");
 }
 
 
-bool IsTopMost(HWND wnd)
+bool isTopMost(HWND wnd)
 {
     return (ef::Win::WndH(wnd).getExStyle() & WS_EX_TOPMOST) != 0;
 }
 
 
-void Error(HWND wnd, LPCWSTR s)
+void error(HWND wnd, LPCWSTR s)
 {
     ResStr caption(IDS_ERRBOXTTITLE, 50, reinterpret_cast<DWORD>(App::APPNAME));
     MessageBox(wnd, s, caption, MB_ICONSTOP | MB_TOPMOST);
 }
 
 
-void Warning(HWND wnd, LPCWSTR s)
+void warning(HWND wnd, LPCWSTR s)
 {
     ResStr caption(IDS_WRNBOXTTITLE, 50, reinterpret_cast<DWORD>(App::APPNAME));
     MessageBox(wnd, s, caption, MB_ICONWARNING | MB_TOPMOST);
@@ -97,26 +97,26 @@ void Warning(HWND wnd, LPCWSTR s)
 
 
 // TODO: move to eflib?
-bool GetScrSize(SIZE& sz)
+bool getScrSize(SIZE& sz)
 {
     return ((sz.cx = GetSystemMetrics(SM_CXSCREEN)) != 0 &&
         (sz.cy = GetSystemMetrics(SM_CYSCREEN)) != 0);
 }
 
 
-void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
+void pinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
 {
     int err = 0, wrn = 0;
 
     if (!hitWnd)
         wrn = IDS_ERR_COULDNOTFINDWND;
-    else if (IsProgManWnd(hitWnd))
+    else if (isProgManWnd(hitWnd))
         wrn = IDS_ERR_CANNOTPINDESKTOP;
     // NOTE: after creating the layer wnd, the taskbar becomes non-topmost;
     // use this check to avoid pinning it
-    else if (IsTaskBar(hitWnd))
+    else if (isTaskBar(hitWnd))
         wrn = IDS_ERR_CANNOTPINTASKBAR;
-    else if (IsTopMost(hitWnd))
+    else if (isTopMost(hitWnd))
         wrn = IDS_ERR_ALREADYTOPMOST;
     // hidden wnds are handled by the proxy mechanism
     //else if (!IsWindowVisible(hitWnd))
@@ -141,9 +141,9 @@ void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
 
     if (!silent && (err || wrn)) {
         if (err)
-            Error(wnd, ResStr(err));
+            error(wnd, ResStr(err));
         else
-            Warning(wnd, ResStr(wrn));
+            warning(wnd, ResStr(wrn));
     }
 
 }
@@ -152,7 +152,7 @@ void PinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
 // If the specified window (top parent) is pinned, 
 // return the pin wnd's handle; otherwise return 0.
 //
-static HWND HasPin(HWND wnd)
+static HWND hasPin(HWND wnd)
 {
     // enumerate all pin windows
     HWND pin = 0;
@@ -165,14 +165,14 @@ static HWND HasPin(HWND wnd)
 }
 
 
-void TogglePin(HWND wnd, HWND target, int trackRate)
+void togglePin(HWND wnd, HWND target, int trackRate)
 {
-    target = GetTopParent(target);
-    HWND pin = HasPin(target);
+    target = getTopParent(target);
+    HWND pin = hasPin(target);
     if (pin)
         DestroyWindow(pin);
     else
-        PinWindow(wnd, target, trackRate);
+        pinWindow(wnd, target, trackRate);
 }
 
 
@@ -191,7 +191,7 @@ HMENU LoadLocalizedMenu(WORD id) {
 }
 
 
-bool IsLastErrResNotFound() {
+bool isLastErrResNotFound() {
     DWORD e = GetLastError();
     return e == ERROR_RESOURCE_DATA_NOT_FOUND ||
         e == ERROR_RESOURCE_TYPE_NOT_FOUND ||
@@ -203,7 +203,7 @@ bool IsLastErrResNotFound() {
 int LocalizedDialogBoxParam(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
     if (app.resMod) {
         int ret = DialogBoxParam(app.resMod, lpTemplate, hParent, lpDialogFunc, dwInit);
-        if (ret != -1 || !IsLastErrResNotFound())
+        if (ret != -1 || !isLastErrResNotFound())
             return ret;
     }
     return DialogBoxParam(app.inst, lpTemplate, hParent, lpDialogFunc, dwInit);
@@ -217,7 +217,7 @@ int LocalizedDialogBoxParam(WORD id, HWND hParent, DLGPROC lpDialogFunc, LPARAM 
 HWND CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc) {
     if (app.resMod) {
         HWND ret = CreateDialog(app.resMod, lpTemplate, hParent, lpDialogFunc);
-        if (ret || !IsLastErrResNotFound())
+        if (ret || !isLastErrResNotFound())
             return ret;
     }
     return CreateDialog(app.inst, lpTemplate, hParent, lpDialogFunc);
@@ -229,7 +229,7 @@ HWND CreateLocalizedDialog(WORD id, HWND hParent, DLGPROC lpDialogFunc) {
 
 
 // TODO: move to eflib?
-bool RectContains(const RECT& rc1, const RECT& rc2)
+bool rectContains(const RECT& rc1, const RECT& rc2)
 {
     return rc2.left   >= rc1.left
         && rc2.top    >= rc1.top
@@ -241,7 +241,7 @@ bool RectContains(const RECT& rc1, const RECT& rc2)
 // enable/disable all ctrls that lie inside the specified ctrl 
 // (usually a group, or maybe a tab, etc)
 // TODO: move to eflib?
-void EnableGroup(HWND wnd, int id, bool mode)
+void enableGroup(HWND wnd, int id, bool mode)
 {
     HWND container = GetDlgItem(wnd, id);
     RECT rc;
@@ -257,7 +257,7 @@ void EnableGroup(HWND wnd, int id, bool mode)
             if (child == container)
                 continue;
             GetWindowRect(child, &rc2);
-            if (RectContains(rc, rc2))
+            if (rectContains(rc, rc2))
                 EnableWindow(child, mode);
     }
 
@@ -265,7 +265,7 @@ void EnableGroup(HWND wnd, int id, bool mode)
 
 
 // TODO: move to eflib?
-std::vector<std::wstring> GetFiles(std::wstring mask)
+std::vector<std::wstring> getFiles(std::wstring mask)
 {
     std::vector<std::wstring> ret;
     for (ef::Win::FileFinder fde(mask, ef::Win::FileFinder::files); fde; ++fde)
@@ -274,7 +274,7 @@ std::vector<std::wstring> GetFiles(std::wstring mask)
 }
 
 
-COLORREF Light(COLORREF clr)
+COLORREF light(COLORREF clr)
 {
     double r = GetRValue(clr) / 255.0;
     double g = GetGValue(clr) / 255.0;
@@ -289,7 +289,7 @@ COLORREF Light(COLORREF clr)
 }
 
 
-COLORREF Dark(COLORREF clr)
+COLORREF dark(COLORREF clr)
 {
     double r = GetRValue(clr) / 255.0;
     double g = GetGValue(clr) / 255.0;
@@ -304,20 +304,20 @@ COLORREF Dark(COLORREF clr)
 }
 
 
-BOOL MoveWindow(HWND wnd, const RECT& rc, BOOL repaint)
+BOOL moveWindow(HWND wnd, const RECT& rc, BOOL repaint)
 {
     return MoveWindow(wnd, rc.left, rc.top, 
         rc.right-rc.left, rc.bottom-rc.top, repaint);
 }
 
 
-BOOL Rectangle(HDC dc, const RECT& rc)
+BOOL rectangle(HDC dc, const RECT& rc)
 {
     return Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
 }
 
 
-bool PSChanged(HWND page)
+bool psChanged(HWND page)
 {
     return !!PropSheet_Changed(GetParent(page), page);
 }
@@ -325,7 +325,7 @@ bool PSChanged(HWND page)
 
 // removes the first accelerator prefix ('&')
 // from a string and returns the result
-std::wstring RemAccel(std::wstring s)
+std::wstring remAccel(std::wstring s)
 {
     std::wstring::size_type i = s.find_first_of(L"&");
     if (i != std::wstring::npos) s.erase(i, 1);

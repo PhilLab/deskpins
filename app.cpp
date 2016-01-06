@@ -6,7 +6,7 @@
 #include "resource.h"
 
 
-LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
 
 
 LPCWSTR App::APPNAME         = L"DeskPins";
@@ -45,7 +45,7 @@ bool App::loadResMod(const std::wstring& file, HWND msgParent)
         LPCWSTR msg = L"Could not load language file: %s\r\n"
             L"Reverting to English interface.";
         wsprintf(buf, msg, file.c_str());
-        Error(msgParent, buf);
+        error(msgParent, buf);
     }
 
     return resMod != 0;
@@ -69,7 +69,7 @@ bool App::initComctl()
     iccx.dwICC = ICC_WIN95_CLASSES;
     bool ret = !!InitCommonControlsEx(&iccx);
     if (!ret)
-        Error(0, ResStr(IDS_ERR_CCINIT));
+        error(0, ResStr(IDS_ERR_CCINIT));
     return ret;
 }
 
@@ -94,7 +94,7 @@ bool App::regWndCls()
     WNDCLASS wc;
 
     wc.style         = 0;
-    wc.lpfnWndProc   = MainWndProc;
+    wc.lpfnWndProc   = mainWndProc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = app.inst;
@@ -107,7 +107,7 @@ bool App::regWndCls()
         return false;
 
     wc.style         = 0;
-    wc.lpfnWndProc   = PinWndProc;
+    wc.lpfnWndProc   = pinWndProc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = sizeof(void*);  // data object ptr
     wc.hInstance     = app.inst;
@@ -120,7 +120,7 @@ bool App::regWndCls()
         return false;
 
     wc.style         = 0;
-    wc.lpfnWndProc   = PinLayerWndProc;
+    wc.lpfnWndProc   = pinLayerWndProc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = app.inst;
@@ -159,7 +159,7 @@ void App::createSmClrIcon(COLORREF clr)
         // (assuming non-monochrome)
         COLORREF clrMap[][2] = {
             { StdClr::red, clr       }, 
-            { StdClr::maroon, Dark(clr) }
+            { StdClr::maroon, dark(clr) }
         };
         remapBmpColors(ii.hbmColor, clrMap, ARRSIZE(clrMap));
         HICON newIcon = CreateIconIndirect(&ii);

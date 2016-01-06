@@ -8,24 +8,24 @@
 #define OWNERDRAW_CLR_BUTTON  0
 
 
-static HBRUSH GetPinClrBrush(HWND wnd)
+static HBRUSH getPinClrBrush(HWND wnd)
 {
     HWND ctrl = GetDlgItem(wnd, IDC_PIN_COLOR_BOX);
     return HBRUSH(GetWindowLong(ctrl, GWL_USERDATA));
 }
 
 
-static COLORREF GetPinClr(HWND wnd)
+static COLORREF getPinClr(HWND wnd)
 {
-    HBRUSH brush = GetPinClrBrush(wnd);
+    HBRUSH brush = getPinClrBrush(wnd);
     LOGBRUSH lb;
     return GetObject(brush, sizeof(LOGBRUSH), &lb) ? lb.lbColor : 0;
 }
 
 
-static void SetPinClrBrush(HWND wnd, COLORREF clr)
+static void setPinClrBrush(HWND wnd, COLORREF clr)
 {
-    DeleteObject(GetPinClrBrush(wnd));
+    DeleteObject(getPinClrBrush(wnd));
 
     HWND ctrl = GetDlgItem(wnd, IDC_PIN_COLOR_BOX);
     SetWindowLong(ctrl, GWL_USERDATA, LONG(CreateSolidBrush(clr)));
@@ -33,7 +33,7 @@ static void SetPinClrBrush(HWND wnd, COLORREF clr)
 }
 
 
-static bool EvInitDialog(HWND wnd, HWND focus, LPARAM lparam)
+static bool evInitDialog(HWND wnd, HWND focus, LPARAM lparam)
 {
     // must have a valid data ptr
     if (!lparam) {
@@ -52,7 +52,7 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM lparam)
     SetWindowLong(GetDlgItem(wnd, IDC_PIN_COLOR), GWL_STYLE, style);
 #endif
 
-    SetPinClrBrush(wnd, opt.pinClr);
+    setPinClrBrush(wnd, opt.pinClr);
 
     SendDlgItemMessage(wnd, IDC_POLL_RATE_UD, UDM_SETRANGE, 0, 
         MAKELONG(opt.trackRate.maxV,opt.trackRate.minV));
@@ -70,16 +70,16 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM lparam)
 }
 
 
-static void EvTermDialog(HWND wnd)
+static void evTermDialog(HWND wnd)
 {
-    DeleteObject(GetPinClrBrush(wnd));
+    DeleteObject(getPinClrBrush(wnd));
 }
 
 
 #if OWNERDRAW_CLR_BUTTON
 
 // TODO: add vistual styles support
-static bool EvDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
+static bool evDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
 {
     if (id != IDC_PIN_COLOR)
         return false;
@@ -122,31 +122,31 @@ static bool EvDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
 #endif
 
 
-static bool Validate(HWND wnd)
+static bool validate(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
     return opt.trackRate.validateUI(wnd, IDC_POLL_RATE);
 }
 
 
-static void CmPinClr(HWND wnd)
+static void cmPinClr(HWND wnd)
 {
     static COLORREF userClrs[16] = {0};
 
     CHOOSECOLOR cc;
     cc.lStructSize  = sizeof(cc);
     cc.hwndOwner    = wnd;
-    cc.rgbResult    = GetPinClr(wnd);
+    cc.rgbResult    = getPinClr(wnd);
     cc.lpCustColors = userClrs;
     cc.Flags        = CC_RGBINIT | CC_SOLIDCOLOR;   //CC_ANYCOLOR
     if (ChooseColor(&cc)) {
-        SetPinClrBrush(wnd, cc.rgbResult);
-        PSChanged(wnd);
+        setPinClrBrush(wnd, cc.rgbResult);
+        psChanged(wnd);
     }
 }
 
 
-static BOOL CALLBACK EnumWndProcPinsUpdate(HWND wnd, LPARAM)
+static BOOL CALLBACK enumWndProcPinsUpdate(HWND wnd, LPARAM)
 {
     if (strimatch(App::WNDCLS_PIN, ef::Win::WndH(wnd).getClassName().c_str()))
         InvalidateRect(wnd, 0, false);
@@ -154,13 +154,13 @@ static BOOL CALLBACK EnumWndProcPinsUpdate(HWND wnd, LPARAM)
 }
 
 
-static void UpdatePinWnds()
+static void updatePinWnds()
 {
-    EnumWindows((WNDENUMPROC)EnumWndProcPinsUpdate, 0);
+    EnumWindows((WNDENUMPROC)enumWndProcPinsUpdate, 0);
 }
 
 
-static BOOL CALLBACK ResetPinTimersEnumProc(HWND wnd, LPARAM param)
+static BOOL CALLBACK resetPinTimersEnumProc(HWND wnd, LPARAM param)
 {
     if (strimatch(App::WNDCLS_PIN, ef::Win::WndH(wnd).getClassName().c_str()))
         SendMessage(wnd, App::WM_PIN_RESETTIMER, param, 0);
@@ -168,20 +168,20 @@ static BOOL CALLBACK ResetPinTimersEnumProc(HWND wnd, LPARAM param)
 }
 
 
-static void Apply(HWND wnd)
+static void apply(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
-    COLORREF clr = GetPinClr(wnd);
+    COLORREF clr = getPinClr(wnd);
     if (opt.pinClr != clr) {
         app.createSmClrIcon(opt.pinClr = clr);
         app.trayIcon.setIcon(app.smClrIcon);
-        if (app.pinShape.initImage(clr)) UpdatePinWnds();
+        if (app.pinShape.initImage(clr)) updatePinWnds();
     }
 
     int rate = opt.trackRate.getUI(wnd, IDC_POLL_RATE);
     if (opt.trackRate.value != rate)
-        EnumWindows(ResetPinTimersEnumProc, opt.trackRate.value = rate);
+        EnumWindows(resetPinTimersEnumProc, opt.trackRate.value = rate);
 
     opt.dblClkTray = IsDlgButtonChecked(wnd, IDC_TRAY_DOUBLE_CLICK) == BST_CHECKED;
 
@@ -189,12 +189,12 @@ static void Apply(HWND wnd)
 }
 
 
-BOOL CALLBACK OptPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+BOOL CALLBACK optPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 
     switch (msg) {
-        case WM_INITDIALOG:  return EvInitDialog(wnd, HWND(wparam), lparam);
-        case WM_DESTROY:     EvTermDialog(wnd); return true;
+        case WM_INITDIALOG:  return evInitDialog(wnd, HWND(wparam), lparam);
+        case WM_DESTROY:     evTermDialog(wnd); return true;
         case WM_NOTIFY: {
             NMHDR nmhdr = *reinterpret_cast<NMHDR*>(lparam);
             switch (nmhdr.code) {
@@ -205,11 +205,11 @@ BOOL CALLBACK OptPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     return true;
                 }
                 case PSN_KILLACTIVE: {
-                    SetWindowLong(wnd, DWL_MSGRESULT, !Validate(wnd));
+                    SetWindowLong(wnd, DWL_MSGRESULT, !validate(wnd));
                     return true;
                 }
                 case PSN_APPLY:
-                    Apply(wnd);
+                    apply(wnd);
                     return true;
                 case PSN_HELP: {
                     app.help.show(wnd, L"::\\optpins.htm");
@@ -238,11 +238,11 @@ BOOL CALLBACK OptPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
         case WM_COMMAND: {
             WORD id = LOWORD(wparam), code = HIWORD(wparam);
             switch (id) {
-                case IDC_PIN_COLOR:         CmPinClr(wnd); return true;
-                case IDC_PIN_COLOR_BOX:     if (code == STN_DBLCLK) CmPinClr(wnd); return true;
+                case IDC_PIN_COLOR:         cmPinClr(wnd); return true;
+                case IDC_PIN_COLOR_BOX:     if (code == STN_DBLCLK) cmPinClr(wnd); return true;
                 case IDC_TRAY_SINGLE_CLICK:
-                case IDC_TRAY_DOUBLE_CLICK: PSChanged(wnd); return true;
-                case IDC_POLL_RATE:         if (code == EN_CHANGE) PSChanged(wnd); return true;
+                case IDC_TRAY_DOUBLE_CLICK: psChanged(wnd); return true;
+                case IDC_POLL_RATE:         if (code == EN_CHANGE) psChanged(wnd); return true;
                 default:                    return false;
             }
         }
@@ -252,7 +252,7 @@ BOOL CALLBACK OptPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 #endif
         case WM_CTLCOLORSTATIC:
             if (HWND(lparam) == GetDlgItem(wnd, IDC_PIN_COLOR_BOX))
-                return BOOL(GetPinClrBrush(wnd));
+                return BOOL(getPinClrBrush(wnd));
             return 0;
         default:
             return false;

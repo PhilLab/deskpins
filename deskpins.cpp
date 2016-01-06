@@ -146,7 +146,7 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE, LPSTR, int)
         return 0;
 
     if (!app.regWndCls() || !app.createMainWnd()) {
-        Error(0, ResStr(IDS_ERR_WNDCLSREG));
+        error(0, ResStr(IDS_ERR_WNDCLSREG));
         return 0;
     }
 
@@ -170,7 +170,7 @@ static bool isWin8orGreater()
 }
 
 
-static void CmNewPin(HWND wnd)
+static void cmNewPin(HWND wnd)
 {
     // avoid re-entrancy
     if (app.layerWnd) return;
@@ -200,15 +200,15 @@ static void CmNewPin(HWND wnd)
 }
 
 
-static void EvPinReq(HWND wnd, int x, int y)
+static void evPinReq(HWND wnd, int x, int y)
 {
     POINT pt = {x,y};
-    HWND hitWnd = GetTopParent(WindowFromPoint(pt));
-    PinWindow(wnd, hitWnd, opt.trackRate.value);
+    HWND hitWnd = getTopParent(WindowFromPoint(pt));
+    pinWindow(wnd, hitWnd, opt.trackRate.value);
 }
 
 
-static void CmRemovePins(HWND wnd)
+static void cmRemovePins(HWND wnd)
 {
     HWND pin;
     while ((pin = FindWindow(App::WNDCLS_PIN, 0)) != 0)
@@ -216,7 +216,7 @@ static void CmRemovePins(HWND wnd)
 }
 
 
-static void FixOptPSPos(HWND wnd)
+static void fixOptPSPos(HWND wnd)
 {
     // - find taskbar ("Shell_TrayWnd")
     // - find notification area ("TrayNotifyWnd") (child of taskbar)
@@ -237,7 +237,7 @@ static void FixOptPSPos(HWND wnd)
         int x = isLeft ? rcWA.left : rcWA.right - (rc.right - rc.left);
         int y = isTop ? rcWA.top : rcWA.bottom - (rc.bottom - rc.top);
         OffsetRect(&rc, x-rc.left, y-rc.top);
-        MoveWindow(wnd, rc);
+        moveWindow(wnd, rc);
     }
 
 }
@@ -254,10 +254,10 @@ static std::wstring trayIconTip()
 static WNDPROC orgOptPSProc;
 
 
-LRESULT CALLBACK OptPSSubclass(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK optPSSubclass(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     if (msg == WM_SHOWWINDOW) {
-        FixOptPSPos(wnd);
+        fixOptPSPos(wnd);
 
         // also set the big icon (for Alt-Tab)
         SendMessage(wnd, WM_SETICON, ICON_BIG, 
@@ -274,19 +274,19 @@ LRESULT CALLBACK OptPSSubclass(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 
 // remove WS_EX_CONTEXTHELP and subclass to fix pos
-static int CALLBACK OptPSCallback(HWND wnd, UINT msg, LPARAM param)
+static int CALLBACK optPSCallback(HWND wnd, UINT msg, LPARAM param)
 {
     if (msg == PSCB_INITIALIZED) {
         // remove caption help button
         ef::Win::WndH(wnd).modifyExStyle(WS_EX_CONTEXTHELP, 0);
-        orgOptPSProc = WNDPROC(SetWindowLong(wnd, GWL_WNDPROC, LONG(OptPSSubclass)));
+        orgOptPSProc = WNDPROC(SetWindowLong(wnd, GWL_WNDPROC, LONG(optPSSubclass)));
     }
 
     return 0;
 }
 
 
-static void BuildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[], 
+static void buildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[], 
     int dlgIds[], DLGPROC dlgProcs[], int pageCnt, HWND parentWnd, 
     OptionsPropSheetData& data, ResStr& capStr)
 {
@@ -313,12 +313,12 @@ static void BuildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[],
     psh.nStartPage  = (app.optionPage >= 0 && app.optionPage < pageCnt) 
         ? app.optionPage : 0;
     psh.ppsp        = psp;
-    psh.pfnCallback = OptPSCallback;
+    psh.pfnCallback = optPSCallback;
 
 }
 
 
-static void CmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
+static void cmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
 {
     // sentry to avoid multiple dialogs
     static bool isOptDlgOn;
@@ -332,7 +332,7 @@ static void CmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
         IDD_OPT_PINS, IDD_OPT_AUTOPIN, IDD_OPT_HOTKEYS, IDD_OPT_LANG
     };
     DLGPROC dlgProcs[pageCnt] = { 
-        OptPinsProc, OptAutoPinProc, OptHotkeysProc, OptLangProc
+        optPinsProc, optAutoPinProc, optHotkeysProc, optLangProc
     };
 
     // This must remain in scope until PropertySheet() call,
@@ -340,7 +340,7 @@ static void CmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
     ResStr capStr(IDS_OPTIONSTITLE);
 
     OptionsPropSheetData data = { opt, winCreMon };
-    BuildOptPropSheet(psh, psp, dlgIds, dlgProcs, pageCnt, 0, data, capStr);
+    buildOptPropSheet(psh, psp, dlgIds, dlgProcs, pageCnt, 0, data, capStr);
 
     // HACK: ensure tab pages creation, even if lang change is applied
     //
@@ -367,7 +367,7 @@ static void CmOptions(HWND wnd, WindowCreationMonitor& winCreMon)
         std::wstring msg = ResStr(IDS_ERR_DLGCREATE);
         msg += L"\r\n";
         msg += ef::Win::getLastErrorStr();
-        Error(wnd, msg.c_str());
+        error(wnd, msg.c_str());
     }
 
     if (curResMod) {
@@ -442,7 +442,7 @@ protected:
 };
 
 
-static void EvTrayIcon(HWND wnd, WPARAM id, LPARAM msg)
+static void evTrayIcon(HWND wnd, WPARAM id, LPARAM msg)
 {
     static bool gotLButtonDblClk = false;
 
@@ -481,7 +481,7 @@ static void EvTrayIcon(HWND wnd, WPARAM id, LPARAM msg)
 }
 
 
-static void EvHotkey(HWND wnd, int idHotKey)
+static void evHotkey(HWND wnd, int idHotKey)
 {
     // ignore if there's an active pin layer
     if (app.layerWnd) return;
@@ -491,14 +491,14 @@ static void EvHotkey(HWND wnd, int idHotKey)
         PostMessage(wnd, WM_COMMAND, CM_NEWPIN, 0);
         break;
     case App::HOTID_TOGGLEPIN:
-        TogglePin(wnd, GetForegroundWindow(), opt.trackRate.value);
+        togglePin(wnd, GetForegroundWindow(), opt.trackRate.value);
         break;
     }
 
 }
 
 
-static void UpdateStatusMessage(HWND wnd)
+static void updateStatusMessage(HWND wnd)
 {
     //ResStr s = app.pinsUsed == 0 ? ResStr(IDS_PINSUSED_0) :
     //           app.pinsUsed == 1 ? ResStr(IDS_PINSUSED_1) :
@@ -507,11 +507,11 @@ static void UpdateStatusMessage(HWND wnd)
 }
 
 
-static bool EvInitDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
+static bool evInitDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
 {
     app.aboutDlg = wnd;
 
-    UpdateStatusMessage(wnd);
+    updateStatusMessage(wnd);
 
     boldGUIFont = ef::Win::FontH::create(ef::Win::FontH::getStockDefaultGui(), 0, ef::Win::FontH::bold);
     underlineGUIFont = ef::Win::FontH::create(ef::Win::FontH::getStockDefaultGui(), 0, ef::Win::FontH::underline);
@@ -560,7 +560,7 @@ static bool EvInitDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
 }
 
 
-static void EvTermDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
+static void evTermDlg(HWND wnd, HFONT& boldGUIFont, HFONT& underlineGUIFont)
 {
     app.aboutDlg = 0;
 
@@ -592,18 +592,18 @@ static void showSpecialInfo(HWND parent)
 }
 
 
-static BOOL CALLBACK AboutDlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static BOOL CALLBACK aboutDlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static HFONT   boldGUIFont, underlineGUIFont;
 
     switch (msg) {
         case WM_INITDIALOG:
-            return EvInitDlg(wnd, boldGUIFont, underlineGUIFont);
+            return evInitDlg(wnd, boldGUIFont, underlineGUIFont);
         case WM_DESTROY:
-            EvTermDlg(wnd, boldGUIFont, underlineGUIFont);
+            evTermDlg(wnd, boldGUIFont, underlineGUIFont);
             return true;
         case App::WM_PINSTATUS:
-            UpdateStatusMessage(wnd);
+            updateStatusMessage(wnd);
             return true;
         //case WM_ACTIVATE:
         //  app.activeModelessDlg = (LOWORD(wparam) == WA_INACTIVE) ? 0 : wnd;
@@ -629,7 +629,7 @@ static BOOL CALLBACK AboutDlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpar
 }
 
 
-LRESULT CALLBACK MainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK mainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static UINT taskbarMsg = RegisterWindowMessage(L"TaskbarCreated");
     static PendingWindows pendWnds;
@@ -642,7 +642,7 @@ LRESULT CALLBACK MainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             winCreMon = new EventHookWindowCreationMonitor();
 
             if (opt.autoPinOn && !winCreMon->init(wnd, App::WM_QUEUEWINDOW)) {
-                Error(wnd, ResStr(IDS_ERR_HOOKDLL));
+                error(wnd, ResStr(IDS_ERR_HOOKDLL));
                 opt.autoPinOn = false;
             }
 
@@ -660,7 +660,7 @@ LRESULT CALLBACK MainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 allKeysSet &= opt.hotEnterPin.set(wnd);
                 allKeysSet &= opt.hotTogglePin.set(wnd);
                 if (!allKeysSet)
-                    Error(wnd, ResStr(IDS_ERR_HOTKEYSSET));
+                    error(wnd, ResStr(IDS_ERR_HOTKEYSSET));
             }
 
             if (opt.autoPinOn)
@@ -689,13 +689,13 @@ LRESULT CALLBACK MainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
         }
         case App::WM_TRAYICON:
-            EvTrayIcon(wnd, wparam, lparam);
+            evTrayIcon(wnd, wparam, lparam);
             break;
         case App::WM_PINREQ:
-            EvPinReq(wnd, int(wparam), int(lparam));
+            evPinReq(wnd, int(wparam), int(lparam));
             break;
         case WM_HOTKEY:
-            EvHotkey(wnd, wparam);
+            evHotkey(wnd, wparam);
             break;
         case WM_TIMER:
             if (wparam == App::TIMERID_AUTOPIN) pendWnds.check(wnd, opt);
@@ -717,18 +717,18 @@ LRESULT CALLBACK MainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     if (app.aboutDlg)
                         SetForegroundWindow(app.aboutDlg);
                     else {
-                        CreateLocalizedDialog(IDD_ABOUT, 0, AboutDlgProc);
+                        CreateLocalizedDialog(IDD_ABOUT, 0, aboutDlgProc);
                         ShowWindow(app.aboutDlg, SW_SHOW);
                     }
                     break;
                 case CM_NEWPIN: 
-                    CmNewPin(wnd);
+                    cmNewPin(wnd);
                     break;
                 case CM_REMOVEPINS:
-                    CmRemovePins(wnd);
+                    cmRemovePins(wnd);
                     break;
                 case CM_OPTIONS:
-                    CmOptions(wnd, *winCreMon);
+                    cmOptions(wnd, *winCreMon);
                     break;
                 case CM_CLOSE:
                     DestroyWindow(wnd);

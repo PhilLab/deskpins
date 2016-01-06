@@ -1,4 +1,4 @@
 #pragma once
 
 
-BOOL CALLBACK OptHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);
+BOOL CALLBACK optHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);

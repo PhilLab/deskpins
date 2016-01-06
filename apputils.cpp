@@ -21,7 +21,7 @@ void PendingWindows::check(HWND wnd, const Options& opt)
     for (int n = entries.size()-1; n >= 0; --n) {
         if (timeToChkWnd(entries[n].time, opt)) {
             if (checkWnd(entries[n].wnd, opt))
-                PinWindow(wnd, entries[n].wnd, opt.trackRate.value, true);
+                pinWindow(wnd, entries[n].wnd, opt.trackRate.value, true);
             entries.erase(entries.begin() + n);
         }
     }

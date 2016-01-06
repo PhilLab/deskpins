@@ -71,7 +71,7 @@ private:
 };
 
 
-void MarkWnd(HWND wnd, bool mode)
+void markWnd(HWND wnd, bool mode)
 {
     const int blinkDelay = 50;  // msec
     // thickness of highlight border
@@ -129,7 +129,7 @@ void MarkWnd(HWND wnd, bool mode)
 }
 
 
-BOOL CALLBACK APEditRuleDlgProc(
+BOOL CALLBACK apEditRuleDlgProc(
                                 HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static int tracking = 0;    // 0: none, 1: title, 2: class
@@ -188,10 +188,10 @@ BOOL CALLBACK APEditRuleDlgProc(
             if (tracking) {
                 POINT pt = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
                 ClientToScreen(wnd, &pt);
-                HWND newWnd = GetNonChildParent(WindowFromPoint(pt));
-                if (hitWnd != newWnd && !IsProgManWnd(newWnd) && !IsTaskBar(newWnd)) {
+                HWND newWnd = getNonChildParent(WindowFromPoint(pt));
+                if (hitWnd != newWnd && !isProgManWnd(newWnd) && !isTaskBar(newWnd)) {
                     if (hitWnd)
-                        MarkWnd(hitWnd, false);
+                        markWnd(hitWnd, false);
 
                     hitWnd = newWnd;
 
@@ -206,7 +206,7 @@ BOOL CALLBACK APEditRuleDlgProc(
                         w.update();
                     }
 
-                    MarkWnd(hitWnd, true);
+                    markWnd(hitWnd, true);
 
                 }
             }
@@ -215,7 +215,7 @@ BOOL CALLBACK APEditRuleDlgProc(
         case WM_LBUTTONUP: {
             if (tracking) {
                 if (hitWnd)
-                    MarkWnd(hitWnd, false);
+                    markWnd(hitWnd, false);
                 ReleaseCapture();
                 SendDlgItemMessage(wnd, tracking == 1 ? IDC_TTLPICK : IDC_CLSPICK, 
                     WM_USER, true, 0);
@@ -309,7 +309,7 @@ public:
         ScreenToClient(list, &hti.pt);
         int i = ListView_HitTest(list, &hti);
         if (i >= 0 && hti.flags & LVHT_ONITEMSTATEICON) {
-            PSChanged(page);
+            psChanged(page);
         }
     }
 
@@ -581,7 +581,7 @@ static RulesList rlist;
 
 // update controls state, depending on current selection
 //
-void UIUpdate(HWND wnd)
+void uiUpdate(HWND wnd)
 {
     int cnt = ListView_GetItemCount(rlist);
     int selCnt = ListView_GetSelectedCount(rlist);
@@ -594,20 +594,20 @@ void UIUpdate(HWND wnd)
 }
 
 
-static bool CmAutoPinOn(HWND wnd)
+static bool cmAutoPinOn(HWND wnd)
 {
     bool b = IsDlgButtonChecked(wnd, IDC_AUTOPIN_ON) == BST_CHECKED;
-    EnableGroup(wnd, IDC_AUTOPIN_GROUP, b);
+    enableGroup(wnd, IDC_AUTOPIN_GROUP, b);
 
     // if turned on, disable some buttons
-    if (b) UIUpdate(wnd);
+    if (b) uiUpdate(wnd);
 
-    PSChanged(wnd);
+    psChanged(wnd);
     return true;
 }
 
 
-static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
+static bool evInitDialog(HWND wnd, HWND focus, LPARAM param)
 {
     // must have a valid data ptr
     if (!param) {
@@ -622,7 +622,7 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
 
 
     CheckDlgButton(wnd, IDC_AUTOPIN_ON, opt.autoPinOn);
-    CmAutoPinOn(wnd);  // simulate check to setup other ctrls
+    cmAutoPinOn(wnd);  // simulate check to setup other ctrls
 
     SendDlgItemMessage(wnd, IDC_RULE_DELAY_UD, UDM_SETRANGE, 0, 
         MAKELONG(opt.autoPinDelay.maxV,opt.autoPinDelay.minV));
@@ -633,13 +633,13 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
     rlist.init(GetDlgItem(wnd, IDC_LIST));
     rlist.setAll(opt.autoPinRules);
 
-    UIUpdate(wnd);
+    uiUpdate(wnd);
 
     return false;
 }
 
 
-static void Apply(HWND wnd, WindowCreationMonitor& winCreMon)
+static void apply(HWND wnd, WindowCreationMonitor& winCreMon)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
@@ -648,7 +648,7 @@ static void Apply(HWND wnd, WindowCreationMonitor& winCreMon)
         if (!autoPinOn)
             winCreMon.term();
         else if (!winCreMon.init(app.mainWnd, App::WM_QUEUEWINDOW)) {
-            Error(wnd, ResStr(IDS_ERR_HOOKDLL));
+            error(wnd, ResStr(IDS_ERR_HOOKDLL));
             autoPinOn = false;
         }
     }
@@ -664,18 +664,18 @@ static void Apply(HWND wnd, WindowCreationMonitor& winCreMon)
 }
 
 
-static bool Validate(HWND wnd)
+static bool validate(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
     return opt.autoPinDelay.validateUI(wnd, IDC_RULE_DELAY);
 }
 
 
-BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+BOOL CALLBACK optAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
         case WM_INITDIALOG: {
-            return EvInitDialog(wnd, HWND(wparam), lparam);
+            return evInitDialog(wnd, HWND(wparam), lparam);
         }
         case WM_DESTROY: {
             rlist.term();
@@ -691,12 +691,12 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 return true;
             }
             case PSN_KILLACTIVE: {
-                SetWindowLong(wnd, DWL_MSGRESULT, !Validate(wnd));
+                SetWindowLong(wnd, DWL_MSGRESULT, !validate(wnd));
                 return true;
             }
             case PSN_APPLY: {
                 WindowCreationMonitor& winCreMon = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->winCreMon;
-                Apply(wnd, winCreMon);
+                apply(wnd, winCreMon);
                 return true;
             }
             case PSN_HELP: {
@@ -717,7 +717,7 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             }
             case LVN_ITEMCHANGED: {
                 NMLISTVIEW& nmlv = *(NMLISTVIEW*)lparam;
-                if (nmlv.uChanged == LVIF_STATE) UIUpdate(wnd);
+                if (nmlv.uChanged == LVIF_STATE) uiUpdate(wnd);
                 return true;
             }
             case NM_CLICK: {
@@ -737,10 +737,10 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                         AutoPinRule rule;
                         if (rlist.getRule(i, rule)) {
                             int res = LocalizedDialogBoxParam(IDD_EDIT_AUTOPIN_RULE, 
-                                wnd, APEditRuleDlgProc, LPARAM(&rule));
+                                wnd, apEditRuleDlgProc, LPARAM(&rule));
                             if (res == IDOK) {
                                 rlist.setRule(i, rule);
-                                PSChanged(wnd);
+                                psChanged(wnd);
                             }
                         }
                     }
@@ -796,16 +796,16 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
         case WM_COMMAND: {
             WORD id = LOWORD(wparam), code = HIWORD(wparam);
             switch (id) {
-                case IDC_AUTOPIN_ON:    return CmAutoPinOn(wnd);
+                case IDC_AUTOPIN_ON:    return cmAutoPinOn(wnd);
                 case IDC_ADD: {
                     AutoPinRule rule;
                     int res = LocalizedDialogBoxParam(IDD_EDIT_AUTOPIN_RULE, 
-                        wnd, APEditRuleDlgProc, LPARAM(&rule));
+                        wnd, apEditRuleDlgProc, LPARAM(&rule));
                     if (res == IDOK) {
                         int i = rlist.addNew();
                         if (i >= 0 && rlist.setRule(i, rule))
                             rlist.selectSingleRule(i);
-                        PSChanged(wnd);
+                        psChanged(wnd);
                     }
                     return true;
                 }
@@ -814,32 +814,32 @@ BOOL CALLBACK OptAutoPinProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     int i = rlist.getFirstSel();
                     if (i >= 0 && rlist.getRule(i, rule)) {
                         int res = LocalizedDialogBoxParam(IDD_EDIT_AUTOPIN_RULE, 
-                            wnd, APEditRuleDlgProc, LPARAM(&rule));
+                            wnd, apEditRuleDlgProc, LPARAM(&rule));
                         if (res == IDOK) {
                             rlist.setRule(i, rule);
-                            PSChanged(wnd);
+                            psChanged(wnd);
                         }
                     }
                     return true;
                 }
                 case IDC_REMOVE: {
                     rlist.remove(rlist.getSel());
-                    PSChanged(wnd);
+                    psChanged(wnd);
                     return true;
                 }
                 case IDC_UP: {
                     rlist.moveSelUp();
-                    PSChanged(wnd);
+                    psChanged(wnd);
                     return true;
                 }
                 case IDC_DOWN: {
                     rlist.moveSelDown();
-                    PSChanged(wnd);
+                    psChanged(wnd);
                     return true;
                 }
                 case IDC_RULE_DELAY:
                     if (code == EN_CHANGE)
-                        PSChanged(wnd);
+                        psChanged(wnd);
                     return true;
                 default:
                     return false;

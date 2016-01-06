@@ -45,7 +45,7 @@ std::wstring getLangFileDescr(const std::wstring& path, const std::wstring& file
 
 void loadLangFiles(HWND combo, const std::wstring& path, const std::wstring& cur)
 {
-    std::vector<std::wstring> files = GetFiles(path + L"lang*.dll");
+    std::vector<std::wstring> files = getFiles(path + L"lang*.dll");
     files.push_back(L"");    // special entry
 
     for (int n = 0; n < int(files.size()); ++n) {
@@ -63,7 +63,7 @@ void loadLangFiles(HWND combo, const std::wstring& path, const std::wstring& cur
 }
 
 
-static bool ReadFileBack(HANDLE file, void* buf, int bytes)
+static bool readFileBack(HANDLE file, void* buf, int bytes)
 {
     DWORD read;
     return SetFilePointer(file, -bytes, 0, FILE_CURRENT) != -1
@@ -86,12 +86,12 @@ std::wstring getHelpFileDescr(const std::wstring& path, const std::wstring& name
     ef::Win::AutoFileH file = ef::Win::FileH::create(path + name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (file != INVALID_HANDLE_VALUE &&
         file.setPosFromEnd32(0) &&
-        ReadFileBack(file, &sig, sizeof(sig)) && 
+        readFileBack(file, &sig, sizeof(sig)) && 
         sig == CHM_MARKER_SIG &&
-        ReadFileBack(file, &len, sizeof(len)))
+        readFileBack(file, &len, sizeof(len)))
     {
         boost::scoped_array<char> buf(new char[len]);
-        if (ReadFileBack(file, buf.get(), len)) {
+        if (readFileBack(file, buf.get(), len)) {
             boost::scoped_array<WCHAR> wbuf(new WCHAR[len]);
             if (MultiByteToWideChar(CP_THREAD_ACP, 0, buf.get(), len, wbuf.get(), len))
                 ret.assign(wbuf.get(), len);
@@ -103,7 +103,7 @@ std::wstring getHelpFileDescr(const std::wstring& path, const std::wstring& name
 
 void loadHelpFiles(HWND combo, const std::wstring& path, const std::wstring& cur)
 {
-    std::vector<std::wstring> files = GetFiles(path + L"DeskPins*.chm");
+    std::vector<std::wstring> files = getFiles(path + L"DeskPins*.chm");
 
     for (int n = 0; n < int(files.size()); ++n) {
         Data* data = new Data;
@@ -121,7 +121,7 @@ void loadHelpFiles(HWND combo, const std::wstring& path, const std::wstring& cur
 }
 
 
-static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
+static bool evInitDialog(HWND wnd, HWND focus, LPARAM param)
 {
     // must have a valid data ptr
     if (!param) {
@@ -149,13 +149,13 @@ static bool EvInitDialog(HWND wnd, HWND focus, LPARAM param)
 }
 
 
-static bool Validate(HWND wnd)
+static bool validate(HWND wnd)
 {
     return true;
 }
 
 
-static void Apply(HWND wnd)
+static void apply(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
@@ -172,10 +172,10 @@ static void Apply(HWND wnd)
 }
 
 
-BOOL CALLBACK OptLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+BOOL CALLBACK optLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
-        case WM_INITDIALOG:  return EvInitDialog(wnd, HWND(wparam), lparam);
+        case WM_INITDIALOG:  return evInitDialog(wnd, HWND(wparam), lparam);
         case WM_NOTIFY: {
             NMHDR nmhdr = *reinterpret_cast<NMHDR*>(lparam);
             switch (nmhdr.code) {
@@ -186,11 +186,11 @@ BOOL CALLBACK OptLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                     break;
                 }
                 case PSN_KILLACTIVE: {
-                    SetWindowLong(wnd, DWL_MSGRESULT, !Validate(wnd));
+                    SetWindowLong(wnd, DWL_MSGRESULT, !validate(wnd));
                     break;
                 }
                 case PSN_APPLY: {
-                    Apply(wnd);
+                    apply(wnd);
                     break;
                 }
                 case PSN_HELP: {
@@ -206,7 +206,7 @@ BOOL CALLBACK OptLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             WORD code = HIWORD(wparam), id = LOWORD(wparam);
             if (code == CBN_SELCHANGE) {
                 if (id == IDC_UILANG || id == IDC_HELPLANG)
-                    PSChanged(wnd);
+                    psChanged(wnd);
             }
             break;
         }

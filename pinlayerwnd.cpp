@@ -6,7 +6,7 @@
 static bool gotInitLButtonDown;
 
 
-static void EvLButtonDown(HWND wnd, UINT /*mk*/, int x, int y)
+static void evLButtonDown(HWND wnd, UINT /*mk*/, int x, int y)
 {
     SetCapture(wnd);
 
@@ -23,7 +23,7 @@ static void EvLButtonDown(HWND wnd, UINT /*mk*/, int x, int y)
 }
 
 
-LRESULT CALLBACK PinLayerWndProc(HWND wnd, UINT msg, 
+LRESULT CALLBACK pinLayerWndProc(HWND wnd, UINT msg, 
                                  WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
@@ -37,7 +37,7 @@ LRESULT CALLBACK PinLayerWndProc(HWND wnd, UINT msg,
         return false;
 
     case WM_LBUTTONDOWN:
-        EvLButtonDown(wnd, wparam, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+        evLButtonDown(wnd, wparam, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
         return false;
 
     case WM_LBUTTONUP:
