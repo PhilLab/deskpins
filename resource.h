@@ -1,17 +1,14 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by DeskPins.rc
+// Microsoft Visual C++ generated include file.
+// Used by deskpins.rc
 //
 #define VERSIONINFO_1                   1
 #define IDI_APP                         1
 #define IDC_PLACEPIN                    1
 #define IDM_TRAY                        1
 #define IDD_ABOUT                       1
-#define IDS_PINSUSED_0                  1
 #define IDB_PIN                         1
 #define IDC_REMOVEPIN                   2
-#define IDS_PINSUSED_1                  2
-#define IDS_PINSUSED_N                  3
 #define IDS_ERRBOXTTITLE                4
 #define IDS_WRNBOXTTITLE                5
 #define IDS_OPTIONSTITLE                6
@@ -41,7 +38,6 @@
 #define IDC_PIN_COLOR                   103
 #define IDC_STATUS                      103
 #define IDC_POLL_RATE                   104
-#define IDC_WEB2                        104
 #define IDC_HOT_TOGGLEPIN               105
 #define IDC_POLL_RATE_UD                106
 #define IDC_TRAY_SINGLE_CLICK           107
