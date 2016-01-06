@@ -5,6 +5,7 @@
 !define PRETTY_VER "1.32"
 !define FULL_VER "1.32.0.0"
 !define UNINST_PATH Software\Microsoft\Windows\CurrentVersion\Uninstall\DeskPins
+!define RUN_PATH Software\Microsoft\Windows\CurrentVersion\Run
 
 ;; The name of the installer
 Name "DeskPins ${PRETTY_VER}"
@@ -124,7 +125,7 @@ SectionEnd
 
 Section "Start DeskPins with Windows"
 
-    CreateShortCut "$SMSTARTUP\DeskPins.lnk" "$INSTDIR\DeskPins.exe"
+    WriteRegStr HKCU "${RUN_PATH}" "DeskPins" "$INSTDIR\DeskPins.exe"
 
 SectionEnd
 
@@ -132,8 +133,9 @@ SectionEnd
 ;; uninstall
 Section "Uninstall"
 
-    ;; remove registry keys
+    ;; remove registry keys/values
     DeleteRegKey HKLM "${UNINST_PATH}"
+    DeleteRegValue HKCU "${RUN_PATH}" "DeskPins"
 
     ;; delete app keys
     DeleteRegKey HKLM "SOFTWARE\Elias Fotinis\DeskPins"
