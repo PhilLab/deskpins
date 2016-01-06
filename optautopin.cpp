@@ -81,7 +81,14 @@ void markWnd(HWND wnd, bool mode)
     // amount to deflate if wnd is maximized, to make the highlight visible
     const int zoomFix = IsZoomed(wnd) ? GetSystemMetrics(SM_CXFRAME) : 0;
 
-    HDC dc = GetWindowDC(wnd);
+    // when composition is enabled, drawing on the glass frame is prohibited
+    // (GetWindowDC() returns a DC that clips the frame); in that case,
+    // we use the screen DC and draw a simple rect (since GetWindowRgn()
+    // returns ERROR); this rect overlaps other windows in front of the target,
+    // but it's better than nothing
+    const bool composition = app.dwm.isCompositionEnabled();
+
+    HDC dc = composition ? GetDC(0) : GetWindowDC(wnd);
     if (dc) {
         int orgRop2 = SetROP2(dc, R2_XORPEN);
 
@@ -99,8 +106,9 @@ void markWnd(HWND wnd, bool mode)
         }
         else {
             RECT rc;
-            GetWindowRect(wnd, &rc);    
-            OffsetRect(&rc, -rc.left, -rc.top);
+            GetWindowRect(wnd, &rc);
+            if (!composition)
+                OffsetRect(&rc, -rc.left, -rc.top);
             InflateRect(&rc, -zoomFix, -zoomFix);
 
             HGDIOBJ orgPen = SelectObject(dc, GetStockObject(WHITE_PEN));
@@ -122,7 +130,7 @@ void markWnd(HWND wnd, bool mode)
         }
 
         SetROP2(dc, orgRop2);
-        ReleaseDC(wnd, dc);
+        ReleaseDC(composition ? 0 : wnd, dc);
         DeleteObject(rgn);
     }
 

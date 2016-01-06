@@ -747,6 +747,10 @@ LRESULT CALLBACK mainWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
         }
         //case WM_SETTINGSCHANGE:
         //case WM_DISPLAYCHANGE:
+        case WM_DWMCOMPOSITIONCHANGED: {
+            app.dwm.wmDwmCompositionChanged();
+            return 0;
+        }
         default:
             if (msg == taskbarMsg) {
                 // taskbar recreated; reset the tray icon

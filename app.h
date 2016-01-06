@@ -5,6 +5,32 @@
 #include "help.h"
 
 
+class Dwm : boost::noncopyable
+{
+    typedef HRESULT (WINAPI* DwmIsCompositionEnabled_Ptr)(BOOL*);
+public: 
+    Dwm() {
+        dll = ef::Win::ModuleH::load(L"dwmapi");
+        if (dll) {
+            DwmIsCompositionEnabled_ = (DwmIsCompositionEnabled_Ptr)dll.getProcAddress("DwmIsCompositionEnabled");
+        }
+        wmDwmCompositionChanged();
+    }
+    bool isCompositionEnabled() const {
+        return cachedIsCompositionEnabled;
+    }
+    // WM_DWMCOMPOSITIONCHANGED handler
+    void wmDwmCompositionChanged() {
+        BOOL b;
+        cachedIsCompositionEnabled = dll && SUCCEEDED(DwmIsCompositionEnabled_(&b)) && b;
+    }
+private:
+    ef::Win::AutoModuleH dll;
+    DwmIsCompositionEnabled_Ptr DwmIsCompositionEnabled_;
+    bool cachedIsCompositionEnabled;
+};
+
+
 struct App : boost::noncopyable {
     ef::Win::PrevInstance prevInst;
     HWND      mainWnd, aboutDlg, optionsDlg, layerWnd; //, activeModelessDlg;
@@ -16,6 +42,7 @@ struct App : boost::noncopyable {
     int       pinsUsed;
     int       optionPage;
     TrayIcon  trayIcon;
+    Dwm       dwm;
 
     static LPCWSTR APPNAME;
     static LPCWSTR WNDCLS_MAIN;
