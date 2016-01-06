@@ -675,7 +675,7 @@ static void apply(HWND wnd, WindowCreationMonitor& winCreMon)
 static bool validate(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
-    return opt.autoPinDelay.validateUI(wnd, IDC_RULE_DELAY);
+    return opt.autoPinDelay.validateUI(wnd, IDC_RULE_DELAY, true);
 }
 
 

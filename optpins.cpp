@@ -125,7 +125,7 @@ static bool evDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
 static bool validate(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
-    return opt.trackRate.validateUI(wnd, IDC_POLL_RATE);
+    return opt.trackRate.validateUI(wnd, IDC_POLL_RATE, true);
 }
 
 

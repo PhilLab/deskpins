@@ -79,15 +79,12 @@ struct ScalarOption {
     {
         if (maxV < minV)
             maxV = minV;
-        capValue();
+        value = clamp(value);
     }
 
-    void capValue()
+    T clamp(T n) const
     {
-        if (value < minV)
-            value = minV;
-        else if (value > maxV)
-            value = maxV;
+        return n < minV ? minV : n > maxV ? maxV : n;
     }
 
     bool inRange(T t) const
@@ -97,8 +94,7 @@ struct ScalarOption {
 
     ScalarOption& operator=(T t)
     {
-        value = t;
-        capValue();
+        value = clamp(t);
         return *this;
     }
 
@@ -127,27 +123,38 @@ struct ScalarOption {
         return t;
     }
 
-    // show warning and focus ctrl if out of range
-    bool validateUI(HWND wnd, int id)
+    // Check control for out-of-range values.
+    // If clamp is false, show warning and move focus to control.
+    // If clamp is true, set control to a proper value.
+    // Return whether final value is valid.
+    //
+    bool validateUI(HWND wnd, int id, bool clampValue)
     {
         if (!std::numeric_limits<T>::is_integer) {
             // only integers are supported for now
             return false;
         }
 
+        const bool isSigned = std::numeric_limits<T>::is_signed;
         BOOL xlated;
-        T t = static_cast<T>(GetDlgItemInt(wnd, id, &xlated, 
-            std::numeric_limits<T>::is_signed));
+        T t = static_cast<T>(GetDlgItemInt(wnd, id, &xlated, isSigned));
         if (xlated && inRange(t))
             return true;
 
-        // report error
-        HWND prevSib = GetWindow(GetDlgItem(wnd, id), GW_HWNDPREV);
-        std::wstring label = remAccel(ef::Win::WndH(prevSib).getText());
-        ResStr str(IDS_WRN_UIRANGE, 256, DWORD_PTR(label.c_str()), DWORD(minV), DWORD(maxV));
-        warning(wnd, str);
-        SetFocus(GetDlgItem(wnd, id));
-        return false;
+        if (clampValue) {
+            T newValue = clamp(t);
+            SetDlgItemInt(wnd, id, static_cast<UINT>(newValue), isSigned);
+            return true;
+        }
+        else {
+            // report error
+            HWND prevSib = GetWindow(GetDlgItem(wnd, id), GW_HWNDPREV);
+            std::wstring label = remAccel(ef::Win::WndH(prevSib).getText());
+            ResStr str(IDS_WRN_UIRANGE, 256, DWORD_PTR(label.c_str()), DWORD(minV), DWORD(maxV));
+            warning(wnd, str);
+            SetFocus(GetDlgItem(wnd, id));
+            return false;
+        }
     }
 
 };
