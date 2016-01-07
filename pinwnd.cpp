@@ -214,7 +214,6 @@ void PinWnd::evPaint(HWND wnd, Data& pd)
         }
         EndPaint(wnd, &ps);
     }
-
 }
 
 
@@ -228,7 +227,6 @@ bool PinWnd::evPinAssignWnd(HWND wnd, Data& pd, HWND target, int pollRate)
 {
     // this shouldn't happen; it means the pin is already used
     if (pd.topMostWnd) return false;
-
 
     pd.topMostWnd = target;
 
@@ -326,7 +324,7 @@ void PinWnd::placeOnCaption(HWND wnd, const Data& pd)
     HWND pinOwner = pd.getPinOwner();
     if (!pinOwner) return;
 
-    // Move the pin on the owner's caption
+    // Move the pin on owner's caption
     //
 
     // Calc the number of caption buttons
@@ -394,5 +392,3 @@ BOOL CALLBACK PinWnd::enumThreadWndProc(HWND wnd, LPARAM param)
 
     return true;  // continue enumeration
 }
-
-

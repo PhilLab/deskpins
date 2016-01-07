@@ -56,7 +56,6 @@ void App::freeResMod()
 }
 
 
-// TODO: move to eflib?
 bool App::initComctl()
 {
     INITCOMMONCONTROLSEX iccx;

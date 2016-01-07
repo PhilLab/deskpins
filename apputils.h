@@ -107,6 +107,7 @@ private:
 
 class Options;
 
+
 // Manager of new windows for autopin checking.
 //
 class PendingWindows {

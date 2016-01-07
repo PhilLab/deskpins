@@ -48,6 +48,5 @@
 #include "ef/Win/Ver.hpp"
 #include "ef/Win/WinHelper.hpp"  // deprecated, but we need getLastErrorStr()
 #include "ef/Win/WinSys.hpp"
-#include <ef/std/TChar.hpp>
 #include <ef/Win/WndH.hpp>
 #include <ef/Win/ModuleH.hpp>

@@ -60,14 +60,10 @@ namespace Util {
     namespace Res {
         HMENU LoadLocalizedMenu(LPCTSTR lpMenuName);
         HMENU LoadLocalizedMenu(WORD id);
-        int   LocalizedDialogBoxParam(LPCTSTR lpTemplateName, HWND hWndParent, 
-                                      DLGPROC lpDialogFunc, LPARAM dwInitParam);
-        int   LocalizedDialogBoxParam(WORD id, HWND hWndParent, 
-                                      DLGPROC lpDialogFunc, LPARAM dwInitParam);
-        HWND  CreateLocalizedDialog  (LPCTSTR lpTemplate, HWND hWndParent, 
-                                      DLGPROC lpDialogFunc);
-        HWND  CreateLocalizedDialog  (WORD id, HWND hWndParent, 
-                                      DLGPROC lpDialogFunc);
+        int   LocalizedDialogBoxParam(LPCTSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+        int   LocalizedDialogBoxParam(WORD id, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+        HWND  CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc);
+        HWND  CreateLocalizedDialog(WORD id, HWND hWndParent, DLGPROC lpDialogFunc);
 
         // automatically handles language
         class ResStr {

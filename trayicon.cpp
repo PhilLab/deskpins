@@ -74,4 +74,3 @@ bool TrayIcon::setIcon(HICON icon)
 
     return !!Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
-

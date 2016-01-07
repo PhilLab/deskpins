@@ -4,8 +4,6 @@
 #include "resource.h"
 
 
-// hotkey type
-//
 struct HotKey {
     int  id;
     UINT vk;

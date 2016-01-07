@@ -103,7 +103,6 @@ BOOL CALLBACK OptHotKeys::dlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpar
 {
     switch (msg) {
         case WM_INITDIALOG:  return evInitDialog(wnd, HWND(wparam), lparam);
-            //case WM_DESTROY:     return EvTermDialog(wnd, lparam);
         case WM_NOTIFY: {
             NMHDR nmhdr = *reinterpret_cast<NMHDR*>(lparam);
             switch (nmhdr.code) {

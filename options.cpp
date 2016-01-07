@@ -3,7 +3,7 @@
 #include "options.h"
 
 
-const HKEY  Options::HKCU              = HKEY_CURRENT_USER;
+const HKEY Options::HKCU = HKEY_CURRENT_USER;
 
 LPCWSTR Options::REG_PATH_EF      = L"Software\\Elias Fotinis";
 LPCWSTR Options::REG_APR_SUBPATH  = L"AutoPinRules";

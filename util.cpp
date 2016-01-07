@@ -133,7 +133,6 @@ std::wstring Util::App::getHelpFileDescr(const std::wstring& path, const std::ws
 }
 
 
-// TODO: move to eflib?
 bool Util::Sys::getScrSize(SIZE& sz)
 {
     return ((sz.cx = GetSystemMetrics(SM_CXSCREEN)) != 0 &&
@@ -345,7 +344,6 @@ HWND Util::Res::CreateLocalizedDialog(WORD id, HWND hParent, DLGPROC lpDialogFun
 }
 
 
-// TODO: move to eflib?
 bool Util::Gfx::rectContains(const RECT& rc1, const RECT& rc2)
 {
     return rc2.left   >= rc1.left
@@ -357,7 +355,6 @@ bool Util::Gfx::rectContains(const RECT& rc1, const RECT& rc2)
 
 // enable/disable all ctrls that lie inside the specified ctrl 
 // (usually a group, or maybe a tab, etc)
-// TODO: move to eflib?
 void Util::Wnd::enableGroup(HWND wnd, int id, bool mode)
 {
     HWND container = GetDlgItem(wnd, id);
@@ -381,7 +378,6 @@ void Util::Wnd::enableGroup(HWND wnd, int id, bool mode)
 }
 
 
-// TODO: move to eflib?
 std::vector<std::wstring> Util::Sys::getFiles(std::wstring mask)
 {
     std::vector<std::wstring> ret;
@@ -460,7 +456,6 @@ std::wstring Util::Text::remAccel(std::wstring s)
 }
 
 
-// TODO: move to eflib?
 bool Util::Gfx::getBmpSize(HBITMAP bmp, SIZE& sz)
 {
     BITMAP bm;
@@ -472,7 +467,6 @@ bool Util::Gfx::getBmpSize(HBITMAP bmp, SIZE& sz)
 }
 
 
-// TODO: move to eflib?
 bool Util::Gfx::getBmpSizeAndBpp(HBITMAP bmp, SIZE& sz, int& bpp)
 {
     BITMAP bm;
