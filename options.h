@@ -4,7 +4,6 @@
 #include "resource.h"
 
 
-
 // hotkey type
 //
 struct HotKey {
@@ -58,7 +57,7 @@ struct AutoPinRule {
     std::wstring cls;
     bool enabled;
 
-    AutoPinRule(const std::wstring& d = std::wstring(ResStr(IDS_NEWRULEDESCR)), 
+    AutoPinRule(const std::wstring& d = std::wstring(Util::Res::ResStr(IDS_NEWRULEDESCR)), 
         const std::wstring& t = L"", 
         const std::wstring& c = L"", 
         bool b = true) : descr(d), ttl(t), cls(c), enabled(b) {}
@@ -149,9 +148,9 @@ struct ScalarOption {
         else {
             // report error
             HWND prevSib = GetWindow(GetDlgItem(wnd, id), GW_HWNDPREV);
-            std::wstring label = remAccel(ef::Win::WndH(prevSib).getText());
-            ResStr str(IDS_WRN_UIRANGE, 256, DWORD_PTR(label.c_str()), DWORD(minV), DWORD(maxV));
-            warning(wnd, str);
+            std::wstring label = Util::Text::remAccel(ef::Win::WndH(prevSib).getText());
+            Util::Res::ResStr str(IDS_WRN_UIRANGE, 256, DWORD_PTR(label.c_str()), DWORD(minV), DWORD(maxV));
+            Util::App::warning(wnd, str);
             SetFocus(GetDlgItem(wnd, id));
             return false;
         }

@@ -1,12 +1,25 @@
 #include "stdafx.h"
 #include "util.h"
 #include "pinlayerwnd.h"
+#include "resource.h"
 
 
-static bool gotInitLButtonDown;
+LPCWSTR PinLayerWnd::className = L"EFPinLayerWnd";
+bool PinLayerWnd::gotInitLButtonDown = false;
 
 
-static void evLButtonDown(HWND wnd, UINT /*mk*/, int x, int y)
+ATOM PinLayerWnd::registerClass()
+{
+    WNDCLASS wc = {};
+    wc.lpfnWndProc   = proc;
+    wc.hInstance     = app.inst;
+    wc.hCursor       = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_PLACEPIN));
+    wc.lpszClassName = className;
+    return RegisterClass(&wc);
+}
+
+
+void PinLayerWnd::evLButtonDown(HWND wnd, UINT mk, int x, int y)
 {
     SetCapture(wnd);
 
@@ -23,8 +36,7 @@ static void evLButtonDown(HWND wnd, UINT /*mk*/, int x, int y)
 }
 
 
-LRESULT CALLBACK pinLayerWndProc(HWND wnd, UINT msg, 
-                                 WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK PinLayerWnd::proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
     case WM_CREATE:

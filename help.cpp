@@ -28,7 +28,7 @@ bool Help::init(HINSTANCE inst, const std::wstring& fname)
 HWND Help::show(HWND wnd, const std::wstring& topic)
 {
     if (hlpFile.empty()) {
-        error(wnd, ResStr(IDS_ERR_HELPMISSING));
+        Util::App::error(wnd, Util::Res::ResStr(IDS_ERR_HELPMISSING));
         return 0;
     }
 

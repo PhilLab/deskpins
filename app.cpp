@@ -1,18 +1,13 @@
 #include "stdafx.h"
 #include "util.h"
+#include "mainwnd.h"
 #include "pinwnd.h"
 #include "pinlayerwnd.h"
 #include "app.h"
 #include "resource.h"
 
 
-LRESULT CALLBACK mainWndProc(HWND, UINT, WPARAM, LPARAM);
-
-
-LPCWSTR App::APPNAME         = L"DeskPins";
-LPCWSTR App::WNDCLS_MAIN     = L"EFDeskPins";
-LPCWSTR App::WNDCLS_PIN      = L"EFPinWnd";
-LPCWSTR App::WNDCLS_PINLAYER = L"EFPinLayerWnd";
+LPCWSTR App::APPNAME = L"DeskPins";
 
 
 // Load a resource dll and store it in 'resMod'.
@@ -45,7 +40,7 @@ bool App::loadResMod(const std::wstring& file, HWND msgParent)
         LPCWSTR msg = L"Could not load language file: %s\r\n"
             L"Reverting to English interface.";
         wsprintf(buf, msg, file.c_str());
-        error(msgParent, buf);
+        Util::App::error(msgParent, buf);
     }
 
     return resMod != 0;
@@ -69,7 +64,7 @@ bool App::initComctl()
     iccx.dwICC = ICC_WIN95_CLASSES;
     bool ret = !!InitCommonControlsEx(&iccx);
     if (!ret)
-        error(0, ResStr(IDS_ERR_CCINIT));
+        Util::App::error(0, Util::Res::ResStr(IDS_ERR_CCINIT));
     return ret;
 }
 
@@ -79,68 +74,29 @@ bool App::initComctl()
 bool App::chkPrevInst()
 {
     if (prevInst.isRunning()) {
-        MessageBox(0, ResStr(IDS_ERR_ALREADYRUNNING), APPNAME, MB_ICONINFORMATION);
+        MessageBox(0, Util::Res::ResStr(IDS_ERR_ALREADYRUNNING), APPNAME, MB_ICONINFORMATION);
         return false;
     }
     else if (!prevInst.isRunning())
         return true;
     else
-        return MessageBox(0, ResStr(IDS_ERR_MUTEXFAILCONFIRM), APPNAME, MB_ICONEXCLAMATION | MB_YESNO) != IDNO;
+        return MessageBox(0, Util::Res::ResStr(IDS_ERR_MUTEXFAILCONFIRM), APPNAME, MB_ICONEXCLAMATION | MB_YESNO) != IDNO;
 }
 
 
 bool App::regWndCls()
 {
-    WNDCLASS wc;
-
-    wc.style         = 0;
-    wc.lpfnWndProc   = mainWndProc;
-    wc.cbClsExtra    = 0;
-    wc.cbWndExtra    = 0;
-    wc.hInstance     = app.inst;
-    wc.hIcon         = 0;
-    wc.hCursor       = 0;
-    wc.hbrBackground = 0;
-    wc.lpszMenuName  = 0;
-    wc.lpszClassName = WNDCLS_MAIN;
-    if (!RegisterClass(&wc))
-        return false;
-
-    wc.style         = 0;
-    wc.lpfnWndProc   = pinWndProc;
-    wc.cbClsExtra    = 0;
-    wc.cbWndExtra    = sizeof(void*);  // data object ptr
-    wc.hInstance     = app.inst;
-    wc.hIcon         = 0;
-    wc.hCursor       = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_REMOVEPIN));
-    wc.hbrBackground = 0;
-    wc.lpszMenuName  = 0;
-    wc.lpszClassName = WNDCLS_PIN;
-    if (!RegisterClass(&wc))
-        return false;
-
-    wc.style         = 0;
-    wc.lpfnWndProc   = pinLayerWndProc;
-    wc.cbClsExtra    = 0;
-    wc.cbWndExtra    = 0;
-    wc.hInstance     = app.inst;
-    wc.hIcon         = 0;
-    wc.hCursor       = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_PLACEPIN));
-    wc.hbrBackground = 0;
-    wc.lpszMenuName  = 0;
-    wc.lpszClassName = WNDCLS_PINLAYER;
-    if (!RegisterClass(&wc))
-        return false;
-
-    return true;
+    return MainWnd::registerClass() && 
+           PinWnd::registerClass() && 
+           PinLayerWnd::registerClass();
 }
 
 
-bool App::createMainWnd()
+bool App::createMainWnd(Options& opt)
 {
     // app.mainWnd set in WM_CREATE
-    CreateWindow(App::WNDCLS_MAIN, App::APPNAME, 
-        WS_POPUP, 0,0,0,0, 0, 0, app.inst, 0);
+    CreateWindow(MainWnd::className, App::APPNAME, 
+        WS_POPUP, 0,0,0,0, 0, 0, app.inst, &opt);
 
     return app.mainWnd != 0;
 }
@@ -158,10 +114,10 @@ void App::createSmClrIcon(COLORREF clr)
     if (GetIconInfo(smClrIcon, &ii)) {
         // (assuming non-monochrome)
         COLORREF clrMap[][2] = {
-            { StdClr::red, clr       }, 
-            { StdClr::maroon, dark(clr) }
+            { Util::Clr::red, clr }, 
+            { Util::Clr::maroon, Util::Clr::dark(clr) }
         };
-        remapBmpColors(ii.hbmColor, clrMap, ARRSIZE(clrMap));
+        Util::Gfx::remapBmpColors(ii.hbmColor, clrMap, ARRSIZE(clrMap));
         HICON newIcon = CreateIconIndirect(&ii);
         if (newIcon) {
             DestroyIcon(smClrIcon);
@@ -172,4 +128,12 @@ void App::createSmClrIcon(COLORREF clr)
         DeleteObject(ii.hbmColor);
         DeleteObject(ii.hbmMask);
     }
+}
+
+
+std::wstring App::trayIconTip()
+{
+    TCHAR s[100];
+    wsprintf(s, L"%s - %s: %d", APPNAME, Util::Res::ResStr(IDS_TRAYTIP, 50), pinsUsed);
+    return s;
 }

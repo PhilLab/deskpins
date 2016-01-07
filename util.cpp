@@ -1,22 +1,23 @@
 #include "stdafx.h"
+#include "pinwnd.h"
 #include "util.h"
 #include "resource.h"
 
 
-bool isWndRectEmpty(HWND wnd)
+bool Util::Wnd::isWndRectEmpty(HWND wnd)
 {
     RECT rc;
     return GetWindowRect(wnd, &rc) && IsRectEmpty(&rc);
 }
 
 
-bool isChild(HWND wnd)
+bool Util::Wnd::isChild(HWND wnd)
 {
     return (ef::Win::WndH(wnd).getStyle() & WS_CHILD) != 0;
 }
 
 
-HWND getNonChildParent(HWND wnd)
+HWND Util::Wnd::getNonChildParent(HWND wnd)
 {
     while (isChild(wnd))
         wnd = GetParent(wnd);
@@ -25,7 +26,7 @@ HWND getNonChildParent(HWND wnd)
 }
 
 
-HWND getTopParent(HWND wnd /*, bool mustBeVisible*/)
+HWND Util::Wnd::getTopParent(HWND wnd /*, bool mustBeVisible*/)
 {
     // ------------------------------------------------------
     // NOTE: 'mustBeVisible' is not used currently
@@ -63,60 +64,96 @@ HWND getTopParent(HWND wnd /*, bool mustBeVisible*/)
 }
 
 
-bool isProgManWnd(HWND wnd)
+bool Util::Wnd::isProgManWnd(HWND wnd)
 { 
-    return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), L"ProgMan")
-        && strimatch(ef::Win::WndH(wnd).getText().c_str(), L"Program Manager");
+    return Util::Text::strimatch(ef::Win::WndH(wnd).getClassName().c_str(), L"ProgMan")
+        && Util::Text::strimatch(ef::Win::WndH(wnd).getText().c_str(), L"Program Manager");
 }
 
 
-bool isTaskBar(HWND wnd)
+bool Util::Wnd::isTaskBar(HWND wnd)
 {
-    return strimatch(ef::Win::WndH(wnd).getClassName().c_str(), L"Shell_TrayWnd");
+    return Util::Text::strimatch(ef::Win::WndH(wnd).getClassName().c_str(), L"Shell_TrayWnd");
 }
 
 
-bool isTopMost(HWND wnd)
+bool Util::Wnd::isTopMost(HWND wnd)
 {
     return (ef::Win::WndH(wnd).getExStyle() & WS_EX_TOPMOST) != 0;
 }
 
 
-void error(HWND wnd, LPCWSTR s)
+bool Util::Wnd::isVCLAppWnd(HWND wnd)
 {
-    ResStr caption(IDS_ERRBOXTTITLE, 50, reinterpret_cast<DWORD>(App::APPNAME));
+    return Util::Text::strimatch(L"TApplication", ef::Win::WndH(wnd).getClassName().c_str()) 
+        && Util::Wnd::isWndRectEmpty(wnd);
+}
+
+
+void Util::App::error(HWND wnd, LPCWSTR s)
+{
+    Util::Res::ResStr caption(IDS_ERRBOXTTITLE, 50, reinterpret_cast<DWORD>(::App::APPNAME));
     MessageBox(wnd, s, caption, MB_ICONSTOP | MB_TOPMOST);
 }
 
 
-void warning(HWND wnd, LPCWSTR s)
+void Util::App::warning(HWND wnd, LPCWSTR s)
 {
-    ResStr caption(IDS_WRNBOXTTITLE, 50, reinterpret_cast<DWORD>(App::APPNAME));
+    Util::Res::ResStr caption(IDS_WRNBOXTTITLE, 50, reinterpret_cast<DWORD>(::App::APPNAME));
     MessageBox(wnd, s, caption, MB_ICONWARNING | MB_TOPMOST);
 }
 
 
+std::wstring Util::App::getHelpFileDescr(const std::wstring& path, const std::wstring& name)
+{
+    // Data layout:
+    //  {CHM file data...}
+    //  WCHAR data[size]  // no NULs
+    //  DWORD size
+    //  DWORD sig
+
+    const DWORD CHM_MARKER_SIG = 0xefda7a00;  // from chmmark.py
+    std::wstring ret;
+    DWORD sig, len;
+    ef::Win::AutoFileH file = ef::Win::FileH::create(path + name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    if (file != INVALID_HANDLE_VALUE &&
+        file.setPosFromEnd32(0) &&
+        Util::Sys::readFileBack(file, &sig, sizeof(sig)) && 
+        sig == CHM_MARKER_SIG &&
+        Util::Sys::readFileBack(file, &len, sizeof(len)))
+    {
+        boost::scoped_array<char> buf(new char[len]);
+        if (Util::Sys::readFileBack(file, buf.get(), len)) {
+            boost::scoped_array<WCHAR> wbuf(new WCHAR[len]);
+            if (MultiByteToWideChar(CP_THREAD_ACP, 0, buf.get(), len, wbuf.get(), len))
+                ret.assign(wbuf.get(), len);
+        }
+    }
+    return ret;
+}
+
+
 // TODO: move to eflib?
-bool getScrSize(SIZE& sz)
+bool Util::Sys::getScrSize(SIZE& sz)
 {
     return ((sz.cx = GetSystemMetrics(SM_CXSCREEN)) != 0 &&
         (sz.cy = GetSystemMetrics(SM_CYSCREEN)) != 0);
 }
 
 
-void pinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
+void Util::App::pinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
 {
     int err = 0, wrn = 0;
 
     if (!hitWnd)
         wrn = IDS_ERR_COULDNOTFINDWND;
-    else if (isProgManWnd(hitWnd))
+    else if (Util::Wnd::isProgManWnd(hitWnd))
         wrn = IDS_ERR_CANNOTPINDESKTOP;
     // NOTE: after creating the layer wnd, the taskbar becomes non-topmost;
     // use this check to avoid pinning it
-    else if (isTaskBar(hitWnd))
+    else if (Util::Wnd::isTaskBar(hitWnd))
         wrn = IDS_ERR_CANNOTPINTASKBAR;
-    else if (isTopMost(hitWnd))
+    else if (Util::Wnd::isTopMost(hitWnd))
         wrn = IDS_ERR_ALREADYTOPMOST;
     // hidden wnds are handled by the proxy mechanism
     //else if (!IsWindowVisible(hitWnd))
@@ -125,7 +162,7 @@ void pinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
         // create a pin wnd
         HWND pin = CreateWindowEx(
             WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
-            App::WNDCLS_PIN,
+            PinWnd::className,
             L"",
             WS_POPUP | WS_VISIBLE,
             0, 0, 0, 0,   // real pos/size set on wnd assignment
@@ -133,7 +170,7 @@ void pinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
 
         if (!pin)
             err = IDS_ERR_PINCREATE;
-        else if (!SendMessage(pin, App::WM_PIN_ASSIGNWND, WPARAM(hitWnd), trackRate)) {
+        else if (!SendMessage(pin, ::App::WM_PIN_ASSIGNWND, WPARAM(hitWnd), trackRate)) {
             err = IDS_ERR_PINWND;
             DestroyWindow(pin);
         }
@@ -141,9 +178,9 @@ void pinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
 
     if (!silent && (err || wrn)) {
         if (err)
-            error(wnd, ResStr(err));
+            Util::App::error(wnd, Util::Res::ResStr(err));
         else
-            warning(wnd, ResStr(wrn));
+            Util::App::warning(wnd, Util::Res::ResStr(wrn));
     }
 
 }
@@ -152,31 +189,109 @@ void pinWindow(HWND wnd, HWND hitWnd, int trackRate, bool silent)
 // If the specified window (top parent) is pinned, 
 // return the pin wnd's handle; otherwise return 0.
 //
-static HWND hasPin(HWND wnd)
+HWND Util::App::hasPin(HWND wnd)
 {
     // enumerate all pin windows
     HWND pin = 0;
-    while ((pin = FindWindowEx(0, pin, App::WNDCLS_PIN, 0)) != 0)
+    while ((pin = FindWindowEx(0, pin, PinWnd::className, 0)) != 0)
         //if (GetParent(pin) == wnd)
-        if (HWND(SendMessage(pin, App::WM_PIN_GETPINNEDWND, 0, 0)) == wnd)
+        if (HWND(SendMessage(pin, ::App::WM_PIN_GETPINNEDWND, 0, 0)) == wnd)
             return pin;
 
     return 0;
 }
 
 
-void togglePin(HWND wnd, HWND target, int trackRate)
+void Util::App::togglePin(HWND wnd, HWND target, int trackRate)
 {
-    target = getTopParent(target);
+    target = Util::Wnd::getTopParent(target);
     HWND pin = hasPin(target);
     if (pin)
         DestroyWindow(pin);
     else
-        pinWindow(wnd, target, trackRate);
+        Util::App::pinWindow(wnd, target, trackRate);
 }
 
 
-HMENU LoadLocalizedMenu(LPCTSTR lpMenuName) {
+void Util::App::markWnd(HWND wnd, bool mode)
+{
+    const int blinkDelay = 50;  // msec
+    // thickness of highlight border
+    const int width = 3;
+    // first val can vary; second should be zero
+    const int flashes = mode ? 1 : 0;
+    // amount to deflate if wnd is maximized, to make the highlight visible
+    const int zoomFix = IsZoomed(wnd) ? GetSystemMetrics(SM_CXFRAME) : 0;
+
+    // when composition is enabled, drawing on the glass frame is prohibited
+    // (GetWindowDC() returns a DC that clips the frame); in that case,
+    // we use the screen DC and draw a simple rect (since GetWindowRgn()
+    // returns ERROR); this rect overlaps other windows in front of the target,
+    // but it's better than nothing
+    const bool composition = app.dwm.isCompositionEnabled();
+
+    HDC dc = composition ? GetDC(0) : GetWindowDC(wnd);
+    if (dc) {
+        int orgRop2 = SetROP2(dc, R2_XORPEN);
+
+        HRGN rgn = CreateRectRgn(0,0,0,0);
+        bool hasRgn = GetWindowRgn(wnd, rgn) != ERROR;
+        const int loops = flashes*2+1;
+
+        if (hasRgn) {
+            for (int m = 0; m < loops; ++m) {
+                FrameRgn(dc, rgn, HBRUSH(GetStockObject(WHITE_BRUSH)), width, width);
+                GdiFlush();
+                if (mode && m < loops-1)
+                    Sleep(blinkDelay);
+            }
+        }
+        else {
+            RECT rc;
+            GetWindowRect(wnd, &rc);
+            if (!composition)
+                OffsetRect(&rc, -rc.left, -rc.top);
+            InflateRect(&rc, -zoomFix, -zoomFix);
+
+            HGDIOBJ orgPen = SelectObject(dc, GetStockObject(WHITE_PEN));
+            HGDIOBJ orgBrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
+
+            RECT tmp;
+            for (int m = 0; m < loops; ++m) {
+                CopyRect(&tmp, &rc);
+                for (int n = 0; n < width; ++n) {
+                    Rectangle(dc, tmp.left, tmp.top, tmp.right, tmp.bottom);
+                    InflateRect(&tmp, -1, -1);
+                }
+                GdiFlush();
+                if (mode && m < loops-1)
+                    Sleep(blinkDelay);
+            }
+            SelectObject(dc, orgBrush);
+            SelectObject(dc, orgPen);
+        }
+
+        SetROP2(dc, orgRop2);
+        ReleaseDC(composition ? 0 : wnd, dc);
+        DeleteObject(rgn);
+    }
+
+}
+
+
+std::wstring Util::App::getLangFileDescr(const std::wstring& path, const std::wstring& file)
+{
+    HINSTANCE inst = file.empty() ? app.inst : LoadLibrary((path+file).c_str());
+    WCHAR buf[100];
+    if (!inst || !LoadString(inst, IDS_LANG, buf, sizeof(buf)))
+        *buf = '\0';
+    if (!file.empty() && inst)   // release inst if we had to load it
+        FreeLibrary(inst);
+    return buf;
+}
+
+
+HMENU Util::Res::LoadLocalizedMenu(LPCTSTR lpMenuName) {
     if (app.resMod) {
         HMENU ret = LoadMenu(app.resMod, lpMenuName);
         if (ret)
@@ -186,21 +301,23 @@ HMENU LoadLocalizedMenu(LPCTSTR lpMenuName) {
 }
 
 
-HMENU LoadLocalizedMenu(WORD id) {
-    return LoadLocalizedMenu(MAKEINTRESOURCE(id));
+HMENU Util::Res::LoadLocalizedMenu(WORD id) {
+    return Util::Res::LoadLocalizedMenu(MAKEINTRESOURCE(id));
 }
 
 
-bool isLastErrResNotFound() {
-    DWORD e = GetLastError();
-    return e == ERROR_RESOURCE_DATA_NOT_FOUND ||
-        e == ERROR_RESOURCE_TYPE_NOT_FOUND ||
-        e == ERROR_RESOURCE_NAME_NOT_FOUND ||
-        e == ERROR_RESOURCE_LANG_NOT_FOUND;
+namespace {
+    bool isLastErrResNotFound() {
+        DWORD e = GetLastError();
+        return e == ERROR_RESOURCE_DATA_NOT_FOUND ||
+            e == ERROR_RESOURCE_TYPE_NOT_FOUND ||
+            e == ERROR_RESOURCE_NAME_NOT_FOUND ||
+            e == ERROR_RESOURCE_LANG_NOT_FOUND;
+    }
 }
 
 
-int LocalizedDialogBoxParam(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
+int Util::Res::LocalizedDialogBoxParam(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
     if (app.resMod) {
         int ret = DialogBoxParam(app.resMod, lpTemplate, hParent, lpDialogFunc, dwInit);
         if (ret != -1 || !isLastErrResNotFound())
@@ -209,12 +326,12 @@ int LocalizedDialogBoxParam(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFu
     return DialogBoxParam(app.inst, lpTemplate, hParent, lpDialogFunc, dwInit);
 }
 
-int LocalizedDialogBoxParam(WORD id, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
-    return LocalizedDialogBoxParam(MAKEINTRESOURCE(id), hParent, lpDialogFunc, dwInit);
+int Util::Res::LocalizedDialogBoxParam(WORD id, HWND hParent, DLGPROC lpDialogFunc, LPARAM dwInit) {
+    return Util::Res::LocalizedDialogBoxParam(MAKEINTRESOURCE(id), hParent, lpDialogFunc, dwInit);
 }
 
 
-HWND CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc) {
+HWND Util::Res::CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFunc) {
     if (app.resMod) {
         HWND ret = CreateDialog(app.resMod, lpTemplate, hParent, lpDialogFunc);
         if (ret || !isLastErrResNotFound())
@@ -223,13 +340,13 @@ HWND CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hParent, DLGPROC lpDialogFun
     return CreateDialog(app.inst, lpTemplate, hParent, lpDialogFunc);
 }
 
-HWND CreateLocalizedDialog(WORD id, HWND hParent, DLGPROC lpDialogFunc) {
-    return CreateLocalizedDialog(MAKEINTRESOURCE(id), hParent, lpDialogFunc);
+HWND Util::Res::CreateLocalizedDialog(WORD id, HWND hParent, DLGPROC lpDialogFunc) {
+    return Util::Res::CreateLocalizedDialog(MAKEINTRESOURCE(id), hParent, lpDialogFunc);
 }
 
 
 // TODO: move to eflib?
-bool rectContains(const RECT& rc1, const RECT& rc2)
+bool Util::Gfx::rectContains(const RECT& rc1, const RECT& rc2)
 {
     return rc2.left   >= rc1.left
         && rc2.top    >= rc1.top
@@ -241,7 +358,7 @@ bool rectContains(const RECT& rc1, const RECT& rc2)
 // enable/disable all ctrls that lie inside the specified ctrl 
 // (usually a group, or maybe a tab, etc)
 // TODO: move to eflib?
-void enableGroup(HWND wnd, int id, bool mode)
+void Util::Wnd::enableGroup(HWND wnd, int id, bool mode)
 {
     HWND container = GetDlgItem(wnd, id);
     RECT rc;
@@ -257,7 +374,7 @@ void enableGroup(HWND wnd, int id, bool mode)
             if (child == container)
                 continue;
             GetWindowRect(child, &rc2);
-            if (rectContains(rc, rc2))
+            if (Util::Gfx::rectContains(rc, rc2))
                 EnableWindow(child, mode);
     }
 
@@ -265,7 +382,7 @@ void enableGroup(HWND wnd, int id, bool mode)
 
 
 // TODO: move to eflib?
-std::vector<std::wstring> getFiles(std::wstring mask)
+std::vector<std::wstring> Util::Sys::getFiles(std::wstring mask)
 {
     std::vector<std::wstring> ret;
     for (ef::Win::FileFinder fde(mask, ef::Win::FileFinder::files); fde; ++fde)
@@ -274,7 +391,17 @@ std::vector<std::wstring> getFiles(std::wstring mask)
 }
 
 
-COLORREF light(COLORREF clr)
+bool Util::Sys::readFileBack(HANDLE file, void* buf, int bytes)
+{
+    DWORD read;
+    return SetFilePointer(file, -bytes, 0, FILE_CURRENT) != -1
+        && ReadFile(file, buf, bytes, &read, 0)
+        && int(read) == bytes
+        && SetFilePointer(file, -bytes, 0, FILE_CURRENT) != -1;
+}
+
+
+COLORREF Util::Clr::light(COLORREF clr)
 {
     double r = GetRValue(clr) / 255.0;
     double g = GetGValue(clr) / 255.0;
@@ -289,7 +416,7 @@ COLORREF light(COLORREF clr)
 }
 
 
-COLORREF dark(COLORREF clr)
+COLORREF Util::Clr::dark(COLORREF clr)
 {
     double r = GetRValue(clr) / 255.0;
     double g = GetGValue(clr) / 255.0;
@@ -304,20 +431,20 @@ COLORREF dark(COLORREF clr)
 }
 
 
-BOOL moveWindow(HWND wnd, const RECT& rc, BOOL repaint)
+BOOL Util::Wnd::moveWindow(HWND wnd, const RECT& rc, BOOL repaint)
 {
     return MoveWindow(wnd, rc.left, rc.top, 
         rc.right-rc.left, rc.bottom-rc.top, repaint);
 }
 
 
-BOOL rectangle(HDC dc, const RECT& rc)
+BOOL Util::Gfx::rectangle(HDC dc, const RECT& rc)
 {
     return Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
 }
 
 
-bool psChanged(HWND page)
+bool Util::Wnd::psChanged(HWND page)
 {
     return !!PropSheet_Changed(GetParent(page), page);
 }
@@ -325,7 +452,7 @@ bool psChanged(HWND page)
 
 // removes the first accelerator prefix ('&')
 // from a string and returns the result
-std::wstring remAccel(std::wstring s)
+std::wstring Util::Text::remAccel(std::wstring s)
 {
     std::wstring::size_type i = s.find_first_of(L"&");
     if (i != std::wstring::npos) s.erase(i, 1);
@@ -334,7 +461,7 @@ std::wstring remAccel(std::wstring s)
 
 
 // TODO: move to eflib?
-bool getBmpSize(HBITMAP bmp, SIZE& sz)
+bool Util::Gfx::getBmpSize(HBITMAP bmp, SIZE& sz)
 {
     BITMAP bm;
     if (!GetObject(bmp, sizeof(bm), &bm))
@@ -346,7 +473,7 @@ bool getBmpSize(HBITMAP bmp, SIZE& sz)
 
 
 // TODO: move to eflib?
-bool getBmpSizeAndBpp(HBITMAP bmp, SIZE& sz, int& bpp)
+bool Util::Gfx::getBmpSizeAndBpp(HBITMAP bmp, SIZE& sz, int& bpp)
 {
     BITMAP bm;
     if (!GetObject(bmp, sizeof(bm), &bm))
@@ -361,7 +488,7 @@ bool getBmpSizeAndBpp(HBITMAP bmp, SIZE& sz, int& bpp)
 // Convert white/lgray/dgray of bmp to shades of 'clr'.
 // NOTE: Bmp must *not* be selected in any DC for this to succeed.
 //
-bool remapBmpColors(HBITMAP bmp, COLORREF clrs[][2], int cnt)
+bool Util::Gfx::remapBmpColors(HBITMAP bmp, COLORREF clrs[][2], int cnt)
 {
     bool ok = false;
     SIZE sz;
@@ -407,8 +534,14 @@ bool remapBmpColors(HBITMAP bmp, COLORREF clrs[][2], int cnt)
 // Returns the part of a string after the last occurrence of a token.
 // Example: substrAfter("foobar", "oo") --> "bar"
 // Returns "" on error.
-std::wstring substrAfterLast(const std::wstring& s, const std::wstring& delim)
+std::wstring Util::Text::substrAfterLast(const std::wstring& s, const std::wstring& delim)
 {
     std::wstring::size_type i = s.find_last_of(delim);
     return i == std::wstring::npos ? L"" : s.substr(i + delim.length());
+}
+
+
+bool Util::Sys::isWin8orGreater()
+{
+    return ef::Win::OsVer().majMin() >= ef::Win::packVer(6, 2);
 }

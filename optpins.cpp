@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "options.h"
 #include "util.h"
+#include "pinwnd.h"
 #include "optpins.h"
 #include "resource.h"
 
@@ -8,14 +9,14 @@
 #define OWNERDRAW_CLR_BUTTON  0
 
 
-static HBRUSH getPinClrBrush(HWND wnd)
+HBRUSH OptPins::getPinClrBrush(HWND wnd)
 {
     HWND ctrl = GetDlgItem(wnd, IDC_PIN_COLOR_BOX);
     return HBRUSH(GetWindowLong(ctrl, GWL_USERDATA));
 }
 
 
-static COLORREF getPinClr(HWND wnd)
+COLORREF OptPins::getPinClr(HWND wnd)
 {
     HBRUSH brush = getPinClrBrush(wnd);
     LOGBRUSH lb;
@@ -23,7 +24,7 @@ static COLORREF getPinClr(HWND wnd)
 }
 
 
-static void setPinClrBrush(HWND wnd, COLORREF clr)
+void OptPins::setPinClrBrush(HWND wnd, COLORREF clr)
 {
     DeleteObject(getPinClrBrush(wnd));
 
@@ -33,7 +34,7 @@ static void setPinClrBrush(HWND wnd, COLORREF clr)
 }
 
 
-static bool evInitDialog(HWND wnd, HWND focus, LPARAM lparam)
+bool OptPins::evInitDialog(HWND wnd, HWND focus, LPARAM lparam)
 {
     // must have a valid data ptr
     if (!lparam) {
@@ -70,7 +71,7 @@ static bool evInitDialog(HWND wnd, HWND focus, LPARAM lparam)
 }
 
 
-static void evTermDialog(HWND wnd)
+void OptPins::evTermDialog(HWND wnd)
 {
     DeleteObject(getPinClrBrush(wnd));
 }
@@ -79,7 +80,7 @@ static void evTermDialog(HWND wnd)
 #if OWNERDRAW_CLR_BUTTON
 
 // TODO: add vistual styles support
-static bool evDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
+bool OptPins::evDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
 {
     if (id != IDC_PIN_COLOR)
         return false;
@@ -122,14 +123,14 @@ static bool evDrawItem(HWND wnd, UINT id, DRAWITEMSTRUCT* dis)
 #endif
 
 
-static bool validate(HWND wnd)
+bool OptPins::validate(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
     return opt.trackRate.validateUI(wnd, IDC_POLL_RATE, true);
 }
 
 
-static void cmPinClr(HWND wnd)
+void OptPins::cmPinClr(HWND wnd)
 {
     static COLORREF userClrs[16] = {0};
 
@@ -141,34 +142,34 @@ static void cmPinClr(HWND wnd)
     cc.Flags        = CC_RGBINIT | CC_SOLIDCOLOR;   //CC_ANYCOLOR
     if (ChooseColor(&cc)) {
         setPinClrBrush(wnd, cc.rgbResult);
-        psChanged(wnd);
+        Util::Wnd::psChanged(wnd);
     }
 }
 
 
-static BOOL CALLBACK enumWndProcPinsUpdate(HWND wnd, LPARAM)
+BOOL CALLBACK OptPins::enumWndProcPinsUpdate(HWND wnd, LPARAM)
 {
-    if (strimatch(App::WNDCLS_PIN, ef::Win::WndH(wnd).getClassName().c_str()))
+    if (Util::Text::strimatch(PinWnd::className, ef::Win::WndH(wnd).getClassName().c_str()))
         InvalidateRect(wnd, 0, false);
     return true;    // continue
 }
 
 
-static void updatePinWnds()
+void OptPins::updatePinWnds()
 {
     EnumWindows((WNDENUMPROC)enumWndProcPinsUpdate, 0);
 }
 
 
-static BOOL CALLBACK resetPinTimersEnumProc(HWND wnd, LPARAM param)
+BOOL CALLBACK OptPins::resetPinTimersEnumProc(HWND wnd, LPARAM param)
 {
-    if (strimatch(App::WNDCLS_PIN, ef::Win::WndH(wnd).getClassName().c_str()))
+    if (Util::Text::strimatch(PinWnd::className, ef::Win::WndH(wnd).getClassName().c_str()))
         SendMessage(wnd, App::WM_PIN_RESETTIMER, param, 0);
     return true;    // continue
 }
 
 
-static void apply(HWND wnd)
+void OptPins::apply(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
@@ -189,7 +190,7 @@ static void apply(HWND wnd)
 }
 
 
-BOOL CALLBACK optPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+BOOL CALLBACK OptPins::dlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 
     switch (msg) {
@@ -241,8 +242,8 @@ BOOL CALLBACK optPinsProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 case IDC_PIN_COLOR:         cmPinClr(wnd); return true;
                 case IDC_PIN_COLOR_BOX:     if (code == STN_DBLCLK) cmPinClr(wnd); return true;
                 case IDC_TRAY_SINGLE_CLICK:
-                case IDC_TRAY_DOUBLE_CLICK: psChanged(wnd); return true;
-                case IDC_POLL_RATE:         if (code == EN_CHANGE) psChanged(wnd); return true;
+                case IDC_TRAY_DOUBLE_CLICK: Util::Wnd::psChanged(wnd); return true;
+                case IDC_POLL_RATE:         if (code == EN_CHANGE) Util::Wnd::psChanged(wnd); return true;
                 default:                    return false;
             }
         }

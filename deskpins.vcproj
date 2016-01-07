@@ -306,6 +306,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\mainwnd.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\optautopin.cpp"
 				>
 			</File>
@@ -315,6 +319,10 @@
 			</File>
 			<File
 				RelativePath=".\options.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\optionsdlg.cpp"
 				>
 			</File>
 			<File
@@ -395,6 +403,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\mainwnd.h"
+				>
+			</File>
+			<File
 				RelativePath=".\optautopin.h"
 				>
 			</File>
@@ -404,6 +416,10 @@
 			</File>
 			<File
 				RelativePath=".\options.h"
+				>
+			</File>
+			<File
+				RelativePath=".\optionsdlg.h"
 				>
 			</File>
 			<File

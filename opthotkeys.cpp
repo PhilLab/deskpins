@@ -5,16 +5,16 @@
 #include "resource.h"
 
 
-static bool cmHotkeysOn(HWND wnd)
+bool OptHotKeys::cmHotkeysOn(HWND wnd)
 {
     bool b = IsDlgButtonChecked(wnd, IDC_HOTKEYS_ON) == BST_CHECKED;
-    enableGroup(wnd, IDC_HOTKEYS_GROUP, b);
-    psChanged(wnd);
+    Util::Wnd::enableGroup(wnd, IDC_HOTKEYS_GROUP, b);
+    Util::Wnd::psChanged(wnd);
     return true;
 }
 
 
-static bool evInitDialog(HWND wnd, HWND focus, LPARAM param)
+bool OptHotKeys::evInitDialog(HWND wnd, HWND focus, LPARAM param)
 {
     // must have a valid data ptr
     if (!param) {
@@ -38,15 +38,15 @@ static bool evInitDialog(HWND wnd, HWND focus, LPARAM param)
 }
 
 
-static bool validate(HWND wnd)
+bool OptHotKeys::validate(HWND wnd)
 {
     return true;
 }
 
 
-static bool changeHotkey(HWND wnd, 
-                         const HotKey& newHotkey, bool newState, 
-                         const HotKey& oldHotkey, bool oldState)
+bool OptHotKeys::changeHotkey(HWND wnd, 
+    const HotKey& newHotkey, bool newState, 
+    const HotKey& oldHotkey, bool oldState)
 {
     // get old & new state to figure out transition
     bool wasOn = oldState && oldHotkey.vk;
@@ -69,7 +69,7 @@ static bool changeHotkey(HWND wnd,
 }
 
 
-static void apply(HWND wnd)
+void OptHotKeys::apply(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
@@ -95,11 +95,11 @@ static void apply(HWND wnd)
     opt.hotTogglePin = toggleKey;
 
     if (!allKeysSet)
-        error(wnd, ResStr(IDS_ERR_HOTKEYSSET));
+        Util::App::error(wnd, Util::Res::ResStr(IDS_ERR_HOTKEYSSET));
 }
 
 
-BOOL CALLBACK optHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+BOOL CALLBACK OptHotKeys::dlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
         case WM_INITDIALOG:  return evInitDialog(wnd, HWND(wparam), lparam);
@@ -138,7 +138,7 @@ BOOL CALLBACK optHotkeysProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             switch (id) {
                 case IDC_HOTKEYS_ON:    cmHotkeysOn(wnd); return true;
                 case IDC_HOT_PINMODE:
-                case IDC_HOT_TOGGLEPIN: if (code == EN_CHANGE) psChanged(wnd); return true;
+                case IDC_HOT_TOGGLEPIN: if (code == EN_CHANGE) Util::Wnd::psChanged(wnd); return true;
                 default:                return false;
             }
         }

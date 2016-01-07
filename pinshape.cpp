@@ -22,12 +22,12 @@ bool PinShape::initImage(COLORREF clr) {
     }
 
     COLORREF clrMap[][2] = {
-        { StdClr::white,  light(clr) }, 
-        { StdClr::silver, clr        }, 
-        { StdClr::gray,   dark(clr)  }
+        { Util::Clr::white,  Util::Clr::light(clr) }, 
+        { Util::Clr::silver, clr        }, 
+        { Util::Clr::gray,   Util::Clr::dark(clr)  }
     };
     return (bmp = LoadBitmap(app.inst, MAKEINTRESOURCE(IDB_PIN)))
-        && remapBmpColors(bmp, clrMap, ARRSIZE(clrMap));
+        && Util::Gfx::remapBmpColors(bmp, clrMap, ARRSIZE(clrMap));
 }
 
 
@@ -39,7 +39,7 @@ bool PinShape::initShape() {
     }
 
     if (HBITMAP bmp = LoadBitmap(app.inst, MAKEINTRESOURCE(IDB_PIN))) {
-        if (!getBmpSize(bmp, sz))
+        if (!Util::Gfx::getBmpSize(bmp, sz))
             sz.cx = sz.cy = 1;
         rgn = ef::Win::RgnH::create(bmp, RGB(255,0,255));
         DeleteObject(bmp);

@@ -5,24 +5,12 @@
 #include "resource.h"
 
 
-const DWORD CHM_MARKER_SIG = 0xefda7a00;  // from chmmark.py
-
-
-struct Data {
-    std::wstring fname, dispName, descr;
-    Data(const std::wstring& fname   = L"", 
-        const std::wstring& dispName = L"", 
-        const std::wstring& descr    = L"")
-        : fname(fname), dispName(dispName), descr(descr) {}
-};
-
-
-std::wstring getComboSel(HWND wnd)
+std::wstring OptLang::getComboSel(HWND combo)
 {
     std::wstring ret;
-    int n = SendMessage(wnd, CB_GETCURSEL, 0, 0);
+    int n = SendMessage(combo, CB_GETCURSEL, 0, 0);
     if (n != CB_ERR) {
-        int i = SendMessage(wnd, CB_GETITEMDATA, n, 0);
+        int i = SendMessage(combo, CB_GETITEMDATA, n, 0);
         if (i != CB_ERR && i != 0) {
             ret.assign(reinterpret_cast<Data*>(i)->fname);
         }
@@ -31,89 +19,39 @@ std::wstring getComboSel(HWND wnd)
 }
 
 
-std::wstring getLangFileDescr(const std::wstring& path, const std::wstring& file)
+void OptLang::loadLangFiles(HWND combo, const std::wstring& path, const std::wstring& cur)
 {
-    HINSTANCE inst = file.empty() ? app.inst : LoadLibrary((path+file).c_str());
-    WCHAR buf[100];
-    if (!inst || !LoadString(inst, IDS_LANG, buf, sizeof(buf)))
-        *buf = '\0';
-    if (!file.empty() && inst)   // release inst if we had to load it
-        FreeLibrary(inst);
-    return buf;
-}
-
-
-void loadLangFiles(HWND combo, const std::wstring& path, const std::wstring& cur)
-{
-    std::vector<std::wstring> files = getFiles(path + L"lang*.dll");
+    std::vector<std::wstring> files = Util::Sys::getFiles(path + L"lang*.dll");
     files.push_back(L"");    // special entry
 
     for (int n = 0; n < int(files.size()); ++n) {
         Data* data = new Data;
         data->fname    = files[n];
         data->dispName = files[n].empty() ? ef::fileSpec(ef::Win::getModulePath(app.inst)) : files[n];
-        data->descr    = getLangFileDescr(path, files[n]);
+        data->descr    = Util::App::getLangFileDescr(path, files[n]);
         int i = SendMessage(combo, CB_ADDSTRING, 0, LPARAM(data));
         if (i == CB_ERR)
             delete data;
-        else if (strimatch(data->fname.c_str(), cur.c_str()))
+        else if (Util::Text::strimatch(data->fname.c_str(), cur.c_str()))
             SendMessage(combo, CB_SETCURSEL, i, 0);
     }
 
 }
 
 
-static bool readFileBack(HANDLE file, void* buf, int bytes)
+void OptLang::loadHelpFiles(HWND combo, const std::wstring& path, const std::wstring& cur)
 {
-    DWORD read;
-    return SetFilePointer(file, -bytes, 0, FILE_CURRENT) != -1
-        && ReadFile(file, buf, bytes, &read, 0)
-        && int(read) == bytes
-        && SetFilePointer(file, -bytes, 0, FILE_CURRENT) != -1;
-}
-
-
-std::wstring getHelpFileDescr(const std::wstring& path, const std::wstring& name)
-{
-    // Data layout:
-    //  {CHM file data...}
-    //  WCHAR data[size]  // no NULs
-    //  DWORD size
-    //  DWORD sig
-
-    std::wstring ret;
-    DWORD sig, len;
-    ef::Win::AutoFileH file = ef::Win::FileH::create(path + name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-    if (file != INVALID_HANDLE_VALUE &&
-        file.setPosFromEnd32(0) &&
-        readFileBack(file, &sig, sizeof(sig)) && 
-        sig == CHM_MARKER_SIG &&
-        readFileBack(file, &len, sizeof(len)))
-    {
-        boost::scoped_array<char> buf(new char[len]);
-        if (readFileBack(file, buf.get(), len)) {
-            boost::scoped_array<WCHAR> wbuf(new WCHAR[len]);
-            if (MultiByteToWideChar(CP_THREAD_ACP, 0, buf.get(), len, wbuf.get(), len))
-                ret.assign(wbuf.get(), len);
-        }
-    }
-    return ret;
-}
-
-
-void loadHelpFiles(HWND combo, const std::wstring& path, const std::wstring& cur)
-{
-    std::vector<std::wstring> files = getFiles(path + L"DeskPins*.chm");
+    std::vector<std::wstring> files = Util::Sys::getFiles(path + L"DeskPins*.chm");
 
     for (int n = 0; n < int(files.size()); ++n) {
         Data* data = new Data;
         data->fname =    files[n];
         data->dispName = files[n];
-        data->descr    = getHelpFileDescr(path, files[n]);
+        data->descr    = Util::App::getHelpFileDescr(path, files[n]);
         int i = SendMessage(combo, CB_ADDSTRING, 0, LPARAM(data));
         if (i == CB_ERR)
             delete data;
-        else if (strimatch(data->fname.c_str(), cur.c_str()))
+        else if (Util::Text::strimatch(data->fname.c_str(), cur.c_str()))
             SendMessage(combo, CB_SETCURSEL, i, 0);
 
     }
@@ -121,7 +59,7 @@ void loadHelpFiles(HWND combo, const std::wstring& path, const std::wstring& cur
 }
 
 
-static bool evInitDialog(HWND wnd, HWND focus, LPARAM param)
+bool OptLang::evInitDialog(HWND wnd, HWND focus, LPARAM param)
 {
     // must have a valid data ptr
     if (!param) {
@@ -149,13 +87,13 @@ static bool evInitDialog(HWND wnd, HWND focus, LPARAM param)
 }
 
 
-static bool validate(HWND wnd)
+bool OptLang::validate(HWND wnd)
 {
     return true;
 }
 
 
-static void apply(HWND wnd)
+void OptLang::apply(HWND wnd)
 {
     Options& opt = reinterpret_cast<OptionsPropSheetData*>(GetWindowLong(wnd, DWL_USER))->opt;
 
@@ -172,7 +110,7 @@ static void apply(HWND wnd)
 }
 
 
-BOOL CALLBACK optLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+BOOL CALLBACK OptLang::dlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg) {
         case WM_INITDIALOG:  return evInitDialog(wnd, HWND(wparam), lparam);
@@ -206,7 +144,7 @@ BOOL CALLBACK optLangProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
             WORD code = HIWORD(wparam), id = LOWORD(wparam);
             if (code == CBN_SELCHANGE) {
                 if (id == IDC_UILANG || id == IDC_HELPLANG)
-                    psChanged(wnd);
+                    Util::Wnd::psChanged(wnd);
             }
             break;
         }

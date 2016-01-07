@@ -5,6 +5,9 @@
 #include "help.h"
 
 
+class Options;
+
+
 class Dwm : boost::noncopyable
 {
     typedef HRESULT (WINAPI* DwmIsCompositionEnabled_Ptr)(BOOL*);
@@ -45,9 +48,6 @@ struct App : boost::noncopyable {
     Dwm       dwm;
 
     static LPCWSTR APPNAME;
-    static LPCWSTR WNDCLS_MAIN;
-    static LPCWSTR WNDCLS_PIN;
-    static LPCWSTR WNDCLS_PINLAYER;
 
     enum {
         // app messages
@@ -83,6 +83,7 @@ struct App : boost::noncopyable {
     bool initComctl();
     bool chkPrevInst();
     bool regWndCls();
-    bool createMainWnd();
+    bool createMainWnd(Options& opt);
     void createSmClrIcon(COLORREF clr);
+    std::wstring trayIconTip();
 };
