@@ -68,7 +68,7 @@ namespace Util {
         // Resource string loading and formatting.
         // Automatically uses loaded language DLL, if any.
         //
-        class ResStr {
+        class ResStr : boost::noncopyable {
         public:
             ResStr(DWORD id, int bufLen = 256) {
                 str = new WCHAR[bufLen];
@@ -94,23 +94,6 @@ namespace Util {
                 initFmt(id, bufLen, params);
             }
 
-            ResStr(const ResStr& other)
-            {
-                const size_t buflen = wcslen(other.str) + 1;
-                str = new WCHAR[buflen];
-                wcscpy_s(str, buflen, other.str);
-            }
-
-            ResStr& operator=(const ResStr& other)
-            {
-                if (*this != other) {
-                    delete[] str;
-                    const size_t buflen = wcslen(other.str) + 1;
-                    str = new WCHAR[buflen];
-                    wcscpy_s(str, buflen, other.str);
-                }
-            }
-
             ~ResStr() {
                 delete[] str;
             }
@@ -119,11 +102,9 @@ namespace Util {
                 return str;
             }
 
-            operator LPWSTR() {
-                return str;
-            }
+        private:
+            LPWSTR str;
 
-        protected:
             void initFmt(DWORD id, int bufLen, DWORD* params) {
                 str = new WCHAR[bufLen];
                 if (!app.resMod || !LoadString(app.resMod, id, str, bufLen))
@@ -134,10 +115,6 @@ namespace Util {
                 if (!FormatMessage(flags, std::wstring(str).c_str(), 0, 0, str, bufLen, va))
                     *str = 0;
             }
-
-        private:
-            LPWSTR str;
-
         };
 
     }
