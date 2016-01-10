@@ -70,27 +70,27 @@ namespace Util {
         //
         class ResStr : boost::noncopyable {
         public:
-            ResStr(DWORD id, int bufLen = 256) {
+            ResStr(UINT id, size_t bufLen = 256) {
                 str = new WCHAR[bufLen];
                 if (!app.resMod || !LoadString(app.resMod, id, str, bufLen))
                     LoadString(app.inst, id, str, bufLen);
             }
 
-            ResStr(DWORD id, int bufLen, DWORD p1) {
+            ResStr(UINT id, size_t bufLen, DWORD_PTR p1) {
                 initFmt(id, bufLen, &p1);
             }
 
-            ResStr(DWORD id, int bufLen, DWORD p1, DWORD p2) {
+            ResStr(UINT id, size_t bufLen, DWORD_PTR p1, DWORD_PTR p2) {
                 DWORD params[] = {p1,p2};
                 initFmt(id, bufLen, params);
             }
 
-            ResStr(DWORD id, int bufLen, DWORD p1, DWORD p2, DWORD p3) {
+            ResStr(UINT id, size_t bufLen, DWORD_PTR p1, DWORD_PTR p2, DWORD_PTR p3) {
                 DWORD params[] = {p1,p2,p3};
                 initFmt(id, bufLen, params);
             }
 
-            ResStr(DWORD id, int bufLen, DWORD* params) {
+            ResStr(UINT id, size_t bufLen, DWORD_PTR* params) {
                 initFmt(id, bufLen, params);
             }
 
@@ -105,7 +105,7 @@ namespace Util {
         private:
             LPWSTR str;
 
-            void initFmt(DWORD id, int bufLen, DWORD* params) {
+            void initFmt(UINT id, size_t bufLen, DWORD_PTR* params) {
                 str = new WCHAR[bufLen];
                 if (!app.resMod || !LoadString(app.resMod, id, str, bufLen))
                     LoadString(app.inst, id, str, bufLen);
