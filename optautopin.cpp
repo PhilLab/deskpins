@@ -6,68 +6,72 @@
 #include "resource.h"
 
 
-// Subclass of static control that turns a bull's eye icon on/off.
+// Static control subclass, showing an icon that can be toggled on/off.
 //
-class TargetCtl : boost::noncopyable
+class IconCtl : boost::noncopyable
 {
 public:
-    ~TargetCtl() {}
+    enum {
+        WM_SHOWICON = WM_USER,  // wparam: bool on/off
+    };
 
-    static bool subclass(HWND wnd)
+    static IconCtl* subclass(HWND wnd, HICON icon)
     {
         WNDPROC orgProc = WNDPROC(GetWindowLong(wnd, GWL_WNDPROC));
         if (!orgProc)
-            return false;
-        TargetCtl* data = new TargetCtl();
-        data->orgProc = orgProc;
-        data->cursShowing = true;
-        data->curs = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_BULLSEYE));
-        SetWindowLong(wnd, GWL_USERDATA, LONG(data));
+            return 0;
+        IconCtl* obj = new IconCtl();
+        obj->orgProc = orgProc;
+        obj->icon = icon;
+        obj->show = true;
+        SetWindowLong(wnd, GWL_USERDATA, LONG(obj));
         SetWindowLong(wnd, GWL_WNDPROC, LONG(wndProc));
-        return true;
+        return obj;
     }
 
 private:
     WNDPROC orgProc;
-    bool    cursShowing;
-    HCURSOR curs;
+    HICON   icon;
+    bool    show;
 
-    TargetCtl() {}
+    IconCtl() {}
 
     static BOOL CALLBACK wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
-        TargetCtl& data = *(TargetCtl*)GetWindowLong(wnd, GWL_USERDATA);
+        IconCtl* obj = (IconCtl*)GetWindowLong(wnd, GWL_USERDATA);
+        if (!obj)
+            return DefWindowProc(wnd, msg, wparam, lparam);
 
         switch (msg) {
             case WM_NCDESTROY: {
-                WNDPROC orgProc = data.orgProc;
-                delete &data;
+                WNDPROC orgProc = obj->orgProc;
+                delete obj;
                 return CallWindowProc(orgProc, wnd, msg, wparam, lparam);
             }
             case WM_PAINT: {
-                LRESULT ret = CallWindowProc(data.orgProc, wnd, msg, wparam, lparam);
+                LRESULT ret = CallWindowProc(obj->orgProc, wnd, msg, wparam, lparam);
                 HDC dc = GetDC(wnd);
                 if (dc) {
-                    if (data.cursShowing) {
+                    if (obj->show) {
                         RECT rc;
                         GetClientRect(wnd, &rc);
                         int x = (rc.right  - GetSystemMetrics(SM_CXCURSOR)) / 2;
                         int y = (rc.bottom - GetSystemMetrics(SM_CYCURSOR)) / 2;          
-                        DrawIcon(dc, x+1, y+1, data.curs);
+                        DrawIcon(dc, x+1, y+1, obj->icon);
                     }
                     ReleaseDC(wnd, dc);
                 }
                 return ret;
             }
-            case WM_USER: {
-                data.cursShowing = wparam != 0;
+            case WM_SHOWICON: {
+                obj->show = wparam != 0;
                 InvalidateRect(wnd, 0, true);
                 UpdateWindow(wnd);
                 return 0;
             }
         }
 
-        return CallWindowProc(data.orgProc, wnd, msg, wparam, lparam);
+        return CallWindowProc(obj->orgProc, wnd, msg, wparam, lparam);
     }
 
 };
@@ -98,8 +102,9 @@ namespace {
                 SetDlgItemText(wnd, IDC_TITLE, rule.ttl.c_str());
                 SetDlgItemText(wnd, IDC_CLASS, rule.cls.c_str());
 
-                TargetCtl::subclass(GetDlgItem(wnd, IDC_TTLPICK));
-                TargetCtl::subclass(GetDlgItem(wnd, IDC_CLSPICK));
+                HICON target = LoadCursor(app.inst, MAKEINTRESOURCE(IDC_BULLSEYE));
+                IconCtl::subclass(GetDlgItem(wnd, IDC_TTLPICK), target);
+                IconCtl::subclass(GetDlgItem(wnd, IDC_CLSPICK), target);
 
                 // create tooltip for target icons
                 tooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, L"",
@@ -162,7 +167,7 @@ namespace {
                         Util::App::markWnd(hitWnd, false);
                     ReleaseCapture();
                     SendDlgItemMessage(wnd, tracking == 1 ? IDC_TTLPICK : IDC_CLSPICK, 
-                        WM_USER, true, 0);
+                        IconCtl::WM_SHOWICON, true, 0);
                     tracking = 0;
                     hitWnd = 0;
                 }
@@ -195,7 +200,7 @@ namespace {
                     case IDC_TTLPICK:
                     case IDC_CLSPICK: {
                         if (HIWORD(wparam) == STN_CLICKED) {
-                            SendDlgItemMessage(wnd, id, WM_USER, false, 0);
+                            SendDlgItemMessage(wnd, id, IconCtl::WM_SHOWICON, false, 0);
                             SetCapture(wnd);
                             SetCursor(LoadCursor(app.inst, MAKEINTRESOURCE(IDC_BULLSEYE)));
                             tracking = id == IDC_TTLPICK ? 1 : 2;
