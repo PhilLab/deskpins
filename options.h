@@ -4,6 +4,9 @@
 #include "resource.h"
 
 
+// Hotkey item.
+// Manages its own activation, persistence and UI interaction.
+//
 struct HotKey {
     int  id;
     UINT vk;
@@ -49,6 +52,9 @@ struct HotKey {
 };
 
 
+// Autopin rule.
+// Manages its own persistence.
+//
 struct AutoPinRule {
     std::wstring descr;
     std::wstring ttl;
@@ -68,6 +74,9 @@ struct AutoPinRule {
 };
 
 
+// Simple scalar option.
+// Manages its own range and UI interaction.
+//
 template <typename T>
 struct ScalarOption {
     T value, minV, maxV, step;
@@ -159,6 +168,10 @@ struct ScalarOption {
 typedef ScalarOption<int>        IntOption;
 typedef std::vector<AutoPinRule> AutoPinRules;
 
+
+// Program options.
+// Provides default values and manages persistence.
+//
 class Options {
 public:
     // pins
@@ -212,6 +225,8 @@ protected:
 class WindowCreationMonitor;
 
 
+// Used by options dialog to pass data to the various tabs.
+//
 struct OptionsPropSheetData {
     Options& opt;
     WindowCreationMonitor& winCreMon;

@@ -1,6 +1,9 @@
 #pragma once
 
 
+// Small popup window in the shape of pin.
+// This is fully responsible for making the target window topmost.
+//
 class PinWnd {
 public:
     static ATOM registerClass();
@@ -8,7 +11,7 @@ public:
     static LPCWSTR className;
 
 protected:
-    // Data object assigned to each pin wnd.
+    // Window data object.
     //
     class Data {
     public:

@@ -1,6 +1,9 @@
 #pragma once
 
 
+// ABC for monitoring system window creation.
+// Post a message to the client window whenever a window is created.
+//
 class WindowCreationMonitor {
 public:
     virtual ~WindowCreationMonitor() {}
@@ -9,6 +12,8 @@ public:
 };
 
 
+// Window creation monitor that uses SetWinEventHook().
+//
 class EventHookWindowCreationMonitor : public WindowCreationMonitor, boost::noncopyable {
 public:
     EventHookWindowCreationMonitor() {}
@@ -52,6 +57,8 @@ private:
 };
 
     
+// Window creation monitor that uses a global hook in a DLL (deprecated).
+//
 class HookDllWindowCreationMonitor : public WindowCreationMonitor, boost::noncopyable {
 private:
     typedef bool (*initF)(HWND wnd, int msgId);
@@ -108,7 +115,9 @@ private:
 class Options;
 
 
-// Manager of new windows for autopin checking.
+// Autopin checking of created windows.
+// Remembers the time each window is added, so when checking
+// it only processes those that have passed the autopin delay.
 //
 class PendingWindows {
 public:

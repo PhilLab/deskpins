@@ -1,6 +1,8 @@
 #pragma once
 
 
+// General options tab.
+//
 class OptPins
 {
 public:

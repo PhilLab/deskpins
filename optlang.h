@@ -1,12 +1,16 @@
 #pragma once
 
 
+// Language options tab.
+//
 class OptLang
 {
 public:
     static BOOL CALLBACK dlgProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
 protected:
+    // Combobox item data.
+    //
     struct Data {
         std::wstring fname, dispName, descr;
         Data(const std::wstring& fname   = L"", 

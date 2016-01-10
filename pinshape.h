@@ -1,6 +1,9 @@
 #pragma once
 
 
+// Pin image and region.
+// Used by pin windows to shape and paint themselves.
+//
 class PinShape : boost::noncopyable {
 public:
     PinShape();

@@ -16,6 +16,8 @@
 LPCWSTR MainWnd::className = L"EFDeskPins";
 
 
+// About dialog.
+//
 class AboutDlg {
 public:
     static BOOL CALLBACK proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -326,7 +328,8 @@ void MainWnd::evPinReq(HWND wnd, int x, int y, Options* opt)
 
 namespace
 {
-    // set and manage tray menu images
+    // Set and manage specific tray menu images.
+    //
     class TrayMenuDecorations : boost::noncopyable {
     public:
         TrayMenuDecorations(HMENU menu)

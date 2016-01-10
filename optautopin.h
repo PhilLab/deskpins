@@ -1,6 +1,8 @@
 #pragma once
 
 
+// Autopin options tab.
+//
 class OptAutoPin
 {
 public:

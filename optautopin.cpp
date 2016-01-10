@@ -6,6 +6,8 @@
 #include "resource.h"
 
 
+// Subclass of static control that turns a bull's eye icon on/off.
+//
 class TargetCtl : boost::noncopyable
 {
 public:
@@ -212,7 +214,8 @@ namespace {
 }
 
 
-// A class to handle interaction with the list control
+// Utility class that handles interaction with the list control.
+//
 class RulesList {
 public:
     RulesList();

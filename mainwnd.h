@@ -4,6 +4,12 @@
 class Options;
 class WindowCreationMonitor;
 
+
+// Main window.
+// Handles notification icon menu, hotkeys, autopin.
+// It also commnunicates with the pin windows (those do the actual work
+// of pinning).
+//
 class MainWnd
 {
 public:

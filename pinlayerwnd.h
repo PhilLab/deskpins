@@ -1,6 +1,12 @@
 #pragma once
 
 
+// Tracking window for placing a pin on a target.
+// It's a transparent, 1x1 window that simply captures the mouse
+// and responds to left/right clicking.
+// It has 'layer' in its name, because in previous versions
+// it used to cover the whole screen.
+//
 class PinLayerWnd
 {
 public:

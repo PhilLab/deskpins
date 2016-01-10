@@ -1,6 +1,8 @@
 #pragma once
 
 
+// Hotkeys options tab.
+//
 class OptHotKeys
 {
 public:

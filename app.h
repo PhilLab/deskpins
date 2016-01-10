@@ -8,6 +8,10 @@
 class Options;
 
 
+// Desktop Window Manager management.
+// Dynamically loads dwmapi.dll provides access to cached API state.
+// The main window needs to call this to handle broadcast messages.
+//
 class Dwm : boost::noncopyable
 {
     typedef HRESULT (WINAPI* DwmIsCompositionEnabled_Ptr)(BOOL*);
@@ -23,6 +27,7 @@ public:
         return cachedIsCompositionEnabled;
     }
     // WM_DWMCOMPOSITIONCHANGED handler
+    // TODO: use a msg filter instead of specific handler
     void wmDwmCompositionChanged() {
         BOOL b;
         cachedIsCompositionEnabled = dll && SUCCEEDED(DwmIsCompositionEnabled_(&b)) && b;
@@ -34,6 +39,9 @@ private:
 };
 
 
+// Main application state.
+// A single global instance is available to all translation units.
+//
 struct App : boost::noncopyable {
     ef::Win::PrevInstance prevInst;
     HWND      mainWnd, aboutDlg, optionsDlg, layerWnd; //, activeModelessDlg;

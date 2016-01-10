@@ -1,6 +1,8 @@
 #pragma once
 
 
+// Program notification icon management.
+//
 class TrayIcon : boost::noncopyable {
 public:
     TrayIcon(UINT msg, UINT id);

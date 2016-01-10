@@ -65,7 +65,9 @@ namespace Util {
         HWND  CreateLocalizedDialog(LPCTSTR lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc);
         HWND  CreateLocalizedDialog(WORD id, HWND hWndParent, DLGPROC lpDialogFunc);
 
-        // automatically handles language
+        // Resource string loading and formatting.
+        // Automatically uses loaded language DLL, if any.
+        //
         class ResStr {
         public:
             ResStr(DWORD id, int bufLen = 256) {

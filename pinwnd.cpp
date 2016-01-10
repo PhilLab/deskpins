@@ -81,7 +81,8 @@ void PinWnd::evDestroy(HWND wnd, Data& pd)
 }
 
 
-// helper to collect all non-child windows of a thread
+// Helper to collect all non-child windows of a thread.
+//
 class ThreadWnds {
 public:
     ThreadWnds(HWND wnd) : appWnd(wnd) {}

@@ -1,6 +1,9 @@
 #pragma once
 
 
+// Options dialog.
+// Uses a property sheet to host the options tabs.
+//
 class OptionsDlg {
 public:
     static void buildOptPropSheet(PROPSHEETHEADER& psh, PROPSHEETPAGE psp[], 
