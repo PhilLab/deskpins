@@ -156,7 +156,8 @@ struct ScalarOption {
             // report error
             HWND prevSib = GetWindow(GetDlgItem(wnd, id), GW_HWNDPREV);
             std::wstring label = Util::Text::remAccel(ef::Win::WndH(prevSib).getText());
-            Util::Res::ResStr str(IDS_WRN_UIRANGE, 256, DWORD_PTR(label.c_str()), DWORD(minV), DWORD(maxV));
+            Util::Res::ResStr str(IDS_WRN_UIRANGE, 256, 
+                DWORD_PTR(label.c_str()), DWORD(minV), DWORD(maxV));
             Util::App::warning(wnd, str);
             SetFocus(GetDlgItem(wnd, id));
             return false;

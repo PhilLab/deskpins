@@ -47,9 +47,6 @@ HotKey::save(ef::Win::RegKeyH& key, LPCWSTR val) const
 }
 
 
-// ----------------------------------------------------------------------
-
-
 bool 
 AutoPinRule::match(HWND wnd) const
 {
@@ -108,9 +105,6 @@ AutoPinRule::remove(ef::Win::RegKeyH& key, int i)
     key.deleteValue(val(L'C'));
     key.deleteValue(val(L'E'));
 }
-
-
-// ----------------------------------------------------------------------
 
 
 Options::Options() : 

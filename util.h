@@ -71,49 +71,20 @@ namespace Util {
         class ResStr : boost::noncopyable {
         public:
             ResStr(UINT id, size_t bufLen = 256) {
-                init(id, bufLen);
-            }
-
+                init(id, bufLen); }
             ResStr(UINT id, size_t bufLen, DWORD_PTR p1) {
-                init(id, bufLen, &p1);
-            }
-
+                init(id, bufLen, &p1); }
             ResStr(UINT id, size_t bufLen, DWORD_PTR p1, DWORD_PTR p2) {
-                DWORD params[] = {p1,p2};
-                init(id, bufLen, params);
-            }
-
+                DWORD params[] = {p1,p2}; init(id, bufLen, params); }
             ResStr(UINT id, size_t bufLen, DWORD_PTR p1, DWORD_PTR p2, DWORD_PTR p3) {
-                DWORD params[] = {p1,p2,p3};
-                init(id, bufLen, params);
-            }
-
+                DWORD params[] = {p1,p2,p3}; init(id, bufLen, params); }
             ResStr(UINT id, size_t bufLen, DWORD_PTR* params) {
-                init(id, bufLen, params);
-            }
-
-            ~ResStr() {
-                delete[] str;
-            }
-
-            operator LPCWSTR() const {
-                return str;
-            }
-
+                init(id, bufLen, params); }
+            ~ResStr() { delete[] str; }
+            operator LPCWSTR() const { return str; }
         private:
             LPWSTR str;
-
-            void init(UINT id, size_t bufLen, DWORD_PTR* params = 0) {
-                str = new WCHAR[bufLen];
-                if (!app.resMod || !LoadString(app.resMod, id, str, bufLen))
-                    LoadString(app.inst, id, str, bufLen);
-                if (params) {
-                    DWORD flags = FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY;
-                    va_list* va = reinterpret_cast<va_list*>(params);
-                    if (!FormatMessage(flags, std::wstring(str).c_str(), 0, 0, str, bufLen, va))
-                        *str = 0;
-                }
-            }
+            void init(UINT id, size_t bufLen, DWORD_PTR* params = 0);
         };
 
     }

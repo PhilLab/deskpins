@@ -19,24 +19,8 @@ public:
     EventHookWindowCreationMonitor() {}
     ~EventHookWindowCreationMonitor() { term(); }
 
-    bool init(HWND wnd, int msgId) {
-        if (!hook) {
-            hook = SetWinEventHook(EVENT_OBJECT_CREATE, EVENT_OBJECT_CREATE, 
-                0, proc, 0, 0, WINEVENT_OUTOFCONTEXT);
-            if (hook) {
-                this->wnd = wnd;
-                this->msgId = msgId;
-            }
-        }
-        return hook != 0;
-    }
-
-    bool term() {
-        if (hook && UnhookWinEvent(hook)) {
-            hook = 0;
-        }
-        return !hook;
-    }
+    bool init(HWND wnd, int msgId);
+    bool term();
 
 private:
     static HWINEVENTHOOK hook;
@@ -44,16 +28,7 @@ private:
     static int msgId;
 
     static VOID CALLBACK proc(HWINEVENTHOOK hook, DWORD event,
-        HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
-    {
-        if (hook == EventHookWindowCreationMonitor::hook &&
-            event == EVENT_OBJECT_CREATE &&
-            idObject == OBJID_WINDOW)
-        {
-            PostMessage(wnd, msgId, (WPARAM)hwnd, 0);
-        }
-    }
-
+        HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 };
 
     
@@ -65,45 +40,11 @@ private:
     typedef bool (*termF)();
 
 public:
-    HookDllWindowCreationMonitor() : dll(0), dllInitFunc(0), dllTermFunc(0)
-    {
-    }
+    HookDllWindowCreationMonitor() : dll(0), dllInitFunc(0), dllTermFunc(0) {}
+    ~HookDllWindowCreationMonitor() { term(); }
 
-    ~HookDllWindowCreationMonitor() {
-        term();
-    }
-
-    bool init(HWND wnd, int msgId) {
-        if (!dll) {
-            dll = LoadLibrary(L"dphook.dll");
-            if (!dll)
-                return false;
-        }
-
-        dllInitFunc = initF(GetProcAddress(dll, "init"));
-        dllTermFunc = termF(GetProcAddress(dll, "term"));
-        if (!dllInitFunc || !dllTermFunc) {
-            term();
-            return false;
-        }
-
-        return dllInitFunc(wnd, msgId);
-    }
-
-    bool term()
-    {
-        if (!dll)
-            return true;
-
-        if (dllTermFunc)
-            dllTermFunc();
-
-        bool ok = !!FreeLibrary(dll);
-        if (ok)
-            dll = 0;
-
-        return ok;
-    }
+    bool init(HWND wnd, int msgId);
+    bool term();
 
 private:
     HMODULE dll;

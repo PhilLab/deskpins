@@ -51,13 +51,7 @@ protected:
         }
 
     private:
-        Data(HWND wnd)
-        :
-            callbackWnd(wnd),
-            proxyMode(false),
-            topMostWnd(0),
-            proxyWnd(0)
-        {}
+        Data(HWND wnd) : callbackWnd(wnd), proxyMode(false), topMostWnd(0), proxyWnd(0) {}
     };
 
     static BOOL CALLBACK enumThreadWndProc(HWND wnd, LPARAM param);

@@ -50,6 +50,7 @@ bool TrayIcon::destroy()
     return !!Shell_NotifyIcon(NIM_DELETE, &nid);
 }
 
+
 bool TrayIcon::setTip(LPCTSTR tip)
 {
     NOTIFYICONDATA nid;

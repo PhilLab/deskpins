@@ -43,3 +43,72 @@ bool PendingWindows::checkWnd(HWND target, const Options& opt)
     return false;
 }
 
+
+bool EventHookWindowCreationMonitor::init(HWND wnd, int msgId)
+{
+    if (!hook) {
+        hook = SetWinEventHook(EVENT_OBJECT_CREATE, EVENT_OBJECT_CREATE, 
+            0, proc, 0, 0, WINEVENT_OUTOFCONTEXT);
+        if (hook) {
+            this->wnd = wnd;
+            this->msgId = msgId;
+        }
+    }
+    return hook != 0;
+}
+
+
+bool EventHookWindowCreationMonitor::term()
+{
+    if (hook && UnhookWinEvent(hook)) {
+        hook = 0;
+    }
+    return !hook;
+}
+
+
+VOID CALLBACK EventHookWindowCreationMonitor::proc(HWINEVENTHOOK hook, DWORD event,
+    HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+    if (hook == EventHookWindowCreationMonitor::hook &&
+        event == EVENT_OBJECT_CREATE &&
+        idObject == OBJID_WINDOW)
+    {
+        PostMessage(wnd, msgId, (WPARAM)hwnd, 0);
+    }
+}
+
+
+bool HookDllWindowCreationMonitor::init(HWND wnd, int msgId)
+{
+    if (!dll) {
+        dll = LoadLibrary(L"dphook.dll");
+        if (!dll)
+            return false;
+    }
+
+    dllInitFunc = initF(GetProcAddress(dll, "init"));
+    dllTermFunc = termF(GetProcAddress(dll, "term"));
+    if (!dllInitFunc || !dllTermFunc) {
+        term();
+        return false;
+    }
+
+    return dllInitFunc(wnd, msgId);
+}
+
+
+bool HookDllWindowCreationMonitor::term()
+{
+    if (!dll)
+        return true;
+
+    if (dllTermFunc)
+        dllTermFunc();
+
+    bool ok = !!FreeLibrary(dll);
+    if (ok)
+        dll = 0;
+
+    return ok;
+}

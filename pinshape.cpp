@@ -4,18 +4,21 @@
 #include "resource.h"
 
 
-PinShape::PinShape() : bmp(0), rgn(0) {
+PinShape::PinShape() : bmp(0), rgn(0)
+{
     sz.cx = sz.cy = 1;
 }
 
 
-PinShape::~PinShape() {
+PinShape::~PinShape()
+{
     DeleteObject(bmp);
     DeleteObject(rgn);
 }
 
 
-bool PinShape::initImage(COLORREF clr) {
+bool PinShape::initImage(COLORREF clr)
+{
     if (bmp) {
         DeleteObject(bmp);
         bmp = 0;
@@ -31,7 +34,8 @@ bool PinShape::initImage(COLORREF clr) {
 }
 
 
-bool PinShape::initShape() {
+bool PinShape::initShape()
+{
     if (rgn) {
         DeleteObject(rgn);
         rgn = 0;

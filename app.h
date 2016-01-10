@@ -9,7 +9,7 @@ class Options;
 
 
 // Desktop Window Manager management.
-// Dynamically loads dwmapi.dll provides access to cached API state.
+// Dynamically loads dwmapi.dll and provides access to cached API state.
 // The main window needs to call this to handle broadcast messages.
 //
 class Dwm : boost::noncopyable
